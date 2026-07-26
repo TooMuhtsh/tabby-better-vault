@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>tabby-better-vault — Contexte &amp; invariants</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="tabbar">
+<a href="README.html">Accueil</a>
+<a href="AI-CONTEXT.html" class="current">Contexte</a>
+<a href="AI-HISTORY.html">Historique</a>
+<a href="ROADMAP.html">Roadmap</a>
+</nav>
+
+<h1>Contexte &amp; invariants</h1>
+<p class="muted">Dernière revue : 2026-07-26</p>
+
+<p>Ce projet n'a pas encore de code — cette page ne contient donc pas de pièges propres découverts
+en implémentant (elle se remplira au fil du développement, comme
+<a href="../../tabby-ssh-sidebar/.AIRules/AI-CONTEXT.html">celle du projet frère</a>). Elle liste
+pour l'instant les pièges <strong>hérités</strong>, hautement probables vu que ce plugin partage
+exactement la même stack (Tabby, Angular 15, Electron, TypeScript, webpack) que
+<code>tabby-better-sidebar</code> — à vérifier/confirmer dès le scaffold, pas à redécouvrir de
+zéro.</p>
+
+<h2 id="cat-identite">Identité du projet</h2>
+<ul>
+<li>Nom prévu : <code>tabby-better-vault</code> (npm/GitHub), à créer.</li>
+<li>Objectif unique : déverrouiller automatiquement le coffre-fort Tabby (mot de passe maître) au
+  démarrage, en déléguant le chiffrement à l'OS plutôt qu'en stockant le secret en clair.</li>
+<li>Relation avec <code>tabby-better-sidebar</code> : projet frère, pas une dépendance obligatoire
+  — <code>better-sidebar</code> peut détecter la présence de ce plugin et exposer un lien vers ses
+  réglages si installé, mais fonctionne normalement sans lui (interfaçage optionnel, voir
+  <a href="ROADMAP.html">ROADMAP.html</a>).</li>
+</ul>
+
+<h2 id="cat-herites">Pièges hérités du projet frère — à anticiper dès le scaffold</h2>
+<p class="muted">Détail complet de chacun dans
+<a href="../../tabby-ssh-sidebar/.AIRules/AI-CONTEXT.html">l'AI-CONTEXT.html de tabby-better-sidebar</a> —
+pas dupliqué ici pour éviter que les deux copies divergent avec le temps. Seul le résumé et le
+pourquoi ça s'applique probablement ici aussi.</p>
+
+<h3>Environnement &amp; build</h3>
+<ul>
+<li><strong>Piège #1</strong> — <code>TABBY_PLUGINS</code> cassé sur Windows (bug Tabby, pas du
+  plugin) : utiliser une jonction NTFS dans <code>%APPDATA%\tabby\plugins\node_modules\</code>,
+  jamais cette variable d'env.</li>
+<li><strong>Piège #2</strong> — <code>package.json</code> doit toujours avoir un champ
+  <code>author</code> (même vide), sinon échec silencieux de la découverte du plugin.</li>
+<li><strong>Piège #4</strong> — mêmes contraintes de version probables pour matcher Angular 15
+  (peer dep de <code>tabby-core</code>) : <code>typescript@^4.9</code>, <code>pug@^2.0</code>,
+  <code>@types/node@^18.19</code>, <code>@ng-bootstrap/ng-bootstrap@^14</code> — à revérifier au
+  moment du scaffold (la version d'Angular ciblée par Tabby a pu changer depuis).</li>
+<li><strong>Piège #5</strong> — si ce plugin dépend de <code>tabby-ssh</code> (peu probable, le
+  Vault n'a a priori rien à voir avec SSH) : <code>npm install --ignore-scripts</code> à cause d'un
+  postinstall natif inutile.</li>
+</ul>
+
+<h3>Composants Angular dans un plugin tiers</h3>
+<ul>
+<li><strong>Piège #3</strong> — <code>templateUrl</code>/<code>styleUrls</code> ne marchent pas
+  pour un plugin tiers ; utiliser <code>template: require('./x.pug')</code> et un import SCSS en
+  side-effect. S'applique à tout composant Angular ajouté par ce plugin (ex. panneau de réglages).</li>
+</ul>
+
+<h3>Vérifier une classe/API Tabby avant de s'y fier</h3>
+<div class="callout important">
+<span class="callout-title">Le point le plus important pour ce projet</span>
+<p>Ce plugin dépend entièrement d'une classe non confirmée exportée : <code>VaultService</code> (ou
+équivalent). Voir le garde-fou bloquant dans <a href="README.html">README.html</a>.</p>
+</div>
+<ul>
+<li><strong>Piège #6</strong> — les typings npm de <code>tabby-core</code> sont probablement en
+  retard sur l'app installée, comme pour <code>ProfilesService</code>.</li>
+<li><strong>Piège #13</strong> — <code>@hidden</code> ne veut pas dire "non exporté" : toujours
+  vérifier les DEUX niveaux (<code>typings/index.d.ts</code> ET le bloc d'export webpack réel de
+  <code>dist/index.js</code> compilé) avant de conclure qu'une classe est inutilisable.</li>
+<li><strong>Piège #17</strong> — même si une classe est exportée dans le bundle réel, les typings
+  npm peuvent nommer ses champs différemment de l'implémentation réelle (vu sur
+  <code>EditProfileModalComponent</code>) — vérifier les noms de champs dans le bundle compilé, pas
+  seulement dans les typings.</li>
+</ul>
+
+<h3>Debug &amp; workflow de dev</h3>
+<ul>
+<li><strong>Piège #8</strong> — <code>Tabby.exe --debug --remote-debugging-port=9333</code> pour le
+  Chrome DevTools Protocol. Après toute modification du plugin, tuer et relancer tout le process
+  <code>Tabby.exe</code> (pas un simple reload).</li>
+</ul>
+
+<h3>Git &amp; GitHub</h3>
+<ul>
+<li><strong>Pièges #9/#10/#11</strong> — vérifier le compte GitHub actif avant
+  <code>gh auth login</code>, configurer l'identité de commit localement au dépôt (pas
+  <code>--global</code>), et la réécriture d'historique (<code>git filter-branch</code>) doit être
+  lancée par l'utilisateur lui-même via le préfixe <code>!</code>.</li>
+</ul>
+
+<h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
+<div class="callout warning">
+<span class="callout-title">Non négociable, à respecter dès la première implémentation</span>
+<p>La variable JS contenant le mot de passe maître déchiffré en clair doit être
+<strong>immédiatement écrasée (<code>= null</code>) dès que l'injection dans le moteur de Tabby est
+validée</strong> — voir détail complet dans <a href="ROADMAP.html">ROADMAP.html</a>. C'est la seule
+règle de ce projet qui n'est pas négociable même en phase d'exploration/prototype : un secret en
+clair ne doit jamais traîner en mémoire plus longtemps que nécessaire.</p>
+</div>
+
+<footer>tabby-better-vault · voir <a href="ROADMAP.html">ROADMAP.html</a> pour le design complet.</footer>
+</body>
+</html>

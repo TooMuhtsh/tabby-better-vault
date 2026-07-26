@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>tabby-better-vault — Roadmap</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="tabbar">
+<a href="README.html">Accueil</a>
+<a href="AI-CONTEXT.html">Contexte</a>
+<a href="AI-HISTORY.html">Historique</a>
+<a href="ROADMAP.html" class="current">Roadmap</a>
+</nav>
+
+<h1>Roadmap</h1>
+<p class="muted">Dernière revue : 2026-07-26</p>
+
+<h2>Vue d'ensemble</h2>
+<table>
+<tr><th>Chantier</th><th>Statut</th><th>Priorité</th></tr>
+<tr><td><a href="#verification">Vérification de faisabilité (<code>VaultService</code>)</a></td>
+    <td><span class="pill warn">🔴 Bloquant, à faire en premier</span></td><td>Absolue</td></tr>
+<tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Pas commencé</span></td><td>—</td></tr>
+<tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Cœur du plugin</td></tr>
+<tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
+</table>
+
+<h2 id="verification">Vérification de faisabilité — à faire avant tout code</h2>
+<div class="callout important">
+<span class="callout-title">Bloquant</span>
+<p>Confirmer que <code>VaultService</code> (ou l'équivalent réel dans le <code>tabby-core</code>
+installé) expose une méthode d'injection programmatique du mot de passe maître utilisable depuis un
+plugin tiers. Vérifier les DEUX niveaux : <code>typings/index.d.ts</code> ET le bloc d'export
+webpack réel de <code>dist/index.js</code> compilé — ne jamais conclure sur un seul des deux (même
+discipline que les pièges #6/#13/#17 du projet frère, voir <a href="AI-CONTEXT.html">AI-CONTEXT.html</a>).</p>
+<p>Si cette vérification échoue (méthode non exposée, ou trop verrouillée pour être pilotée depuis
+l'extérieur), tout le design ci-dessous est à revoir avant de commencer — ne pas scaffolder le
+plugin en attendant.</p>
+</div>
+
+<h2 id="scaffold">Scaffold du plugin</h2>
+<p>Pas encore commencé. Probablement la même mécanique que <code>tabby-better-sidebar</code> à son
+lancement (voir <a href="../../tabby-ssh-sidebar/.AIRules/AI-HISTORY.html">son historique</a> pour
+le détail de ce qui avait été fait) :</p>
+<ul>
+<li>Environnement de dev (Node.js, versions verrouillées Angular 15).</li>
+<li>Scaffold <code>package.json</code>/<code>tsconfig.json</code>/<code>webpack.config.js</code>/<code>LICENSE</code>.</li>
+<li>Jonction NTFS de dev dans <code>%APPDATA%\tabby\plugins\node_modules\tabby-better-vault</code>
+  (pas <code>TABBY_PLUGINS</code>, cassé sur Windows).</li>
+<li>Dépôt Git créé — <strong><code>.AIRules/</code> à déplacer dans ce dépôt dès sa création</strong>,
+  pas à le laisser au niveau <code>Développement/</code> (leçon du projet frère).</li>
+</ul>
+
+<h2 id="unlock">Déverrouillage automatique du coffre-fort</h2>
+<p>Objectif : éviter la ressaisie du mot de passe maître de Tabby à chaque démarrage, en déléguant
+le chiffrement à l'OS plutôt qu'en stockant le mot de passe en clair.</p>
+
+<h3>Délégation à l'OS via <code>electron.safeStorage</code></h3>
+<ul>
+<li><strong>Windows</strong> : Gestionnaire d'identifiants / DPAPI.</li>
+<li><strong>macOS</strong> : Trousseau d'accès (Keychain), avec Touch ID si activé.</li>
+<li><strong>Linux</strong> : Secret Service API (<code>libsecret</code>) via GNOME Keyring/KWallet.</li>
+</ul>
+
+<h3>Flux d'injection</h3>
+<ol>
+<li>Mécanisme <strong>opt-in</strong> (à activer explicitement dans les options du plugin — jamais
+  actif par défaut sans action explicite de l'utilisateur).</li>
+<li>Au démarrage, déchiffrement du token via l'OS puis tentative d'injection programmatique dans le
+  <code>VaultService</code> de Tabby, avant que la pop-up native de saisie n'apparaisse.</li>
+<li>Garde-fou si l'injection échoue (ex. mot de passe maître changé depuis les réglages natifs de
+  Tabby) : suppression immédiate du token local obsolète, retour transparent à la pop-up native —
+  jamais d'erreur bloquante affichée à l'utilisateur pour cette fonctionnalité de confort.</li>
+</ol>
+
+<div class="callout warning">
+<span class="callout-title">Sécurité RAM — non négociable</span>
+<p>La variable JS contenant le mot de passe maître déchiffré en clair doit être
+<strong>immédiatement écrasée (<code>= null</code>) dès que l'injection dans le moteur de Tabby est
+validée</strong>, pour limiter au minimum la fenêtre d'exposition du secret en mémoire vive. À
+respecter dès le premier prototype, pas seulement en version finale.</p>
+</div>
+
+<h3>Stockage du token local</h3>
+<p>Le token chiffré (nom de clé à définir, ex. <code>vaultAutoUnlockToken</code>) est strictement
+local à la machine — ne doit <strong>jamais</strong> être exportable/synchronisable (contrairement
+aux réglages classiques d'un plugin). Si ce plugin gagne un jour ses propres réglages persistés
+dans <code>config.yaml</code> via <code>ConfigProvider</code>, cette clé doit être explicitement
+exclue de tout mécanisme d'export/partage — voir la discipline équivalente déjà appliquée aux
+workspaces de <code>tabby-better-sidebar</code>
+(<a href="../../tabby-ssh-sidebar/.AIRules/ROADMAP.html#workspaces">son ROADMAP.html</a>, où
+l'export ne porte jamais sur les données sensibles).</p>
+
+<h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
+<p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à
+fonctionner normalement si ce plugin n'est pas installé.</p>
+<ul>
+<li>Tous les plugins Tabby tournent dans le même process Electron et partagent le même injecteur
+  Angular — c'est le mécanisme déjà utilisé par <code>tabby-better-sidebar</code> pour consommer des
+  classes de <code>tabby-core</code>/<code>tabby-settings</code>/<code>tabby-ssh</code>.</li>
+<li><code>tabby-better-vault</code> exporterait un service minimal (ex.
+  <code>VaultBridgeService</code>) ; <code>tabby-better-sidebar</code> l'importerait en dépendance
+  npm optionnelle, avec <code>@Optional()</code> côté Angular (ou
+  <code>Injector.get(TOKEN, null)</code>) pour ne jamais planter si ce plugin n'est pas installé —
+  la section correspondante des réglages disparaît simplement dans ce cas côté sidebar.</li>
+<li><strong>Pattern non officiel</strong> : effet de bord du chargeur de plugins partageant un même
+  injecteur, pas une API documentée par Tabby. Le contrat entre les deux packages est à notre
+  charge (versioning à gérer entre les deux — envisager de figer une interface minimale tôt pour
+  éviter la casse croisée).</li>
+<li>Même discipline de vérification que le reste de l'écosystème : si un service est exporté,
+  vérifier les DEUX niveaux (typings ET bundle compilé) avant que l'autre plugin ne s'y fie.</li>
+</ul>
+
+<footer>tabby-better-vault · voir <a href="../../tabby-ssh-sidebar/.AIRules/ROADMAP.html#vault">la section Vault du projet frère</a> pour l'historique de cette décision.</footer>
+</body>
+</html>

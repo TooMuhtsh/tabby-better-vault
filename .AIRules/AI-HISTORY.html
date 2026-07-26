@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>tabby-better-vault — Historique</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="tabbar">
+<a href="README.html">Accueil</a>
+<a href="AI-CONTEXT.html">Contexte</a>
+<a href="AI-HISTORY.html" class="current">Historique</a>
+<a href="ROADMAP.html">Roadmap</a>
+</nav>
+
+<h1>Journal de bord</h1>
+<p class="muted">Chantiers classés du plus récent au plus ancien. À l'intérieur d'un chantier,
+entrées les plus récentes en tête.</p>
+
+<div class="callout important">
+<span class="callout-title">Ne jamais modifier une entrée existante</span>
+<p>Uniquement en ajouter en tête du chantier concerné. Format d'une ligne :
+<code>Date | Hash | Résumé</code>.</p>
+</div>
+
+<h2>Genèse du projet (2026-07-26)</h2>
+<p>Le déverrouillage automatique du coffre-fort avait été envisagé comme une fonctionnalité de
+<code>tabby-better-sidebar</code>, puis explicitement sorti de son périmètre (pas une
+fonctionnalité de sidebar, secret utilisateur le plus sensible de l'écosystème) pour devenir ce
+projet indépendant. Design discuté et validé pendant les sessions de travail sur le projet frère,
+transporté ici tel quel.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-26</td><td>n/a (pas encore de dépôt Git)</td>
+<td>Dossier de travail <code>tabby-better-vault</code> et gouvernance IA (<code>.AIRules/</code>)
+créés, sur le modèle de <code>tabby-better-sidebar</code>. Design complet du déverrouillage
+automatique porté depuis les décisions actées sur le projet frère (délégation OS via
+<code>electron.safeStorage</code>, injection opt-in dans <code>VaultService</code>, purge RAM
+immédiate, garde-fou d'échec, pattern d'interfaçage optionnel entre les deux plugins via
+l'injecteur Angular partagé). Aucun code écrit — projet au stade design uniquement.</td></tr>
+</table>
+
+<footer>tabby-better-vault · voir <a href="../../tabby-ssh-sidebar/.AIRules/AI-HISTORY.html">l'historique du projet frère</a> pour le contexte complet de cette décision.</footer>
+</body>
+</html>

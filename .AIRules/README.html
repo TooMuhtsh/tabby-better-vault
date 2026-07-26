@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>tabby-better-vault — Gouvernance IA</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="tabbar">
+<a href="README.html" class="current">Accueil</a>
+<a href="AI-CONTEXT.html">Contexte</a>
+<a href="AI-HISTORY.html">Historique</a>
+<a href="ROADMAP.html">Roadmap</a>
+</nav>
+
+<h1>tabby-better-vault — Gouvernance IA</h1>
+
+<div class="callout note">
+<span class="callout-title">Projet pas encore démarré</span>
+<p>Aucun code, aucun <code>package.json</code>, aucun dépôt Git à ce jour — ce dossier ne contient
+que la <strong>décision de design déjà actée</strong> (voir <a href="ROADMAP.html">ROADMAP.html</a>)
+pendant le travail sur le projet frère <a href="../../tabby-ssh-sidebar/.AIRules/README.html"><code>tabby-better-sidebar</code></a>.
+Sert de point de départ le jour où ce plugin est effectivement scaffoldé.</p>
+</div>
+
+<p>Plugin Tabby indépendant : déverrouillage automatique du coffre-fort (mot de passe maître) via
+délégation à l'OS (<code>electron.safeStorage</code>) — sorti du périmètre de
+<code>tabby-better-sidebar</code> car hors sujet (pas une fonctionnalité de sidebar) et parce que
+c'est le point le plus sensible (manipulation d'un secret utilisateur) envisagé sur l'écosystème de
+plugins de l'utilisateur.</p>
+
+<ul>
+<li>Dossier de travail : <code>C:\Users\Alex Ramirez\Documents\Développement\tabby-better-vault</code>
+  (à créer/scaffolder — rien dedans pour l'instant à part <code>.AIRules/</code>).</li>
+<li>Projet frère : <code>tabby-better-sidebar</code> —
+  <a href="../../tabby-ssh-sidebar/.AIRules/README.html">.AIRules de ce projet</a>. Interfaçage
+  prévu entre les deux (voir <a href="ROADMAP.html">ROADMAP.html</a>) : lien relatif valable tant
+  que les deux dossiers restent côte à côte dans <code>Développement/</code>.</li>
+</ul>
+
+<h2>Structure</h2>
+<table>
+<tr><th>Fichier</th><th>Contenu</th></tr>
+<tr><td><a href="AI-CONTEXT.html">AI-CONTEXT.html</a></td>
+    <td>Invariants du code déjà construit — pour l'instant surtout des pièges <strong>hérités</strong>
+    du projet frère, à anticiper une fois le scaffold commencé (même stack Tabby/Angular/Electron).</td></tr>
+<tr><td><a href="AI-HISTORY.html">AI-HISTORY.html</a></td>
+    <td>Journal chronologique par chantier, le plus récent en tête.</td></tr>
+<tr><td><a href="ROADMAP.html">ROADMAP.html</a></td>
+    <td>Design complet déjà validé pour la fonctionnalité de déverrouillage automatique, et
+    prochaines étapes concrètes pour démarrer le projet.</td></tr>
+</table>
+
+<h2>Protocole</h2>
+
+<h3>Avant la toute première ligne de code</h3>
+<div class="callout important">
+<span class="callout-title">Vérification bloquante</span>
+<p>Confirmer que <code>VaultService</code> (ou l'équivalent réel dans le <code>tabby-core</code>
+installé) expose bien une méthode d'injection programmatique du mot de passe maître utilisable
+depuis un plugin tiers — <strong>vérifier les DEUX niveaux</strong> : <code>typings/index.d.ts</code>
+ET le bloc d'export webpack réel de <code>dist/index.js</code> compilé. Ne jamais conclure sur un
+seul des deux (même discipline que le projet frère, pièges #6/#13/#17 de son AI-CONTEXT.html). Si
+cette vérification échoue, le design décrit dans <a href="ROADMAP.html">ROADMAP.html</a> n'est pas
+réalisable tel quel — remonter le blocage avant de continuer.</p>
+</div>
+
+<h3>En début de session sur ce projet</h3>
+<ol>
+<li>Lire <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les pièges hérités à anticiper.</li>
+<li>Lire <a href="ROADMAP.html">ROADMAP.html</a> pour le design déjà validé.</li>
+<li>Lire le haut d'<a href="AI-HISTORY.html">AI-HISTORY.html</a> pour l'état d'avancement réel.</li>
+</ol>
+
+<h3>Quand mettre à jour</h3>
+<ul>
+<li><strong>AI-HISTORY.html</strong> : à chaque commit Git une fois le dépôt créé, ou dès qu'un
+  piège est découvert.</li>
+<li><strong>AI-CONTEXT.html</strong> : dès qu'un piège propre à ce projet (pas juste hérité) est
+  rencontré.</li>
+<li><strong>ROADMAP.html</strong> : dès qu'un chantier change de statut.</li>
+</ul>
+
+<div class="callout important">
+<span class="callout-title">Une fois le projet scaffoldé</span>
+<p><code>.AIRules/</code> doit vivre <strong>dans le dépôt Git</strong> du plugin dès qu'il en a un
+(pas au niveau parent <code>Développement/</code>) — leçon tirée du projet frère, où ce dossier avait
+été positionné au mauvais niveau puis déplacé pour rester versionné avec le code.</p>
+</div>
+
+<footer>tabby-better-vault · dossier de gouvernance créé le 2026-07-26, avant tout code.</footer>
+
+</body>
+</html>
