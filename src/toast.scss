@@ -57,31 +57,43 @@
     }
 }
 
-// Variante compacte, affichée à chaque déverrouillage automatique (une fois par
-// session) : même identité visuelle, mais discrète — elle signale une réussite
-// de routine, là où l'autre annonce l'enregistrement d'un secret.
-.toast-container .better-vault-toast-compact {
-    width: 21rem !important;
-    max-width: 90vw !important;
-    padding: 0.55rem 0.9rem 0.55rem 2.6rem;
+// Notification de déverrouillage, ancrée en bas à gauche DU TERMINAL ACTIF et
+// non de la fenêtre : elle appartient au terminal que l'utilisateur regarde.
+// Insérée à la main dans `tab-body.content-tab-active` (voir inlineToast.ts),
+// ngx-toastr ne sachant positionner que par rapport à la fenêtre.
+.better-vault-inline-toast {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    z-index: 10;
+    max-width: calc(100% - 2rem);
+    padding: 0.45rem 0.8rem;
     background-color: #b3261e;
-    background-position: 0.8rem center;
-    background-size: 1.1rem;
     color: #fff;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
-    opacity: 1;
+    cursor: pointer;
+    animation: better-vault-inline-in 0.18s ease-out;
+    // Le terminal reste cliquable autour de la pastille.
+    pointer-events: auto;
 
-    .toast-message {
-        font-size: 0.9rem;
-        line-height: 1.3;
-        color: #fff;
+    &.leaving {
+        opacity: 0;
+        transition: opacity 0.2s ease-in;
     }
+}
 
-    .toast-close-button {
-        color: #fff;
-        opacity: 0.8;
-        text-shadow: none;
+@keyframes better-vault-inline-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.4rem);
+    }
+    to {
+        opacity: 1;
+        transform: none;
     }
 }
 
@@ -89,7 +101,6 @@
 // la couleur est figée dans le SVG lui-même : impossible de la teindre en CSS.
 // On redéclare donc le même pictogramme en blanc. Le sélecteur porte les deux
 // classes pour l'emporter sur la règle d'origine de ngx-toastr.
-.toast-container .better-vault-toast.toast-info,
-.toast-container .better-vault-toast-compact.toast-info {
+.toast-container .better-vault-toast.toast-info {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%23ffffff' d='M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z'/%3E%3C/svg%3E");
 }

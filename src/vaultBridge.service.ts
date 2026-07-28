@@ -1,7 +1,8 @@
 import { Injectable, Injector } from '@angular/core'
 import { ToastrService } from 'ngx-toastr'
-import { VaultService } from 'tabby-core'
+import { AppService, VaultService } from 'tabby-core'
 
+import { showInlineToast } from './inlineToast'
 import { log, warn, crit } from './logger'
 import { keychainStatus, keychainLabel, encrypt, decrypt } from './osKeychain'
 import {
@@ -25,6 +26,8 @@ import { passphraseOpensVault } from './vaultCrypto'
  * elle. Aucun champ de cette classe ne le contient, il n'est jamais journalisé,
  * jamais écrit ailleurs que chiffré par l'OS.
  */
+const UNLOCK_MESSAGE = 'Coffre-fort déverrouillé automatiquement'
+
 @Injectable({ providedIn: 'root' })
 export class VaultBridgeService {
     private installed = false
@@ -199,19 +202,43 @@ export class VaultBridgeService {
             return
         }
         this.unlockAnnounced = true
-        try {
-            this.toastr.info(
-                'Coffre-fort déverrouillé automatiquement',
-                undefined,
-                {
-                    timeOut: 4000,
-                    positionClass: 'toast-bottom-left',
-                    toastClass: 'ngx-toastr better-vault-toast-compact',
-                },
-            )
-        } catch (e) {
-            warn(`notification impossible — ${String(e)}`)
+
+        if (showInlineToast(UNLOCK_MESSAGE)) {
+            return
         }
+
+        // Au démarrage, le coffre est déverrouillé avant qu'un onglet n'existe :
+        // il n'y a alors rien où afficher. On attend le premier onglet actif
+        // plutôt que de retomber sur une notification globale, qui irait contre
+        // l'intention — la notification doit appartenir au terminal.
+        this.showWhenTabAvailable()
+    }
+
+    private showWhenTabAvailable (): void {
+        let app: AppService
+        try {
+            app = this.injector.get(AppService)
+        } catch {
+            return
+        }
+
+        const subscription = app.activeTabChange$.subscribe(tab => {
+            if (!tab) {
+                return
+            }
+            // Laisse le corps de l'onglet se rendre avant d'y insérer quoi que
+            // ce soit : `activeTabChange$` précède l'apparition du DOM.
+            setTimeout(() => {
+                if (showInlineToast(UNLOCK_MESSAGE)) {
+                    subscription.unsubscribe()
+                }
+            }, 150)
+        })
+
+        // Sans onglet dans ce délai, on renonce : une notification qui
+        // surgirait bien plus tard n'aurait plus de rapport visible avec le
+        // déverrouillage.
+        setTimeout(() => subscription.unsubscribe(), 30000)
     }
 
     /**
