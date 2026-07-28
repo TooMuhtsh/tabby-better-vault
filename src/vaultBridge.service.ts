@@ -35,6 +35,12 @@ export class VaultBridgeService {
     private tokenVerified = false
     /** Sérialise nos propres résolutions, comme Tabby le fait pour la sienne. */
     private pending: Promise<string> | null = null
+    /**
+     * Le coffre est déverrouillé plusieurs fois par démarrage (trois appels en
+     * une seconde en usage réel). Une seule notification par session : au-delà,
+     * elle cesserait d'informer pour devenir une nuisance.
+     */
+    private unlockAnnounced = false
 
     constructor (private injector: Injector, private toastr: ToastrService) { }
 
@@ -111,7 +117,7 @@ export class VaultBridgeService {
 
         const status = keychainStatus()
         if (!status.available) {
-            warn(`keychain indisponible (${status.reason}) — saisie manuelle`)
+            warn(`trousseau indisponible (${status.reason}) — saisie manuelle`)
             return this.callOriginal()
         }
 
@@ -126,7 +132,7 @@ export class VaultBridgeService {
     private async serveFromToken (): Promise<string | null> {
         const settings = this.settings
         if (settings.token && tokenHasExpired(settings)) {
-            warn('jeton arrivé à échéance — purge et saisie manuelle')
+            warn('jeton expiré selon la politique configurée — purge et saisie manuelle')
             deleteToken()
             this.tokenVerified = false
             return null
@@ -178,8 +184,34 @@ export class VaultBridgeService {
             log('jeton vérifié')
         }
 
-        log('coffre déverrouillé depuis le keychain de l\'OS')
+        log('coffre déverrouillé depuis le trousseau du système')
+        this.announceUnlock()
         return passphrase
+    }
+
+    /**
+     * Signale discrètement que le plugin vient d'agir. Sans cela, un
+     * déverrouillage réussi est indiscernable d'un coffre qui n'aurait jamais
+     * été verrouillé — le plugin ne se manifeste que lorsqu'il échoue.
+     */
+    private announceUnlock (): void {
+        if (this.unlockAnnounced) {
+            return
+        }
+        this.unlockAnnounced = true
+        try {
+            this.toastr.info(
+                'Coffre-fort déverrouillé automatiquement',
+                undefined,
+                {
+                    timeOut: 4000,
+                    positionClass: 'toast-bottom-left',
+                    toastClass: 'ngx-toastr better-vault-toast-compact',
+                },
+            )
+        } catch (e) {
+            warn(`notification impossible — ${String(e)}`)
+        }
     }
 
     /**
@@ -211,12 +243,12 @@ export class VaultBridgeService {
         try {
             const expiresAt = writeToken(encrypt(passphrase))
             this.tokenVerified = true
-            log(`mot de passe confié au keychain de l'OS — échéance : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
+            log(`mot de passe enregistré dans le trousseau du système — échéance : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
             this.announceStorage(expiresAt)
         } catch (e) {
             // Échec d'enregistrement : sans conséquence pour l'utilisateur, il
             // ressaisira au prochain démarrage.
-            warn(`enregistrement dans le keychain impossible — ${String(e)}`)
+            warn(`enregistrement dans le trousseau impossible — ${String(e)}`)
         }
         return passphrase
     }
