@@ -28,6 +28,37 @@ entrées les plus récentes en tête.</p>
 <table>
 <tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
 <tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Notification à l'enregistrement du mot de passe</strong>, demandée par l'utilisateur :
+un toast indique où le secret est stocké, jusqu'à quand, et qu'il est révocable dans les réglages.
+Principe retenu : un plugin qui capte un secret ne doit jamais le faire en silence.
+<code>ToastrService</code> injecté dans le pont, délai porté à 12 s, échec de notification sans
+conséquence sur le déverrouillage. <code>ngx-toastr</code> ajouté en <code>devDependency</code>
+<em>pour ses seuls typages</em> — il reste external et n'entre pas dans le bundle ; il a fallu
+ajouter <code>@angular/platform-browser@^15</code> qu'il réclame en peer, sans quoi npm tentait
+d'installer Angular 22 et cassait la résolution.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Intention notée, pas ouverte : panneau de réglages unifié « Tabby Better * ».</strong>
+L'utilisateur souhaite à terme un onglet unique regroupant en sous-onglets tous les plugins
+<code>tabby-better-*</code> installés. Explicitement repoussé : <code>tabby-better-sidebar</code> est
+en développement actif et n'a pas encore de réglages, il n'y a donc rien à unifier. Consigné en
+<a href="ROADMAP.html#panneau-unifie">ROADMAP § Panneau unifié</a> avec ce qui est déjà compatible
+(logique et présentation séparées), ce qu'il faudra revoir (<code>title</code>/<code>weight</code>,
+<code>HostBinding content-box</code>) et la difficulté centrale non tranchée : lequel des plugins
+héberge l'onglet parent, sachant qu'aucun ne peut dépendre de l'autre.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Panneau validé par l'utilisateur, puis habillage et repositionnement.</strong> Onglet
+renommé <strong>« Better Vault »</strong> (au lieu de « Coffre-fort auto ») pour lever toute
+ambiguïté avec le coffre natif de Tabby, et <code>weight = 2</code> pour le classer après les
+onglets natifs. Détail du tri, utile à connaître :
+<code>a.weight - b.weight + a.title.localeCompare(b.title)</code>, et <strong>tous</strong> les
+onglets natifs laissent <code>weight</code> à 0 — ils sont donc rangés par ordre alphabétique. Un
+poids ≥ 2 dépasse à coup sûr le ±1 de <code>localeCompare</code> ; en revanche il place l'onglet
+après <em>tous</em> les onglets natifs, l'adjacence stricte avec « Vault » étant impossible sans un
+titre commençant lui aussi par « Vault ». Ajout d'un SCSS (champs assombris, bordures marquées,
+focus visible, séparateurs de lignes) : styles portés par une classe racine
+<code>.better-vault-settings</code> et non par <code>:host</code>, inopérant ici (piège hérité
+#14). Couleurs en <code>rgba</code> pour rester lisibles sur les thèmes clairs comme sombres.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
 <td><strong>Panneau de réglages et expiration du jeton.</strong> Onglet « Coffre-fort auto » via
 <code>SettingsTabProvider</code> (<code>src/settings.ts</code>,
 <code>src/components/settingsTab.component.{ts,pug}</code>) : activation, nom de machine, politique

@@ -1,0 +1,48 @@
+// Styles portés par la classe racine du template, JAMAIS par `:host` : le SCSS
+// d'un plugin tiers est injecté en CSS globale brute, où `:host` n'a aucun effet
+// — ni erreur, ni avertissement, le style est simplement ignoré
+// (.AIRules/AI-CONTEXT.html, piège hérité #14).
+//
+// Toutes les couleurs sont exprimées en rgba de blanc ou de noir, afin de rester
+// lisibles sur les thèmes clairs comme sombres de Tabby sans avoir à détecter
+// lequel est actif.
+.better-vault-settings {
+    .form-control {
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(128, 128, 128, 0.45);
+        transition: border-color 0.15s ease, background 0.15s ease;
+
+        &:hover:not(:focus) {
+            border-color: rgba(128, 128, 128, 0.75);
+        }
+
+        &:focus {
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(120, 170, 255, 0.9);
+            box-shadow: 0 0 0 2px rgba(120, 170, 255, 0.2);
+        }
+    }
+
+    // Regroupe visuellement chaque réglage et détache les champs modifiables du
+    // fond de la page.
+    .form-line {
+        border-bottom: 1px solid rgba(128, 128, 128, 0.18);
+        padding: 0.6rem 0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    // Les sélecteurs jour + heure vivent côte à côte sur une même ligne.
+    select.form-control {
+        display: inline-block;
+        width: auto;
+        min-width: 7rem;
+    }
+
+    .machine-badge {
+        font-size: 0.8em;
+        opacity: 0.7;
+    }
+}

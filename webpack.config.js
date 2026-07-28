@@ -30,12 +30,19 @@ module.exports = {
       // `templateUrl` : le template doit être inliné via `require('./x.pug')`
       // (.AIRules/AI-CONTEXT.html, piège hérité #3).
       { test: /\.pug$/, use: ['apply-loader', 'pug-loader'] },
+      // Le SCSS est importé en side-effect et injecté en CSS globale : d'où la
+      // nécessité de porter les styles par une classe racine plutôt que par
+      // `:host`, qui n'a aucun effet ici (piège hérité #14).
+      { test: /\.scss$/, use: ['style-loader', 'css-loader', 'sass-loader'] },
     ],
   },
   externals: [
     'fs',
     'os',
     'path',
+    // Doit rester external : Tabby pré-cache ce module et sert sa propre
+    // instance, seule reliée au conteneur de toasts affiché à l'écran
+    // (.AIRules/AI-CONTEXT.html, piège #V8).
     'ngx-toastr',
     // Résolu à l'exécution par l'environnement Electron de Tabby, jamais bundlé.
     // Que ce require aboutisse depuis un plugin tiers est précisément l'objet du

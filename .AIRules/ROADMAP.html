@@ -32,6 +32,8 @@
 <tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
 <tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill progress">🚧 Implémenté, compile — à tester</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
+<tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
+    <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -362,6 +364,18 @@ d'année et changement d'heure traités — tout est calculé en heure locale.</
 échéance au premier usage suivant, sans quoi il resterait éternellement valide alors que les
 réglages affichent une échéance.</p>
 
+<h3>Transparence — notification à l'enregistrement</h3>
+<p>À l'instant où le mot de passe est confié à l'OS, une notification l'annonce : où il est stocké,
+jusqu'à quand, et comment le révoquer. <strong>Un plugin qui capte un secret ne doit jamais le faire
+en silence</strong> — l'information doit atteindre l'utilisateur au moment où elle le concerne, pas
+dormir dans un panneau de réglages qu'il n'ouvrira peut-être jamais.</p>
+<p class="muted">Affichée via <code>ToastrService</code> (<code>ngx-toastr</code>), avec un délai
+allongé à 12 s : le message compte trois informations à lire. <code>ngx-toastr</code> doit rester
+<strong>external</strong> dans webpack — Tabby le pré-cache (<a href="AI-CONTEXT.html#piege-v8">#V8</a>)
+et sert sa propre instance, seule reliée au conteneur de toasts réellement affiché. Le bundler
+n'ayant pas de paquet à résoudre, il est installé en <code>devDependency</code> pour ses seuls
+typages, avec <code>@angular/platform-browser</code> qu'il réclame en peer.</p>
+
 <h3>Réglages par machine</h3>
 <p>Aucune mécanique dédiée n'a été nécessaire : <code>better-vault.json</code> étant strictement
 local et jamais synchronisé (<a href="#stockage">§ Stockage</a>), <strong>chaque machine a
@@ -375,6 +389,56 @@ la laissant désactivée.</p>
 <li><strong>Nommer la machine</strong> — libellé indicatif (défaut : nom d'hôte), repris dans le
   journal pour savoir de quel poste vient une trace.</li>
 </ul>
+
+<h2 id="panneau-unifie">Panneau de réglages unifié « Tabby Better * » — intention, pas un chantier ouvert</h2>
+<div class="callout note">
+<span class="callout-title">Volontairement repoussé (2026-07-28)</span>
+<p>Idée exprimée par l'utilisateur : lorsqu'au moins deux plugins <code>tabby-better-*</code> sont
+installés, n'afficher <strong>qu'un seul onglet de réglages</strong> les regroupant en sous-onglets,
+plutôt qu'un onglet par plugin. <strong>Pas réalisable aujourd'hui</strong> :
+<code>tabby-better-sidebar</code> est en développement actif et n'a pas encore de panneau de
+réglages — il n'y a donc rien à unifier. À reprendre quand ce sera le cas.</p>
+</div>
+
+<h3>Ce qui est déjà compatible — à préserver</h3>
+<ul>
+<li><strong>Logique et présentation sont déjà séparées</strong> : <code>src/store.ts</code> ne
+  dépend d'aucun composant Angular, et <code>settingsTab.component.ts</code> ne fait que le piloter.
+  Le jour venu, le composant se réutilise tel quel comme contenu d'un sous-onglet.</li>
+<li>Le composant est autonome (aucune dépendance à son parent) et ne suppose rien de son
+  emplacement, hormis le point ci-dessous.</li>
+</ul>
+
+<h3>Ce qu'il faudra revoir</h3>
+<ul>
+<li><code>title = 'Better Vault'</code> et <code>weight = 2</code> (<code>src/settings.ts</code>)
+  passeraient à l'onglet parent ; ce plugin ne déclarerait plus son propre
+  <code>SettingsTabProvider</code>.</li>
+<li><code>@HostBinding('class.content-box')</code> sur le composant est une convention d'onglet
+  racine de Tabby : à retirer si le composant devient le contenu d'un sous-onglet.</li>
+</ul>
+
+<h3>Difficulté centrale — qui héberge l'onglet parent ?</h3>
+<p>Les deux plugins doivent rester installables indépendamment : aucun ne peut supposer la présence
+de l'autre. Trois pistes, aucune tranchée :</p>
+<table>
+<tr><th>Piste</th><th>Compromis</th></tr>
+<tr><td>Package commun <code>tabby-better-shared</code></td>
+    <td>Propre et typé, mais introduit une dépendance npm dure et un versioning croisé à gérer entre
+    trois paquets.</td></tr>
+<tr><td>Registre à l'exécution via l'injecteur Angular partagé</td>
+    <td>Aucune dépendance de build — c'est déjà le mécanisme envisagé pour
+    <a href="#interfacage">l'interfaçage</a>. Mais non officiel, et il faut élire lequel des plugins
+    crée l'onglet parent (le premier chargé), ce qui rend l'ordre de chargement significatif.</td></tr>
+<tr><td>Onglet parent optionnel</td>
+    <td>Chaque plugin garde son onglet et n'en propose un commun que s'il détecte l'autre. Le plus
+    simple à dégrader, le plus verbeux à écrire.</td></tr>
+</table>
+<p><strong>À vérifier avant de choisir</strong> : le comportement de Tabby quand deux
+<code>SettingsTabProvider</code> déclarent le même <code>id</code> — écrasement, doublon ou erreur ?
+Rien dans le code lu à ce jour ne le précise, et c'est ce qui décidera de la viabilité de la
+deuxième piste. Les sous-onglets eux-mêmes ne posent pas de problème :
+<code>@ng-bootstrap</code> (<code>ngb-nav</code>) est déjà disponible dans l'environnement Tabby.</p>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
 <p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à

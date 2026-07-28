@@ -1,8 +1,9 @@
 import { Injectable, Injector } from '@angular/core'
+import { ToastrService } from 'ngx-toastr'
 import { VaultService } from 'tabby-core'
 
 import { log } from './logger'
-import { keychainStatus, encrypt, decrypt } from './osKeychain'
+import { keychainStatus, keychainLabel, encrypt, decrypt } from './osKeychain'
 import {
     readSettings, writeSettings, readToken, writeToken, deleteToken,
     cleanUpLegacyToken, tokenHasExpired, computeExpiry, Settings,
@@ -28,12 +29,14 @@ import { passphraseOpensVault } from './vaultCrypto'
 export class VaultBridgeService {
     private installed = false
     private original: (() => Promise<string>) | null = null
+    /** Conservé pour interroger `isOpen()` — voir previewOnly(). */
+    private vault: VaultService | null = null
     /** Le jeton courant a déjà passé la vérification PBKDF2 (coûteuse). */
     private tokenVerified = false
     /** Sérialise nos propres résolutions, comme Tabby le fait pour la sienne. */
     private pending: Promise<string> | null = null
 
-    constructor (private injector: Injector) { }
+    constructor (private injector: Injector, private toastr: ToastrService) { }
 
     install (): void {
         if (this.installed) {
@@ -49,6 +52,7 @@ export class VaultBridgeService {
         }
 
         this.installed = true
+        this.vault = vault
         this.original = vault.getPassphrase.bind(vault)
         cleanUpLegacyToken()
 
@@ -93,7 +97,7 @@ export class VaultBridgeService {
 
         if (debug) {
             log('mode observation : délégation à la pop-up native, aucune capture')
-            return this.callOriginal()
+            return this.previewOnly()
         }
         if (!enabled) {
             return this.callOriginal()
@@ -173,6 +177,26 @@ export class VaultBridgeService {
     }
 
     /**
+     * Mode observation : rien n'est capturé ni enregistré, mais on montre ce
+     * qui se serait produit — sans quoi ce mode ne permettrait pas de juger du
+     * résultat avant de confier son mot de passe pour de bon.
+     *
+     * L'aperçu n'est affiché que si l'utilisateur vient réellement de saisir son
+     * mot de passe. `isOpen()` distingue les deux cas : faux avant l'appel, le
+     * cache natif était vide, donc la pop-up s'est bien affichée ; vrai, l'appel
+     * a été servi depuis le cache sans rien demander, et une notification
+     * n'aurait aucun sens.
+     */
+    private async previewOnly (): Promise<string> {
+        const wasOpen = this.vault?.isOpen() ?? false
+        const passphrase = await this.callOriginal()
+        if (!wasOpen) {
+            this.announceStorage(computeExpiry(this.settings.expiry), true)
+        }
+        return passphrase
+    }
+
+    /**
      * Premier usage : l'utilisateur saisit son mot de passe dans la pop-up
      * native, et on le confie au keychain pour les fois suivantes.
      */
@@ -182,11 +206,50 @@ export class VaultBridgeService {
             const expiresAt = writeToken(encrypt(passphrase))
             this.tokenVerified = true
             log(`mot de passe confié au keychain de l'OS — échéance : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
+            this.announceStorage(expiresAt)
         } catch (e) {
             // Échec d'enregistrement : sans conséquence pour l'utilisateur, il
             // ressaisira au prochain démarrage.
             log(`enregistrement dans le keychain impossible — ${String(e)}`)
         }
         return passphrase
+    }
+
+    /**
+     * Prévient l'utilisateur que son mot de passe vient d'être confié à l'OS.
+     *
+     * Ce plugin capte un secret : le stockage ne doit jamais être silencieux.
+     * L'utilisateur doit savoir ce qui a été enregistré, jusqu'à quand, et
+     * comment revenir en arrière — le tout au moment précis où ça se produit,
+     * pas enfoui dans un panneau de réglages qu'il n'ouvrira peut-être jamais.
+     */
+    private announceStorage (expiresAt: number | null, preview = false): void {
+        const until = expiresAt
+            ? `Valable jusqu'au ${new Date(expiresAt).toLocaleString()}.`
+            : 'Valable jusqu\'à révocation.'
+        const title = preview
+            ? 'Mode observation — rien n\'a été enregistré'
+            : `Mot de passe enregistré dans ${keychainLabel()}`
+        const body = preview
+            ? `Hors mode observation, le mot de passe serait confié à ${keychainLabel()}. ${until}`
+            : `${until} Révocable à tout moment dans Paramètres → Better Vault.`
+        try {
+            this.toastr.info(
+                body,
+                title,
+                {
+                    timeOut: 12000,
+                    extendedTimeOut: 4000,
+                    // `toastClass` REMPLACE la classe par défaut au lieu de s'y
+                    // ajouter : conserver `ngx-toastr` est indispensable, sinon
+                    // le toast perd sa mise en forme de base.
+                    toastClass: 'ngx-toastr better-vault-toast',
+                },
+            )
+        } catch (e) {
+            // Une notification qui échoue ne doit pas compromettre le
+            // déverrouillage lui-même.
+            log(`notification impossible — ${String(e)}`)
+        }
     }
 }

@@ -4,6 +4,11 @@ import { FormsModule } from '@angular/forms'
 import TabbyCoreModule from 'tabby-core'
 import { SettingsTabProvider } from 'tabby-settings'
 
+// Importé ici et pas dans le composant de réglages : la notification peut
+// survenir sans que l'onglet ait jamais été ouvert, donc sans que le style du
+// composant ait été chargé.
+import './toast.scss'
+
 import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
 import { BetterVaultSettingsTabProvider } from './settings'
 import { VaultBridgeService } from './vaultBridge.service'

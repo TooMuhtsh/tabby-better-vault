@@ -1,5 +1,9 @@
 import { Component, HostBinding } from '@angular/core'
 
+// Import en side-effect : `styleUrls` ne fonctionne pas pour un plugin tiers
+// (piège hérité #3), les styles sont injectés en CSS globale.
+import './settingsTab.component.scss'
+
 import { keychainStatus } from '../osKeychain'
 import {
     Settings,

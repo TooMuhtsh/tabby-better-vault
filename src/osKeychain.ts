@@ -69,6 +69,17 @@ export function keychainStatus (): KeychainStatus {
     }
 }
 
+/** Nom du coffre de l'OS, tel qu'il est connu de l'utilisateur. */
+export function keychainLabel (): string {
+    if (process.platform === 'win32') {
+        return "le gestionnaire d'identifiants de Windows"
+    }
+    if (process.platform === 'darwin') {
+        return 'le trousseau de macOS'
+    }
+    return 'le trousseau du système'
+}
+
 export function encrypt (plaintext: string): Buffer {
     const safeStorage = getSafeStorage()
     if (!safeStorage) {

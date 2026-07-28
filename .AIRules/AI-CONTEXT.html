@@ -396,6 +396,21 @@ plus de valeur, et il n'y a aucune raison de renoncer au chiffrement : il suffit
 plugin vivent ailleurs.</p>
 </div>
 
+<h3 id="piege-v12">#V12 — Un SCSS importé par un composant n'existe que si ce composant est instancié</h3>
+<p>Le SCSS d'un plugin tiers est chargé par un import en side-effect (<code>import './x.scss'</code>,
+piège hérité #3) — donc au moment où le <strong>module JS qui l'importe</strong> est évalué. Un style
+importé depuis un composant n'est présent que si ce composant a été instancié au moins une fois.</p>
+<p>Concrètement : le style de la notification d'enregistrement, s'il était importé par le composant
+du panneau de réglages, n'existerait qu'après une première ouverture de l'onglet. Un utilisateur qui
+ne l'ouvre jamais verrait une notification non stylée — sans aucune erreur pour le signaler.
+<strong>Règle : tout style visant quelque chose d'extérieur au composant doit être importé depuis
+<code>src/index.ts</code></strong>, évalué dès le chargement du plugin.</p>
+<p class="muted">Corollaire pour <code>ngx-toastr</code> : l'option <code>toastClass</code>
+<strong>remplace</strong> la classe par défaut au lieu de s'y ajouter — sa valeur par défaut est
+<code>'ngx-toastr'</code>, qu'il faut donc conserver explicitement
+(<code>'ngx-toastr ma-classe'</code>) sous peine de perdre toute la mise en forme de base. La classe
+de type (<code>toast-info</code>, etc.) est ajoutée automatiquement, elle.</p>
+
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>

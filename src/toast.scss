@@ -1,0 +1,66 @@
+// Style de la notification d'enregistrement du mot de passe.
+//
+// Chargé depuis src/index.ts, et NON depuis le composant de réglages : ce
+// dernier n'est instancié que si l'utilisateur ouvre l'onglet, alors que la
+// notification peut survenir bien avant. Importé ici, le style est présent dès
+// le chargement du plugin (.AIRules/AI-CONTEXT.html, piège #V12).
+//
+// Rouge et surdimensionné à la demande de l'utilisateur : l'enregistrement d'un
+// mot de passe maître dans l'OS mérite d'être vu, pas seulement affiché.
+//
+// La spécificité passe par `.toast-container`, qui est le conteneur de
+// ngx-toastr : sans lui, les styles par défaut de `.toast-info` l'emportent.
+.toast-container .better-vault-toast {
+    // Large et ramassé : deux lignes de texte, pas un pavé.
+    //
+    // `!important` est nécessaire ici, et seulement ici : ngx-toastr fixe la
+    // largeur via `.toast-container.toast-top-center .ngx-toastr` (spécificité
+    // 0,3,0), qui l'emporte sur notre `.toast-container .better-vault-toast`
+    // (0,2,0). Les autres propriétés ne sont pas concernées — elles ne sont
+    // déclarées que par des règles de spécificité inférieure ou égale.
+    width: 50rem !important;
+    max-width: 92vw !important;
+    // Le retrait à gauche réserve la place de l'icône, que ngx-toastr dessine
+    // en image de fond : un padding uniforme la ferait chevaucher le texte.
+    padding: 0.7rem 1rem 0.7rem 3.6rem;
+    background-color: #b3261e;
+    background-position: 1.1rem center;
+    background-size: 1.6rem;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    opacity: 1;
+
+    .toast-title {
+        font-size: 1.08rem;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-bottom: 0.15rem;
+        color: #fff;
+    }
+
+    .toast-message {
+        font-size: 0.97rem;
+        line-height: 1.35;
+        color: #fff;
+    }
+
+    // Le bouton de fermeture de toastr est sombre par défaut : invisible ici.
+    .toast-close-button {
+        color: #fff;
+        opacity: 0.85;
+        text-shadow: none;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
+// L'icône est une image de fond posée par la classe de type `toast-info`, dont
+// la couleur est figée dans le SVG lui-même : impossible de la teindre en CSS.
+// On redéclare donc le même pictogramme en blanc. Le sélecteur porte les deux
+// classes pour l'emporter sur la règle d'origine de ngx-toastr.
+.toast-container .better-vault-toast.toast-info {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%23ffffff' d='M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z'/%3E%3C/svg%3E");
+}
