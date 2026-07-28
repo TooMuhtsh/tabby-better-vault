@@ -29,6 +29,9 @@ confie une fois au trousseau du système, puis répond à votre place.
 - [x] **Révocation à tout moment** depuis l'onglet de réglages
 - [x] **Notification lors de l'enregistrement**, indiquant où le mot de passe
       est stocké, jusqu'à quand, et comment le révoquer
+- [x] **Journal d'audit** des ouvertures du coffre, des expirations et des
+      révocations, avec durée de conservation configurable — ne contenant
+      jamais le mot de passe
 - [x] **Mode observation** — voir ce que ferait le plugin sans le laisser rien
       enregistrer
 - [x] **Repli sûr** — en cas d'anomalie, retour silencieux à la fenêtre native
@@ -69,6 +72,33 @@ Ouvrir **Paramètres → Better Vault** et activer *Activer sur cette machine*.
 À la prochaine demande du mot de passe maître, saisissez-le normalement : cette
 saisie-là est capturée et confiée au trousseau du système. Ensuite, le
 coffre-fort s'ouvre tout seul jusqu'à l'expiration ou la révocation.
+
+## Journal d'audit
+
+Le plugin conserve un journal des événements de cycle de vie dans
+`better-vault.log`, à côté de `config.yaml` : quand le coffre a été déverrouillé
+automatiquement, quand un jeton a expiré ou a été révoqué, et quand un garde-fou
+a refusé d'opérer. Il s'ouvre et se vide depuis l'onglet de réglages. La durée de
+conservation est configurable — 30 jours, 90 (par défaut), un an, ou illimitée.
+
+```
+[2026-07-28 23:19:20] INFO ──── session ouverte — machine « poste maison » — plugin actif — rétention 90 j
+[2026-07-28 23:19:21] INFO  coffre déverrouillé depuis le trousseau du système
+[2026-07-28 23:20:39] INFO  révocation manuelle depuis les réglages — jeton supprimé
+```
+
+**Il ne contient jamais votre mot de passe, ni sa longueur** — uniquement des
+événements anonymes.
+
+Deux limites méritent d'être dites franchement :
+
+- **Il est local à chaque machine et le restera.** Le fichier d'état est
+  délibérément exclu de toute synchronisation : il n'existe donc pas de vue
+  d'ensemble entre vos machines, à moins d'en collecter les fichiers vous-même.
+- **Il n'est pas infalsifiable.** C'est un fichier texte dans votre propre
+  session, modifiable par quiconque y a accès — c'est-à-dire précisément
+  l'attaquant contre lequel un journal d'audit servirait. À considérer comme un
+  outil de diagnostic et de détection après coup, pas comme une preuve.
 
 ## Fonctionnement
 

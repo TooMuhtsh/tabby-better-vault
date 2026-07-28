@@ -27,6 +27,8 @@ OS keychain once, then answers on your behalf.
 - [x] **Revoke at any time** from the settings tab
 - [x] **Notification when your passphrase is stored**, stating where it went,
       until when, and how to revoke it
+- [x] **Audit log** of vault openings, expiries and revocations, with
+      configurable retention — never containing the passphrase
 - [x] **Observation mode** — see what the plugin would do without letting it
       store anything
 - [x] **Safe fallback** — any failure quietly returns you to Tabby's own
@@ -67,6 +69,33 @@ Open **Settings → Better Vault** and turn on *Enable on this machine*.
 The next time Tabby asks for your master passphrase, type it as usual: that
 one is captured and handed to your OS keychain. From then on, the vault opens
 on its own until the passphrase expires or you revoke it.
+
+## Audit log
+
+The plugin keeps a log of lifecycle events in `better-vault.log`, next to
+`config.yaml`: when the vault was unlocked automatically, when a token expired
+or was revoked, and when a safeguard refused to operate. Open it or clear it
+from the settings tab. Retention is configurable — 30 days, 90 (the default),
+a year, or unlimited.
+
+```
+[2026-07-28 23:19:20] INFO ──── session opened — machine "desktop" — plugin active — retention 90 d
+[2026-07-28 23:19:21] INFO  vault unlocked from the system keychain
+[2026-07-28 23:20:39] INFO  manual revocation from settings — token deleted
+```
+
+**It never contains your passphrase, nor its length** — only anonymous
+lifecycle events.
+
+Two limits worth stating plainly:
+
+- **It is local to each machine and stays that way.** The state file is
+  deliberately never synchronised, so there is no combined view across your
+  machines unless you collect the files yourself.
+- **It is not tamper-proof.** It is a plain text file in your own session,
+  editable by anyone with access to it — which is precisely the attacker an
+  audit trail would be up against. Treat it as a diagnostic and after-the-fact
+  detection tool, not as evidence.
 
 ## How it works
 
