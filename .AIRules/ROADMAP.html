@@ -31,6 +31,8 @@
 <tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Base en place, compile</span></td><td>—</td></tr>
 <tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
 <tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
+<tr><td><a href="#audit">Journal d'audit</a></td>
+    <td><span class="pill planned">📋 Proposé — emplacement tranché, reste à implémenter</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
@@ -391,6 +393,55 @@ la laissant désactivée.</p>
 <li><strong>Nommer la machine</strong> — libellé indicatif (défaut : nom d'hôte), repris dans le
   journal pour savoir de quel poste vient une trace.</li>
 </ul>
+
+<h2 id="audit">Journal d'audit — proposition (2026-07-28)</h2>
+<p>Enrichir <code>better-vault.log</code> pour en faire un véritable historique d'événements de
+cycle de vie : savoir quand le coffre a été ouvert, quand un jeton a expiré, quand un garde-fou
+s'est déclenché. <strong>Emplacement tranché par l'utilisateur : le fichier dédié existant</strong>,
+et non le flux natif de Tabby — choix confirmé par le code, <code>LogService</code> ne fabriquant
+qu'un <code>ConsoleLogger</code> qui écrit dans la console DevTools, sans rien persister.</p>
+<p class="muted">L'invariant de sécurité s'applique sans exception : le mot de passe en clair n'est
+jamais journalisé, <strong>ni sa longueur</strong>. Seuls des événements anonymes sont tracés.</p>
+
+<h3>Déjà en place — à ne pas réimplémenter</h3>
+<ul>
+<li>En-tête de session horodaté ISO à chaque démarrage.</li>
+<li>Nom de la machine, état actif/inactif du plugin et backend de trousseau retenu, à l'installation.</li>
+<li>Déverrouillage automatique réussi ; vérification du jeton ; jeton illisible.</li>
+<li>Jeton arrivé à échéance et purgé ; échéance appliquée à un jeton qui n'en avait pas.</li>
+<li>Enregistrement d'un mot de passe, avec la date d'échéance calculée.</li>
+<li>Trousseau indisponible, avec la raison exacte (dont le refus de <code>basic_text</code>).</li>
+</ul>
+
+<h3>Ce qui manque réellement</h3>
+<ul>
+<li><strong>La révocation manuelle</strong> : « Oublier maintenant » ne journalise rien
+  aujourd'hui — c'est le trou le plus net, puisque c'est une action délibérée de l'utilisateur.</li>
+<li><strong>Un horodatage absolu par ligne.</strong> Les lignes portent un délai relatif au
+  démarrage (<code>+532ms</code>), utile au diagnostic mais inexploitable pour un audit : une entrée
+  doit dire <em>quand</em>, pas <em>combien de temps après le lancement</em>.</li>
+<li><strong>Des niveaux de sévérité</strong> pour distinguer d'un coup d'œil une information
+  d'un garde-fou déclenché.</li>
+<li><strong>Les changements de configuration</strong> : activation/désactivation du plugin,
+  modification de la politique d'expiration.</li>
+<li><strong>Un plafonnement du fichier.</strong> Il croît aujourd'hui sans limite. Un journal
+  d'audit qui finit par peser des dizaines de mégaoctets ne se consulte plus — prévoir une rotation
+  simple, ou une troncature au-delà d'une taille donnée.</li>
+</ul>
+
+<h3>Deux réserves à ne pas perdre de vue</h3>
+<div class="callout warning">
+<span class="callout-title">Portée réelle de ce journal</span>
+<p><strong>Il est local à la machine, et le restera.</strong> L'idée de « repérer un comportement
+suspect si la configuration est partagée » ne s'applique pas ici : <code>better-vault.json</code>
+comme le journal sont délibérément exclus de toute synchronisation
+(<a href="#stockage">§ Stockage</a>). Chaque poste a le sien. Consigner le nom de la machine n'a donc
+d'intérêt que si les journaux sont agrégés ailleurs — ce qui reste à décider.</p>
+<p><strong>Il n'est pas inviolable.</strong> C'est un fichier texte modifiable par quiconque a accès
+à la session de l'utilisateur — c'est-à-dire précisément l'attaquant contre lequel un audit servirait.
+Il vaut comme outil de diagnostic et de détection <em>a posteriori</em>, pas comme preuve. À ne pas
+présenter autrement dans le README.</p>
+</div>
 
 <h2 id="publication">Publication</h2>
 <p><strong>Dépôt GitHub public depuis le 2026-07-28</strong> :
