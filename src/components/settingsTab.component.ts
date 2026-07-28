@@ -1,10 +1,11 @@
 import { Component, HostBinding } from '@angular/core'
+import { PlatformService } from 'tabby-core'
 
 // Import en side-effect : `styleUrls` ne fonctionne pas pour un plugin tiers
 // (piège hérité #3), les styles sont injectés en CSS globale.
 import './settingsTab.component.scss'
 
-import { log, LOG_PATH } from '../logger'
+import { log, purge, LOG_PATH } from '../logger'
 import { keychainStatus } from '../osKeychain'
 import {
     Settings,
@@ -45,8 +46,31 @@ export class BetterVaultSettingsTabComponent {
         { value: 0, label: 'Illimitée' },
     ]
 
-    constructor () {
+    constructor (private platform: PlatformService) {
         this.settings = readSettings()
+    }
+
+    openLog (): void {
+        this.platform.openPath(LOG_PATH)
+    }
+
+    /**
+     * Purge sur confirmation : le journal est le seul historique des ouvertures
+     * du coffre, et l'effacer est irréversible. Un clic malencontreux ne doit
+     * pas suffire.
+     */
+    async purgeLog (): Promise<void> {
+        const result = await this.platform.showMessageBox({
+            type: 'warning',
+            message: 'Vider le journal ?',
+            detail: "Tout l'historique des ouvertures du coffre, des expirations et des révocations sera perdu. Cette action est irréversible.",
+            buttons: ['Vider', 'Annuler'],
+            defaultId: 1,
+            cancelId: 1,
+        })
+        if (result.response === 0) {
+            purge()
+        }
     }
 
     get hasToken (): boolean {

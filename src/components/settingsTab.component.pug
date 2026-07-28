@@ -101,7 +101,14 @@
 
   .form-line
     .header
-      .title Emplacement
+      .title Fichier
       .description
         code {{logPath}}
-      .description.mt-1 Fichier local à cette machine, jamais synchronisé.
+      .description.mt-1 Local à cette machine, jamais synchronisé. Ne contient jamais votre mot de passe.
+    div
+      button.btn.btn-secondary.mr-2((click)='openLog()')
+        i.fas.fa-external-link-alt.mr-2
+        | Ouvrir
+      button.btn.btn-danger((click)='purgeLog()')
+        i.fas.fa-eraser.mr-2
+        | Purger

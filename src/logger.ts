@@ -136,6 +136,21 @@ export function applyRetention (): void {
     }
 }
 
+/**
+ * Vide le journal à la demande de l'utilisateur.
+ *
+ * La purge est elle-même journalisée : un fichier vide serait autrement
+ * indiscernable d'un journal qui n'a jamais rien enregistré.
+ */
+export function purge (): void {
+    try {
+        fs.writeFileSync(LOG_PATH, '', 'utf8')
+    } catch {
+        return
+    }
+    log('journal purgé manuellement depuis les réglages')
+}
+
 /** Ouvre une session. Le nom de la machine figure ici, et pas sur chaque ligne. */
 export function startSession (): void {
     const { machineName, enabled, logRetentionDays } = readSettings()

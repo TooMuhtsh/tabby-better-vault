@@ -12,7 +12,7 @@ import './toast.scss'
 import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
 import { BetterVaultSettingsTabProvider } from './settings'
 import { VaultBridgeService } from './vaultBridge.service'
-import { log, crit, startSession, applyRetention, LOG_PATH } from './logger'
+import { crit, startSession, applyRetention } from './logger'
 
 // Purge avant d'ouvrir la session : les lignes du jour ne doivent jamais être
 // candidates à leur propre suppression.
@@ -50,6 +50,5 @@ export default class BetterVaultModule {
             // démarrer, quoi qu'il arrive.
             crit(`installation échouée — ${String(e)}`)
         }
-        log(`journal : ${LOG_PATH}`)
     }
 }
