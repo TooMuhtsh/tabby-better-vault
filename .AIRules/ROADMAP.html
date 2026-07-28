@@ -30,7 +30,9 @@
     <td><span class="pill planned">📋 Verdict rendu le 2026-07-28 : les deux levés</span></td><td>—</td></tr>
 <tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Base en place, compile</span></td><td>—</td></tr>
 <tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
-<tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill progress">🚧 Implémenté, compile — à tester</span></td><td>Suite immédiate</td></tr>
+<tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
+<tr><td><a href="#publication">Publication</a></td>
+    <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
     <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
@@ -389,6 +391,33 @@ la laissant désactivée.</p>
 <li><strong>Nommer la machine</strong> — libellé indicatif (défaut : nom d'hôte), repris dans le
   journal pour savoir de quel poste vient une trace.</li>
 </ul>
+
+<h2 id="publication">Publication</h2>
+<p><strong>Dépôt GitHub public depuis le 2026-07-28</strong> :
+<a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>,
+avec <code>README.md</code> (anglais) et <code>README.fr.md</code> (français).</p>
+
+<h3>Reste à faire — publication npm</h3>
+<p>C'est elle qui rendra le plugin installable en un clic depuis le gestionnaire de plugins de
+Tabby : celui-ci interroge le registre npm avec <code>keywords:tabby-plugin</code>, mot-clé déjà
+présent dans le <code>package.json</code>. À vérifier avant de publier :</p>
+<ul>
+<li>Le champ <code>author</code> doit être présent, même vide, sinon la découverte du plugin échoue
+  silencieusement (piège hérité #2) — c'est déjà le cas.</li>
+<li><code>npm run build</code> est déjà branché sur <code>prepublishOnly</code>, et
+  <code>files</code> ne publie que <code>dist</code>.</li>
+<li>Passer la version de <code>0.0.1</code> à quelque chose de significatif, et décider si le plugin
+  sort en <code>0.x</code> (le mécanisme reste non contractuel) ou en <code>1.0</code>.</li>
+<li>Vérifier le rendu du README sur la page npm, qui n'affiche que <code>README.md</code>.</li>
+</ul>
+<div class="callout warning">
+<span class="callout-title">À trancher avant publication</span>
+<p>Le plugin repose sur un patch d'une API interne de Tabby (<a href="AI-CONTEXT.html#piege-v2">#V2</a>)
+et manipule le secret le plus sensible de l'utilisateur. Publier, c'est engager cette responsabilité
+auprès d'inconnus, sur des configurations jamais testées — <strong>notamment Linux, où le refus du
+backend <code>basic_text</code> n'a encore jamais été exercé en vrai</strong>. Le README l'annonce
+clairement, mais la décision de publier reste à prendre en connaissance de cause.</p>
+</div>
 
 <h2 id="panneau-unifie">Panneau de réglages unifié « Tabby Better * » — intention, pas un chantier ouvert</h2>
 <div class="callout note">

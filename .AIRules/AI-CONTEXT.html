@@ -410,6 +410,14 @@ ne l'ouvre jamais verrait une notification non stylée — sans aucune erreur po
 <code>'ngx-toastr'</code>, qu'il faut donc conserver explicitement
 (<code>'ngx-toastr ma-classe'</code>) sous peine de perdre toute la mise en forme de base. La classe
 de type (<code>toast-info</code>, etc.) est ajoutée automatiquement, elle.</p>
+<p class="muted">Deux détails de mise en forme constatés sur les notifications, tous deux
+silencieux : <strong>(1)</strong> la largeur est fixée par
+<code>.toast-container.toast-top-center .ngx-toastr</code> (spécificité 0,3,0), qui l'emporte sur un
+sélecteur en <code>.toast-container .ma-classe</code> (0,2,0) — d'où un <code>!important</code>
+nécessaire sur <code>width</code>, et sur elle seule ; <strong>(2)</strong> l'icône est une image de
+fond dont la couleur est figée dans le SVG : impossible de la teindre en CSS, il faut redéclarer le
+pictogramme. Penser aussi à conserver le retrait à gauche (<code>padding-left</code>) qui lui réserve
+sa place, faute de quoi elle chevauche le texte.</p>
 
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">

@@ -24,7 +24,50 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Publication du dépôt (2026-07-28)</h2>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-28</td><td><code>719cd0a</code></td>
+<td><strong>Dépôt rendu public : <a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>.</strong>
+Branche <code>feat/auto-unlock</code> fusionnée en <em>fast-forward</em> dans <code>master</code>,
+puis poussée. <code>README.md</code> (anglais, affiché par défaut) et <code>README.fr.md</code>
+(français) reliés par un lien en tête de chacun : fonctionnalités en cases à cocher, installation
+depuis les sources, choix techniques et leurs raisons, sécurité <em>et ses limites</em>, feuille de
+route, projet frère, crédits. Deux partis pris assumés : annoncer dès l'introduction que le plugin
+patche une partie non documentée de Tabby et peut casser à une mise à jour, et créditer
+<code>tabby-vault-keepassxc</code> comme antériorité.</td></tr>
+<tr><td>2026-07-28</td><td><code>719cd0a</code></td>
+<td><strong>Historique nettoyé avant le premier push — erreur de ma part.</strong> Les trois
+premiers commits portaient les trailers <code>Co-Authored-By: Claude</code> et
+<code>Claude-Session</code>, que l'utilisateur refuse sur ses dépôts publics. La consigne était
+connue mais notée « sur le projet frère », et je l'ai appliquée trop littéralement — la raison
+invoquée (dépôt public) valait pourtant à l'identique ici. Corrigé <strong>avant</strong> toute
+publication par <code>git filter-branch --msg-filter</code> sur <code>92be359..HEAD</code> : aucun
+force-push nécessaire, l'historique public est né propre. Vérifié après coup sur
+<code>origin/master</code> : zéro trailer. Mémoire de collaboration corrigée pour que la règle
+s'applique désormais à tous les dépôts de l'utilisateur.</td></tr>
+</table>
+
 <h2>Implémentation du déverrouillage automatique (2026-07-28)</h2>
+<div class="callout note">
+<span class="callout-title">Correspondance avec les commits</span>
+<p>Les entrées de ce chantier ont été rédigées <em>avant</em> d'être committées — d'où leur mention
+« pas encore committé », laissée telle quelle (le journal ne se réécrit pas). Les hachages ci-dessous
+sont ceux <strong>après</strong> le nettoyage des trailers, donc ceux qui font foi :</p>
+<table>
+<tr><th>Hash</th><th>Contenu</th></tr>
+<tr><td><code>9572ae0</code></td><td>Scaffold, spike, première implémentation fonctionnelle
+  (<code>osKeychain</code>, <code>tokenStore</code>, <code>vaultCrypto</code>,
+  <code>tabbyConfig</code>, <code>vaultBridge</code>), décision du stockage en fichier séparé.</td></tr>
+<tr><td><code>5b2b3a9</code></td><td>Correctif <a href="AI-CONTEXT.html#piege-v11">#V11</a>
+  (<code>store.ts</code> remplace <code>tokenStore.ts</code>/<code>config.ts</code>), expiration du
+  jeton, panneau de réglages, réglages par machine.</td></tr>
+<tr><td><code>e5b192b</code></td><td>Habillage du panneau, onglet renommé « Better Vault » et
+  repositionné, notification d'enregistrement, mode observation avec aperçu,
+  <code>CLAUDE.md</code>.</td></tr>
+<tr><td><code>719cd0a</code></td><td>README publics bilingues.</td></tr>
+</table>
+</div>
 <table>
 <tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
 <tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
