@@ -1,0 +1,45 @@
+{
+  "name": "tabby-better-vault",
+  "version": "0.0.1",
+  "description": "Unlock the Tabby Vault automatically using your operating system's native keychain — no third-party password manager required.",
+  "keywords": [
+    "tabby-plugin"
+  ],
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TooMuhtsh/tabby-better-vault.git"
+  },
+  "homepage": "https://github.com/TooMuhtsh/tabby-better-vault#readme",
+  "bugs": {
+    "url": "https://github.com/TooMuhtsh/tabby-better-vault/issues"
+  },
+  "scripts": {
+    "build": "webpack --progress --color",
+    "watch": "webpack --progress --color --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "TooMuhtsh",
+  "license": "MIT",
+  "devDependencies": {
+    "@angular/common": "^15.0.0",
+    "@angular/core": "^15.0.0",
+    "@angular/forms": "^15.0.0",
+    "@ng-bootstrap/ng-bootstrap": "^14.2.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^18.19.0",
+    "@types/webpack-env": "^1.16.0",
+    "js-yaml": "^5.2.2",
+    "rxjs": "^7.3.0",
+    "tabby-core": "^1.0.231-nightly.0",
+    "tabby-settings": "^1.0.231-nightly.0",
+    "ts-loader": "^9.4.0",
+    "typescript": "^4.9.5",
+    "webpack": "^5.24.4",
+    "webpack-cli": "^4.5.0"
+  }
+}

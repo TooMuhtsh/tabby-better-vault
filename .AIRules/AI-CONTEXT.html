@@ -14,19 +14,31 @@
 </nav>
 
 <h1>Contexte &amp; invariants</h1>
-<p class="muted">Dernière revue : 2026-07-26</p>
+<p class="muted">Dernière revue : 2026-07-28</p>
 
-<p>Ce projet n'a pas encore de code — cette page ne contient donc pas de pièges propres découverts
-en implémentant (elle se remplira au fil du développement, comme
-<a href="../../tabby-ssh-sidebar/.AIRules/AI-CONTEXT.html">celle du projet frère</a>). Elle liste
-pour l'instant les pièges <strong>hérités</strong>, hautement probables vu que ce plugin partage
-exactement la même stack (Tabby, Angular 15, Electron, TypeScript, webpack) que
-<code>tabby-better-sidebar</code> — à vérifier/confirmer dès le scaffold, pas à redécouvrir de
-zéro.</p>
+<p>Ce projet n'a pas encore de code, mais la <strong>vérification de faisabilité du 2026-07-28</strong>
+(lecture des sources et du bundle réels de <code>tabby-core</code>) a déjà produit des invariants
+propres — voir <a href="#cat-vault">Anatomie du Vault de Tabby</a>. Le reste de la page liste les
+pièges <strong>hérités</strong>, hautement probables vu que ce plugin partage exactement la même
+stack (Tabby, Angular 15, Electron, TypeScript, webpack) que <code>tabby-better-sidebar</code> — à
+vérifier/confirmer dès le scaffold, pas à redécouvrir de zéro.</p>
+
+<div class="callout note">
+<span class="callout-title">Convention de numérotation</span>
+<p>Deux séries distinctes, à ne jamais confondre : les numéros <strong>sans préfixe</strong> désignent
+toujours les pièges <strong>hérités</strong> du projet frère (numérotation de
+<a href="../../tabby-ssh-sidebar/.AIRules/AI-CONTEXT.html">son AI-CONTEXT.html</a>, qui fait
+autorité) ; <strong>#V1, #V2…</strong> désignent les pièges <strong>propres à ce projet</strong>.
+Un nouveau piège propre prend toujours le prochain numéro <code>#V</code> libre, jamais un numéro
+recyclé.</p>
+</div>
 
 <h2 id="cat-identite">Identité du projet</h2>
 <ul>
-<li>Nom prévu : <code>tabby-better-vault</code> (npm/GitHub), à créer.</li>
+<li>Nom : <code>tabby-better-vault</code>. Dépôt GitHub existant depuis le 2026-07-26 —
+  <code>https://github.com/TooMuhtsh/tabby-better-vault</code> — ne contenant à ce jour que
+  <code>.AIRules/</code>, <code>LICENSE</code> et <code>README.md</code>. Package npm : pas encore
+  créé.</li>
 <li>Objectif unique : déverrouiller automatiquement le coffre-fort Tabby (mot de passe maître) au
   démarrage, en déléguant le chiffrement à l'OS plutôt qu'en stockant le secret en clair.</li>
 <li>Relation avec <code>tabby-better-sidebar</code> : projet frère, pas une dépendance obligatoire
@@ -65,10 +77,12 @@ pourquoi ça s'applique probablement ici aussi.</p>
 </ul>
 
 <h3>Vérifier une classe/API Tabby avant de s'y fier</h3>
-<div class="callout important">
-<span class="callout-title">Le point le plus important pour ce projet</span>
-<p>Ce plugin dépend entièrement d'une classe non confirmée exportée : <code>VaultService</code> (ou
-équivalent). Voir le garde-fou bloquant dans <a href="README.html">README.html</a>.</p>
+<div class="callout note">
+<span class="callout-title">Vérification faite le 2026-07-28</span>
+<p><code>VaultService</code> est confirmé accessible depuis un plugin tiers (voir
+<a href="#piege-v1">#V1</a>) — ces trois pièges hérités ne se sont donc <em>pas</em> matérialisés
+sur cette classe précise. Ils restent valables pour toute autre classe Tabby que ce plugin voudrait
+utiliser plus tard.</p>
 </div>
 <ul>
 <li><strong>Piège #6</strong> — les typings npm de <code>tabby-core</code> sont probablement en
@@ -97,8 +111,261 @@ pourquoi ça s'applique probablement ici aussi.</p>
   lancée par l'utilisateur lui-même via le préfixe <code>!</code>.</li>
 </ul>
 
-<h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
+<h2 id="cat-vault">Anatomie du Vault de Tabby — pièges propres (#V)</h2>
+<p class="muted">Établis le 2026-07-28 par lecture de <code>tabby-core@1.0.231-nightly.0</code> :
+<code>src/services/vault.service.ts</code>, <code>src/services/config.service.ts</code>,
+<code>src/components/unlockVaultModal.component.ts</code>, <code>typings/api/index.d.ts</code> et
+le bloc de réexport webpack de <code>dist/index.js</code>. Sources lues dans l'app installée
+(<code>C:\Program Files\Tabby\resources\builtin-plugins\</code>), qui embarque son propre
+<code>src/</code> — c'est la référence la plus fiable, plus fraîche que les typings npm.</p>
+
+<h3 id="piege-v1">#V1 — <code>VaultService</code> est bien exporté, aux deux niveaux</h3>
+<p>Contrairement à ce qui était redouté, <strong>aucune augmentation de type n'est nécessaire</strong> :
+<code>import { VaultService } from 'tabby-core'</code> compile et fonctionne à l'exécution.</p>
+<ul>
+<li><strong>Typings</strong> : <code>typings/index.d.ts</code> ne contient pas le mot « vault », mais
+  il fait <code>export * from './api'</code>, et <code>typings/api/index.d.ts</code> (ligne 36)
+  réexporte <code>VaultService, Vault, VaultSecret, VaultFileSecret, VAULT_SECRET_TYPE_FILE,
+  StoredVault, VaultSecretKey</code>. <strong>Ne pas conclure d'un simple grep sur
+  <code>index.d.ts</code></strong> — suivre les réexports en cascade.</li>
+<li><strong>Bundle</strong> : <code>dist/index.js</code> contient bien
+  <code>VaultService: () =&gt; (/* reexport */ VaultService)</code> et
+  <code>VAULT_SECRET_TYPE_FILE</code>.</li>
+<li><strong>Non exportés</strong> (présents dans le bundle mais absents du bloc de réexport, donc
+  inatteignables depuis un plugin tiers) : <code>VaultFileProvider</code> et
+  <code>UnlockVaultModalComponent</code>. Ce dernier point conditionne le contournement décrit en
+  <a href="ROADMAP.html#contournement">ROADMAP.html</a>.</li>
+</ul>
+
+<h3 id="piege-v2">#V2 — Le mot de passe maître n'est PAS injectable programmatiquement</h3>
+<div class="callout important">
+<span class="callout-title">Constat central du projet</span>
+<p>Le cache du mot de passe vit dans <code>let _rememberedPassphrase</code>, une variable de
+<strong>portée module</strong> dans <code>vault.service.ts</code>, précédée du commentaire explicite
+<code>// Don't make it accessible through VaultService fields</code>. C'est un choix de conception
+délibéré de Tabby : aucun champ ni méthode publique n'y donne accès en écriture.</p>
+</div>
+<p>Détail des méthodes qui acceptent un paramètre <code>passphrase?</code> — <strong>aucune ne
+remplit le cache</strong> :</p>
+<table>
+<tr><th>Méthode</th><th>Pourquoi elle ne suffit pas</th></tr>
+<tr><td><code>setEnabled(enabled, passphrase?)</code></td>
+    <td>Ne fait quelque chose que si <code>!this.store</code> — inopérante dès que le coffre existe,
+    c'est-à-dire dans tous les cas qui nous intéressent.</td></tr>
+<tr><td><code>decrypt(store, passphrase?)</code> / <code>load(passphrase?)</code></td>
+    <td>Utilisent bien la passphrase fournie, mais ne la mémorisent jamais. Déchiffrer une fois
+    n'ouvre pas le coffre pour le reste de l'application.</td></tr>
+<tr><td><code>encrypt(vault, passphrase?)</code></td>
+    <td>Contient la seule écriture du cache hors modal —
+    <code>if (_rememberedPassphrase) { _rememberedPassphrase = passphrase }</code> — mais elle est
+    gardée par le cache lui-même : elle ne fait que <em>rafraîchir</em> une valeur déjà présente,
+    jamais l'initialiser. Inutilisable pour un premier déverrouillage.</td></tr>
+<tr><td><code>getPassphrase()</code></td>
+    <td><strong>Seul chemin d'écriture réel</strong>, et il passe obligatoirement par l'ouverture du
+    modal <code>UnlockVaultModalComponent</code> via <code>ngbModal.open()</code>.</td></tr>
+</table>
+
+<h3 id="piege-v3">#V3 — Fournir la passphrase à nos propres appels ne sert à rien</h3>
+<p>Piste à écarter d'emblée : les consommateurs internes de Tabby appellent tous le Vault
+<strong>sans argument</strong> et retomberont donc systématiquement sur le cache natif —
+<code>getSecret()</code> appelle <code>load()</code> sans passphrase, et
+<code>ConfigService.maybeDecryptConfig()</code> appelle <code>getPassphrase()</code> avant tout
+<code>decrypt()</code>. Déverrouiller « pour nous seuls » n'évite donc jamais la pop-up aux autres
+plugins ni à Tabby lui-même. Le seul objectif valable est de remplir le cache natif.</p>
+
+<h3 id="piege-v4">#V4 — Deux moments de pop-up très différents selon <code>config.encrypted</code></h3>
+<p>Le design initial supposait une pop-up systématique au démarrage. C'est faux dans un cas sur
+deux, et la différence change complètement la fenêtre de tir du plugin :</p>
+<ul>
+<li><strong>Config chiffrée</strong> (<code>store.encrypted === true</code>) : la pop-up apparaît
+  <strong>pendant le démarrage</strong>, dans <code>ConfigService.maybeDecryptConfig()</code>, appelé
+  depuis <code>load()</code> lui-même déclenché par un <code>setTimeout(() =&gt; this.init())</code>
+  posé dans le <em>constructeur</em> de <code>ConfigService</code>. Si l'utilisateur annule, Tabby
+  boucle sur une message box « Try again / Quit ». <strong>Fenêtre de tir extrêmement précoce</strong> —
+  c'est le risque de faisabilité restant (voir <a href="ROADMAP.html#timing">ROADMAP.html</a>).</li>
+<li><strong>Config non chiffrée mais coffre activé</strong> : aucune pop-up au démarrage, elle
+  n'apparaît qu'à la <strong>première demande de secret</strong> (connexion SSH utilisant un secret
+  du coffre). Fenêtre de tir confortable.</li>
+</ul>
+<div class="callout note">
+<span class="callout-title">Vérifié par le spike le 2026-07-28 — le patch arrive à temps</span>
+<p>Journal d'exécution : <code>%APPDATA%\tabby\better-vault-spike.log</code>. Le résultat décisif
+est la ligne <code>#V4 patch posé … (isEnabled=false)</code> alors que le
+<code>config.yaml</code> contient bien un coffre (<code>vaultPresent=true</code>).
+<code>isEnabled()</code> vaut <code>!!this.store</code>, et <code>store</code> n'est renseigné que
+par <code>setStore()</code>, appelé depuis <code>ConfigService.init()</code>. Le fait qu'il soit
+encore <code>false</code> au moment du patch <strong>prouve que nous passons avant
+<code>init()</code></strong> — donc avant <code>maybeDecryptConfig()</code>, donc avant la pop-up du
+cas « config chiffrée ». Le raisonnement ci-dessous est confirmé par la mesure.</p>
+<p><strong>Réserve</strong> : la machine de test a une config <em>non chiffrée</em>
+(<code>encrypted=absent</code>). Le cas <code>encrypted: true</code> n'a donc pas été observé
+directement — mais l'ordre établi (patch avant <code>setStore</code>, donc avant
+<code>init()</code>) est précisément ce qui le gouverne. Confiance élevée, pas certitude absolue.</p>
+<p>Observé au passage : deux appels à <code>getPassphrase()</code> lors de l'usage réel, tous deux
+issus de <code>decrypt()</code> (<code>dist/index.js:20621</code>). Le premier a mis ~7 s (saisie
+utilisateur dans la pop-up), le second a répondu en 1 ms — le cache natif faisait son travail. Le
+comportement de Tabby est donc resté strictement inchangé par notre enveloppe, comme voulu.</p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">Raisonnement d'origine, antérieur à la mesure (2026-07-28)</span>
+<p>La séquence de démarrage lue dans <code>app.asar</code> est <code>loadPlugins()</code> →
+<code>getRootModule(pluginModules)</code> → <code>bootstrapModule()</code>. Les bundles des plugins
+sont donc évalués <strong>avant tout Angular</strong>, et les constructeurs des <code>NgModule</code>
+s'exécutent pendant la création — synchrone — de l'injecteur racine. Or <code>ConfigService</code>
+ne lance pas <code>init()</code> directement : son constructeur l'arme via
+<code>setTimeout(() =&gt; this.init())</code>, donc au tick suivant. Un patch posé dans le
+constructeur de notre <code>NgModule</code> devrait par conséquent arriver à temps
+<strong>même en config chiffrée</strong>.</p>
+<p>À confirmer par le spike : la création de l'injecteur est le point le plus précoce où une
+instance de <code>VaultService</code> puisse exister, donc <strong>il n'y a aucune marge de
+manœuvre en amont</strong> si cette présomption se révèle fausse.</p>
+</div>
+
+<h3 id="piege-v5">#V5 — La durée de mémorisation est dictée par le modal, pas par le service</h3>
+<p><code>getPassphrase()</code> arme un <code>setTimeout</code> qui remet le cache à <code>null</code>
+après <code>Math.max(1000, rememberFor * 60000)</code> ms, où <code>rememberFor</code> vient
+<strong>de la valeur retournée par le modal</strong> (options natives : 1, 5, 15, 60, 1440, 10080
+minutes ; la préférence de l'utilisateur est persistée dans
+<code>window.localStorage.vaultRememberPassphraseFor</code> par le modal lui-même, jamais par le
+service). Conséquence pratique : qui contrôle la réponse du modal contrôle aussi la durée du
+déverrouillage — et un <code>rememberFor</code> long est un choix de sécurité à exposer à
+l'utilisateur, pas à coder en dur.</p>
+
+<h3 id="piege-v6">#V6 — L'état du cache natif dépend du chemin emprunté</h3>
+<p>Le <a href="ROADMAP.html#contournement">contournement retenu</a> remplace
+<code>getPassphrase</code> sur l'instance. Le cache natif <code>_rememberedPassphrase</code> n'est
+alors alimenté que dans certains cas — <strong>c'est conditionnel, pas absolu</strong> :</p>
+<table>
+<tr><th>Chemin emprunté</th><th>Cache natif</th><th><code>isOpen()</code></th></tr>
+<tr><td>Jeton servi depuis le keychain (déverrouillage automatique)</td>
+    <td>❌ jamais rempli — on ne passe pas par la méthode native</td><td><code>false</code></td></tr>
+<tr><td>Délégation à la méthode native (apprentissage, repli, mode observation, plugin désactivé)</td>
+    <td>✅ rempli normalement, avec son <code>setTimeout</code> de purge</td><td><code>true</code> ensuite</td></tr>
+</table>
+<p>Conséquences à connaître avant de s'étonner :</p>
+<ul>
+<li>En déverrouillage automatique, <code>vault.isOpen()</code> reste <code>false</code>. Impact réel
+  <strong>faible</strong> : cette méthode n'a qu'un seul appelant dans tout Tabby
+  (<code>tabby-settings/src/components/vaultSettingsTab.component.ts:28</code>) — l'onglet de
+  réglages du coffre affichera l'état « verrouillé » même quand tout fonctionne.</li>
+<li>Toujours dans ce cas, le réglage natif « remember for » (<a href="#piege-v5">#V5</a>) devient
+  sans effet : le <code>setTimeout</code> de purge n'est pas armé. La politique de durée devient
+  <strong>notre responsabilité</strong> et devra être exposée à l'utilisateur.</li>
+<li>En revanche, dès qu'on délègue au natif, le comportement de Tabby redevient exactement celui
+  d'origine — c'est ce qui rend le repli réellement transparent.</li>
+</ul>
+
+<h3 id="piege-v10">#V10 — Les paramètres cryptographiques du coffre sont répliqués chez nous</h3>
 <div class="callout warning">
+<span class="callout-title">Couplage non contractuel à surveiller à chaque mise à jour de Tabby</span>
+<p><code>src/vaultCrypto.ts</code> reproduit le déchiffrement de Tabby (PBKDF2 100 000 itérations,
+SHA-512, AES-256-CBC, clé 256 bits) pour <strong>vérifier qu'un mot de passe est le bon avant de le
+servir</strong>. Si Tabby change ces paramètres, notre vérification échouera systématiquement.</p>
+<p>La dégradation est sûre — jeton purgé, retour à la saisie manuelle, aucune erreur visible — mais
+<strong>silencieuse</strong> : le déverrouillage automatique cesserait simplement de fonctionner,
+sans que rien ne l'explique. À revérifier après toute mise à jour majeure de Tabby.</p>
+</div>
+<p>Pourquoi ne pas appeler l'API native de déchiffrement plutôt que de la répliquer :</p>
+<ul>
+<li><strong>Récursion infinie</strong> — <code>vault.decrypt()</code> et <code>vault.load()</code>
+  retombent sur <code>this.getPassphrase()</code>, qui est justement notre méthode. Le plugin se
+  bloquerait au démarrage. C'est la raison principale, et elle est rappelée en commentaire dans le
+  fichier pour dissuader toute « simplification » future.</li>
+<li><strong>Effets de bord</strong> — <code>decrypt()</code> appelle <code>forgetPassphrase()</code>
+  et affiche une notification « Incorrect passphrase ». Notre vérification doit rester silencieuse :
+  un jeton périmé se purge sans déranger l'utilisateur.</li>
+</ul>
+<p>Corollaire de conception : la vérification a lieu contre le coffre lu <strong>directement dans
+<code>config.yaml</code></strong>, pas via <code>vault.store</code>. Ce dernier est encore
+<code>null</code> au moment qui compte, puisqu'en config chiffrée <code>getPassphrase()</code> est
+appelée avant <code>setStore()</code> (<a href="#piege-v4">#V4</a>). Lire le fichier est le seul
+moyen de valider dans les deux régimes.</p>
+
+<h3 id="piege-v7">#V7 — Quels modules Node un plugin tiers peut-il vraiment <code>require</code> ?</h3>
+<div class="callout note">
+<span class="callout-title">Trois questions distinctes — ne pas les confondre (état au 2026-07-28)</span>
+<table>
+<tr><th>Question</th><th>Statut</th></tr>
+<tr><td>Le module <code>@electron/remote</code> est-il résolvable depuis un plugin tiers ?</td>
+    <td>✅ <strong>Prouvé</strong> par lecture du chargeur (voir ci-dessous).</td></tr>
+<tr><td><code>safeStorage</code> est-il proxifié par <code>@electron/remote</code> ?</td>
+    <td>✅ <strong>Prouvé</strong> : il figure explicitement dans <code>browserModuleNames</code>
+    (<code>@electron/remote/common/module-names</code>), la liste même des modules du processus
+    principal exposés au renderer. À noter qu'il est <em>absent</em> de la surface utilisée par
+    <code>ElectronService</code> de Tabby — d'où le doute initial.</td></tr>
+<tr><td><code>isEncryptionAvailable()</code> renvoie-t-il <code>true</code> sur cette machine ?</td>
+    <td>✅ <strong>Mesuré : <code>true</code></strong> (spike du 2026-07-28, Windows 11 / DPAPI).
+    Reste à revérifier sur Linux le jour où le plugin y sera porté : la réponse y dépend d'un
+    service de trousseau actif.</td></tr>
+</table>
+<p><strong>Le risque jugé le plus élevé du projet est clos.</strong> Les trois volets sont vérifiés,
+les deux premiers par lecture du code, le troisième par mesure : <code>require("@electron/remote")
+: OK</code> → <code>remote.safeStorage : présent</code> →
+<code>isEncryptionAvailable() : true</code>.</p>
+</div>
+<p>Rien côté Tabby ne s'y oppose non plus : l'app appelle bien
+<code>require('@electron/remote/main').enable(webContents)</code>, et aucun gestionnaire maison
+n'intercepte l'événement <code>remote-get-builtin</code> pour filtrer les modules accessibles (les
+deux seules occurrences dans <code>app.asar</code> appartiennent à <code>@electron/remote</code>
+lui-même).</p>
+<p>Mécanisme, dans <code>initModuleLookup()</code> du chargeur de plugins de Tabby
+(<code>app.asar</code>, module <code>plugins</code>) :</p>
+<pre><code>function initModuleLookup (userPluginsPath) {
+    global['module'].paths.map(x =&gt; nodeModule.globalPaths.push(normalizePath(x)))
+    const paths = []
+    paths.unshift(path.join(userPluginsPath, 'node_modules'))
+    paths.unshift(path.join(remote.app.getAppPath(), 'node_modules'))   // ← app.asar/node_modules
+    ...
+    process.env.NODE_PATH += path.delimiter + paths.join(path.delimiter)
+    nodeModule._initPaths()
+}</code></pre>
+<p>Tabby ajoute donc <code>&lt;app.asar&gt;/node_modules</code> au <code>NODE_PATH</code> puis force
+<code>Module._initPaths()</code> : tout ce que l'app embarque devient résolvable depuis n'importe
+quel plugin. Vérification faite dans l'en-tête de l'archive <code>app.asar</code> — sur les 351
+modules de premier niveau, <code>@electron/remote</code> et <code>keytar</code> sont bien
+<strong>présents</strong> tous les deux.</p>
+<ul>
+<li>✅ <code>@electron/remote</code> → voie principale pour <code>safeStorage</code>.</li>
+<li>✅ <code>keytar</code> → repli crédible, déjà utilisé par <code>tabby-ssh</code>
+  (<code>passwordStorage.service.ts</code>) pour les mots de passe SSH quand le coffre est
+  désactivé.</li>
+<li>⚠️ <code>require('electron')</code> fonctionne dans le renderer mais <strong>n'expose pas</strong>
+  <code>safeStorage</code>, réservé au processus principal — d'où le détour obligatoire par
+  <code>@electron/remote</code>.</li>
+<li>❓ Reste à confirmer empiriquement : que <code>safeStorage</code> est effectivement proxifié par
+  <code>@electron/remote</code> (tout objet du processus principal ne l'est pas forcément) et que
+  <code>isEncryptionAvailable()</code> renvoie <code>true</code>. C'est ce que mesure le spike.</li>
+</ul>
+
+<h3 id="piege-v8">#V8 — La liste exacte des modules pré-cachés par Tabby (externals sûrs)</h3>
+<p>Le même chargeur remplace <code>global.require</code> <em>et</em>
+<code>Module.prototype.require</code> pour servir un jeu de modules déjà instanciés — c'est ce qui
+garantit qu'un plugin partage bien la <strong>même</strong> instance d'Angular et de RxJS que
+Tabby (sans quoi l'injecteur partagé ne fonctionnerait pas). Ce sont les externals à déclarer sans
+hésiter dans <code>webpack.config.js</code> :</p>
+<p><code>@angular/core</code>, <code>@angular/common</code>, <code>@angular/compiler</code>,
+<code>@angular/forms</code>, <code>@angular/platform-browser</code>,
+<code>@angular/platform-browser/animations</code>, <code>@angular/platform-browser-dynamic</code>,
+<code>@ng-bootstrap/ng-bootstrap</code>, <code>ngx-toastr</code>, <code>rxjs</code>,
+<code>rxjs/operators</code>, <code>zone.js</code>, plus <code>tabby-core</code>,
+<code>tabby-local</code>, <code>tabby-settings</code>, <code>tabby-terminal</code>.</p>
+<p class="muted">À noter : <code>tabby-ssh</code> n'est <strong>pas</strong> dans cette liste de
+modules pré-cachés — il reste résolvable via le dossier des plugins intégrés, mais il ne bénéficie
+pas de la même garantie d'instance unique.</p>
+
+<h3 id="piege-v9">#V9 — Cause racine du piège hérité #1 (<code>TABBY_PLUGINS</code> cassé sur Windows)</h3>
+<p>Trouvée incidemment dans le même <code>initModuleLookup()</code> :</p>
+<pre><code>process.env.TABBY_PLUGINS.split(':').map(x =&gt; paths.push(normalizePath(x)))</code></pre>
+<p>Le séparateur est codé en dur à <code>':'</code> — séparateur de chemins POSIX. Sur Windows, un
+chemin comme <code>C:\Users\...</code> est donc découpé en <code>['C', '\Users\...']</code>, deux
+chemins invalides. Le bug n'est ni aléatoire ni lié à l'environnement : il est structurel, et la
+variable est <strong>inutilisable telle quelle sur Windows</strong>, quoi qu'on y mette. La jonction
+NTFS n'est pas un contournement de confort, c'est la seule voie. À remonter au projet frère, dont le
+piège #1 ne documente que le symptôme.</p>
+
+<h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
+<div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>
 <p>La variable JS contenant le mot de passe maître déchiffré en clair doit être
 <strong>immédiatement écrasée (<code>= null</code>) dès que l'injection dans le moteur de Tabby est

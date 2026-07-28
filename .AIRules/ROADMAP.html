@@ -15,30 +15,215 @@
 </nav>
 
 <h1>Roadmap</h1>
-<p class="muted">Dernière revue : 2026-07-26</p>
+<p class="muted">Dernière revue : 2026-07-28</p>
 
 <h2>Vue d'ensemble</h2>
 <table>
 <tr><th>Chantier</th><th>Statut</th><th>Priorité</th></tr>
 <tr><td><a href="#verification">Vérification de faisabilité (<code>VaultService</code>)</a></td>
-    <td><span class="pill warn">🔴 Bloquant, à faire en premier</span></td><td>Absolue</td></tr>
-<tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Pas commencé</span></td><td>—</td></tr>
-<tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Cœur du plugin</td></tr>
+    <td><span class="pill planned">📋 Terminée — API absente, contournement validé</span></td><td>Absolue</td></tr>
+<tr><td><a href="#etat-de-lart">État de l'art (plugins existants)</a></td>
+    <td><span class="pill planned">📋 Fait le 2026-07-28</span></td><td>Cadrage</td></tr>
+<tr><td><a href="#contournement">Contournement : patch de <code>getPassphrase</code></a></td>
+    <td><span class="pill planned">📋 Mécanisme tranché — acté par l'utilisateur le 2026-07-28</span></td><td>Fondation</td></tr>
+<tr><td><a href="#spike">Spike d'observation (lève #V4 et #V7)</a></td>
+    <td><span class="pill planned">📋 Verdict rendu le 2026-07-28 : les deux levés</span></td><td>—</td></tr>
+<tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Base en place, compile</span></td><td>—</td></tr>
+<tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
+<tr><td>Panneau de réglages (opt-in, durée)</td><td><span class="pill planned">📋 Pas commencé — activation via config.yaml en attendant</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
 </table>
 
-<h2 id="verification">Vérification de faisabilité — à faire avant tout code</h2>
+<h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
+<p>Menée sur <code>tabby-core@1.0.231-nightly.0</code>, en lecture seule, aux deux niveaux exigés
+(typings npm <em>et</em> bundle webpack compilé), complétés par les sources <code>src/</code> que
+l'app installée embarque. Constats détaillés et numérotés en
+<a href="AI-CONTEXT.html#cat-vault">AI-CONTEXT.html § Anatomie du Vault</a>.</p>
+
+<table>
+<tr><th>Question posée par le garde-fou</th><th>Réponse</th></tr>
+<tr><td><code>VaultService</code> existe et est atteignable depuis un plugin tiers ?</td>
+    <td>✅ <strong>Oui, aux deux niveaux.</strong> Typings : réexporté par
+    <code>typings/api/index.d.ts</code>, lui-même repris par <code>index.d.ts</code> via
+    <code>export * from './api'</code>. Bundle : présent dans le bloc de réexport webpack. Aucune
+    augmentation de type nécessaire (<a href="AI-CONTEXT.html#piege-v1">#V1</a>).</td></tr>
+<tr><td>Expose-t-il une méthode d'<strong>injection programmatique</strong> du mot de passe maître ?</td>
+    <td>❌ <strong>Non.</strong> Le cache est une variable de portée module
+    (<code>_rememberedPassphrase</code>) explicitement rendue inaccessible par Tabby. Aucune méthode
+    publique ne l'initialise, sauf <code>getPassphrase()</code> qui ouvre obligatoirement le modal
+    (<a href="AI-CONTEXT.html#piege-v2">#V2</a>).</td></tr>
+<tr><td>Peut-on contourner en passant la passphrase à chaque appel ?</td>
+    <td>❌ <strong>Non.</strong> Les consommateurs internes de Tabby appellent le Vault sans
+    argument et retombent toujours sur le cache natif
+    (<a href="AI-CONTEXT.html#piege-v3">#V3</a>).</td></tr>
+</table>
+
 <div class="callout important">
-<span class="callout-title">Bloquant</span>
-<p>Confirmer que <code>VaultService</code> (ou l'équivalent réel dans le <code>tabby-core</code>
-installé) expose une méthode d'injection programmatique du mot de passe maître utilisable depuis un
-plugin tiers. Vérifier les DEUX niveaux : <code>typings/index.d.ts</code> ET le bloc d'export
-webpack réel de <code>dist/index.js</code> compilé — ne jamais conclure sur un seul des deux (même
-discipline que les pièges #6/#13/#17 du projet frère, voir <a href="AI-CONTEXT.html">AI-CONTEXT.html</a>).</p>
-<p>Si cette vérification échoue (méthode non exposée, ou trop verrouillée pour être pilotée depuis
-l'extérieur), tout le design ci-dessous est à revoir avant de commencer — ne pas scaffolder le
-plugin en attendant.</p>
+<span class="callout-title">Verdict : le garde-fou n'est pas franchi</span>
+<p>La condition exacte posée dans <a href="README.html">README.html</a> — <em>« expose une méthode
+d'injection programmatique du mot de passe maître »</em> — <strong>n'est pas remplie</strong>. Le
+protocole du projet impose donc de remonter le blocage plutôt que de continuer : le design de la
+section <a href="#unlock">Déverrouillage automatique</a> n'est pas réalisable tel quel, et le
+plugin ne doit pas être scaffoldé avant arbitrage.</p>
+<p>Un contournement techniquement viable existe (<a href="#contournement">ci-dessous</a>), mais il
+repose sur un monkey-patch d'une API interne de Tabby. C'est un changement de nature du projet,
+pas un simple ajustement d'implémentation — <strong>d'où la décision demandée à l'utilisateur avant
+toute suite.</strong></p>
 </div>
+
+<h2 id="etat-de-lart">État de l'art — ce qui existe déjà (2026-07-28)</h2>
+<p>Recherche exhaustive du registre npm avec la requête exacte du gestionnaire de plugins intégré
+(<code>keywords:tabby-plugin</code>, cf. <code>tabby-plugin-manager/src/services/</code>) :
+<strong>125 plugins publiés</strong>, dont 3 touchent aux secrets.</p>
+<table>
+<tr><th>Plugin</th><th>Sujet</th><th>Rapport à ce projet</th></tr>
+<tr><td><code>tabby-vault-keepassxc</code> v1.0.1 (2026-07-23)</td>
+    <td>Déverrouillage automatique du Vault via KeePassXC (Browser Integration, NaCl + socket natif).</td>
+    <td><strong>Concurrent direct</strong>, publié 2 jours avant la création de ce projet. Source du
+    secret différente : gestionnaire tiers, pas l'OS.</td></tr>
+<tr><td><code>tabby-keepass-ssh</code> v1.0.4</td>
+    <td>Auto-remplissage des mots de passe SSH et TOTP via KeePass.</td><td>Sujet voisin, pas le Vault.</td></tr>
+<tr><td><code>tabby-ssh-auth-socket</code> v1.0.0</td>
+    <td>Chemin de socket d'agent SSH (Secretive, 1Password).</td><td>Hors sujet.</td></tr>
+</table>
+<div class="callout note">
+<span class="callout-title">Positionnement retenu</span>
+<p><strong>Aucun plugin existant ne délègue à l'OS.</strong> Le créneau de ce projet n'est donc pas
+« déverrouiller automatiquement le Vault » (déjà couvert depuis le 2026-07-23 pour les utilisateurs
+de KeePassXC) mais « le faire <strong>sans aucun gestionnaire tiers</strong>, via le keychain natif
+de la machine ». Le pitch du <code>README.md</code> public doit refléter cette différence, pas
+prétendre à l'antériorité.</p>
+</div>
+
+<h3>Ce que le code de <code>tabby-vault-keepassxc</code> nous apprend</h3>
+<p>Son bundle npm a été lu (<code>dist/services/vault-passphrase-bridge.service</code>). Il
+<strong>confirme indépendamment</strong> le diagnostic de la
+<a href="#verification">vérification de faisabilité</a> : faute d'API d'injection, il monkey-patche
+la méthode sur l'instance du service.</p>
+<pre><code>install(vault, client, _settings) {
+    this.originalGetPassphrase = vault.getPassphrase.bind(vault);
+    this.serializedFetch = serializeAsync(() =&gt; this.resolvePassphrase());
+    vault.getPassphrase = () =&gt; this.serializedFetch();
+}</code></pre>
+<p>Installé depuis le constructeur de son <code>NgModule</code>, via
+<code>this.injector.get(core.VaultService)</code> — avec un garde
+<code>if (!core.VaultService) return</code> et un <code>try/catch</code> englobant. Aucun cache de
+passphrase dans le bundle (malgré ce que suggère son README) : il réinterroge KeePassXC à chaque
+appel, et retombe sur <code>originalGetPassphrase</code> en cas d'échec.</p>
+
+<h2 id="contournement">Contournement retenu — patch de <code>getPassphrase</code></h2>
+<div class="callout important">
+<span class="callout-title">Décision actée le 2026-07-28 par l'utilisateur</span>
+<p>Question posée : accepte-t-on de piloter le Vault par un mécanisme non officiel, alors que Tabby
+a délibérément fermé l'accès programmatique au mot de passe maître ? <strong>Réponse : oui</strong>,
+au vu de l'état de l'art (un plugin publié fait déjà exactement cela) et de l'absence d'alternative.
+Le projet est donc lancé.</p>
+</div>
+
+<h3>Principe</h3>
+<p>Remplacer <code>getPassphrase</code> sur l'<strong>instance</strong> de <code>VaultService</code>
+obtenue via l'injecteur Angular, en conservant l'originale pour le repli. Notre implémentation
+déchiffre le token via l'OS, retourne la passphrase, et ne conserve rien.</p>
+
+<div class="callout important">
+<span class="callout-title">Correction d'une erreur d'analyse du 2026-07-28 (matin)</span>
+<p>Une première version de cette section écartait le patch d'instance au motif qu'il
+« obligerait à garder le mot de passe en clair dans une closure pendant toute la session », et lui
+préférait une interception de <code>NgbModal.open()</code>. <strong>C'est faux</strong> :
+rien n'oblige à mettre en cache. En redéchiffrant via l'OS à chaque appel — ce que fait
+<code>tabby-vault-keepassxc</code>, qui réinterroge sa source à chaque fois — la passphrase ne vit
+que le temps de l'appel, ce qui respecte pleinement l'invariant de purge RAM. Le patch d'instance
+est donc <strong>retenu</strong>, et l'interception de modal abandonnée (plus fragile : elle
+imposait d'identifier <code>UnlockVaultModalComponent</code> par son nom, cette classe n'étant pas
+réexportée — cf. <a href="AI-CONTEXT.html#piege-v1">#V1</a>).</p>
+</div>
+
+<h3>Conséquences connues et fragilités</h3>
+<ul>
+<li><strong>Le cache natif n'est jamais rempli</strong> : <code>_rememberedPassphrase</code> reste
+  <code>null</code>, donc <code>isOpen()</code> renvoie toujours <code>false</code>
+  (<a href="AI-CONTEXT.html#piege-v6">#V6</a>) et le réglage natif « remember for » devient sans
+  effet. C'est à nous d'assumer la politique de durée — voir
+  <a href="AI-CONTEXT.html#piege-v5">#V5</a>.</li>
+<li><strong>Toujours conserver <code>originalGetPassphrase</code></strong> et y retomber à la
+  moindre erreur : OS indisponible, token absent, token obsolète après changement du mot de passe
+  maître. Jamais d'erreur bloquante — la pop-up native doit reprendre la main de façon
+  transparente.</li>
+<li><strong>Sérialisation</strong> : Tabby enveloppe déjà <code>getPassphrase</code> dans
+  <code>serializeFunction</code> au niveau du constructeur. Notre remplaçante doit sérialiser ses
+  propres appels pour ne pas déclencher plusieurs déchiffrements concurrents.</li>
+<li>Dépendance à des détails d'implémentation internes : à revérifier à chaque mise à jour de Tabby,
+  au même titre que les pièges du projet frère.</li>
+</ul>
+
+<h2 id="spike">Spike d'observation — verdict rendu le 2026-07-28</h2>
+<div class="callout important">
+<span class="callout-title">✅ Les deux inconnues sont levées — le projet est viable</span>
+<table>
+<tr><th>Inconnue</th><th>Verdict</th></tr>
+<tr><td><a href="AI-CONTEXT.html#piege-v7">#V7</a> — accès à l'OS</td>
+    <td><code>require("@electron/remote")</code> OK, <code>remote.safeStorage</code> présent,
+    <code>isEncryptionAvailable()</code> → <code>true</code>. <strong>Délégation à l'OS
+    possible</strong>, sans repli sur <code>keytar</code>.</td></tr>
+<tr><td><a href="AI-CONTEXT.html#piege-v4">#V4</a> — timing</td>
+    <td><code>isEnabled=false</code> à la pose du patch alors que le coffre existe : nous passons
+    <strong>avant <code>ConfigService.init()</code></strong>, donc avant la pop-up même en config
+    chiffrée (cas non observé directement — machine de test en config non chiffrée).</td></tr>
+</table>
+<p>Le comportement natif est resté intact pendant tout le test : deux appels réels à
+<code>getPassphrase()</code>, le premier avec saisie utilisateur, le second servi par le cache natif
+de Tabby.</p>
+</div>
+<p class="muted">Le reste de cette section décrit le spike tel qu'il a été conçu, conservé pour
+mémoire.</p>
+<p>Objectif : lever les deux inconnues empiriques <strong>sans jamais substituer la passphrase</strong>
+lors des premières exécutions. Le spike <em>enveloppe</em> <code>getPassphrase</code> (appel de
+l'originale + journalisation) au lieu de la remplacer.</p>
+<div class="callout important">
+<span class="callout-title">Pourquoi observer avant de substituer</span>
+<p>Il n'existe pas d'équivalent « données jetables » pour un coffre-fort : le test porte forcément
+sur la vraie config de l'utilisateur. Une substitution qui échoue au mauvais moment peut le
+verrouiller hors de sa propre configuration. La règle de prudence du workspace s'applique donc en
+version renforcée : <strong>première exécution en lecture seule</strong>.</p>
+</div>
+<ol>
+<li><strong>Lève <a href="AI-CONTEXT.html#piege-v4">#V4</a> (timing)</strong> : journaliser
+  l'horodatage de chargement du module du plugin, celui du premier appel à
+  <code>getPassphrase</code>, la valeur de <code>config.encrypted</code> et la pile d'appel — pour
+  savoir si notre patch est en place avant le premier appel, y compris en config chiffrée.</li>
+<li><strong>Lève <a href="AI-CONTEXT.html#piege-v7">#V7</a> (accès à l'OS)</strong> : tester
+  <code>require('@electron/remote')</code> puis <code>safeStorage.isEncryptionAvailable()</code>
+  depuis le plugin, et journaliser le résultat sans rien chiffrer.</li>
+<li>Vérifier au passage que <code>injector.get(VaultService)</code> rend bien l'instance déjà
+  construite et que notre enveloppe se pose au-dessus de celle de <code>serializeFunction</code>.</li>
+</ol>
+
+<h3 id="timing">Risque de faisabilité restant — le timing (non tranché)</h3>
+<div class="callout warning">
+<span class="callout-title">À vérifier empiriquement avant de s'engager</span>
+<p>Si la config de l'utilisateur est chiffrée (<code>config.encrypted === true</code>), la pop-up
+est déclenchée très tôt au démarrage par <code>ConfigService.init()</code>
+(<a href="AI-CONTEXT.html#piege-v4">#V4</a>). Il n'est <strong>pas établi</strong> qu'un plugin tiers
+puisse installer son interception avant ce moment — un plugin a lui-même besoin de
+<code>ConfigService</code>, ce qui rend l'ordre d'initialisation défavorable.</p>
+<p>Si la config n'est pas chiffrée, le problème ne se pose pas : la pop-up n'arrive qu'à la première
+demande de secret, largement après le chargement des plugins. <strong>Il est donc possible que le
+plugin ne soit réalisable que dans ce second cas</strong> — ce qui réduirait sa portée et mérite
+d'être su avant d'écrire du code.</p>
+<p>Vérification requise : Tabby lancé avec <code>--debug --remote-debugging-port=9333</code>
+(piège hérité #8), sur un profil de test, pour observer l'ordre réel d'initialisation. Non fait à ce
+jour.</p>
+</div>
+
+<h3>Point ouvert secondaire — accès à <code>safeStorage</code></h3>
+<p><strong>Largement levé le 2026-07-28 par lecture du chargeur de plugins</strong> (détail en
+<a href="AI-CONTEXT.html#piege-v7">#V7</a>) : Tabby ajoute <code>&lt;app.asar&gt;/node_modules</code>
+au <code>NODE_PATH</code> puis appelle <code>Module._initPaths()</code>, et
+<code>@electron/remote</code> comme <code>keytar</code> sont bien présents dans cette archive. Un
+plugin tiers peut donc les résoudre. Reste à confirmer empiriquement que <code>safeStorage</code>
+est effectivement proxifié par <code>@electron/remote</code> et que
+<code>isEncryptionAvailable()</code> renvoie <code>true</code> — c'est dans le périmètre du
+<a href="#spike">spike</a>.</p>
 
 <h2 id="scaffold">Scaffold du plugin</h2>
 <p>Pas encore commencé. Probablement la même mécanique que <code>tabby-better-sidebar</code> à son
@@ -49,11 +234,22 @@ le détail de ce qui avait été fait) :</p>
 <li>Scaffold <code>package.json</code>/<code>tsconfig.json</code>/<code>webpack.config.js</code>/<code>LICENSE</code>.</li>
 <li>Jonction NTFS de dev dans <code>%APPDATA%\tabby\plugins\node_modules\tabby-better-vault</code>
   (pas <code>TABBY_PLUGINS</code>, cassé sur Windows).</li>
-<li>Dépôt Git créé — <strong><code>.AIRules/</code> à déplacer dans ce dépôt dès sa création</strong>,
-  pas à le laisser au niveau <code>Développement/</code> (leçon du projet frère).</li>
+<li>✅ <strong>Fait</strong> : dépôt Git créé le 2026-07-26 (remote
+  <code>https://github.com/TooMuhtsh/tabby-better-vault</code>), avec <code>.AIRules/</code>
+  directement versionné dedans — leçon du projet frère appliquée dès le départ.</li>
 </ul>
+<p class="muted">Le reste du scaffold est explicitement gelé tant que la
+<a href="#contournement">décision sur le contournement</a> n'est pas prise.</p>
 
 <h2 id="unlock">Déverrouillage automatique du coffre-fort</h2>
+<div class="callout important">
+<span class="callout-title">Design initial invalidé le 2026-07-28 — conservé pour référence</span>
+<p>Le flux ci-dessous suppose une injection programmatique du mot de passe dans
+<code>VaultService</code> ; la <a href="#verification">vérification de faisabilité</a> a montré que
+cette API n'existe pas. Les <strong>objectifs</strong> et les <strong>règles de sécurité</strong> de
+cette section restent entièrement valables — seule l'étape 2 du flux d'injection est à remplacer, par
+le <a href="#contournement">contournement proposé</a> si celui-ci est retenu.</p>
+</div>
 <p>Objectif : éviter la ressaisie du mot de passe maître de Tabby à chaque démarrage, en déléguant
 le chiffrement à l'OS plutôt qu'en stockant le mot de passe en clair.</p>
 
@@ -68,30 +264,78 @@ le chiffrement à l'OS plutôt qu'en stockant le mot de passe en clair.</p>
 <ol>
 <li>Mécanisme <strong>opt-in</strong> (à activer explicitement dans les options du plugin — jamais
   actif par défaut sans action explicite de l'utilisateur).</li>
-<li>Au démarrage, déchiffrement du token via l'OS puis tentative d'injection programmatique dans le
-  <code>VaultService</code> de Tabby, avant que la pop-up native de saisie n'apparaisse.</li>
+<li><s>Au démarrage, déchiffrement du token via l'OS puis tentative d'injection programmatique dans le
+  <code>VaultService</code> de Tabby, avant que la pop-up native de saisie n'apparaisse.</s>
+  <strong>Étape caduque</strong> : l'injection programmatique n'existe pas
+  (<a href="AI-CONTEXT.html#piege-v2">#V2</a>), et le moment d'apparition de la pop-up dépend de
+  <code>config.encrypted</code> (<a href="AI-CONTEXT.html#piege-v4">#V4</a>) — elle n'apparaît pas
+  systématiquement au démarrage. À remplacer par le <a href="#contournement">contournement</a>.</li>
 <li>Garde-fou si l'injection échoue (ex. mot de passe maître changé depuis les réglages natifs de
   Tabby) : suppression immédiate du token local obsolète, retour transparent à la pop-up native —
   jamais d'erreur bloquante affichée à l'utilisateur pour cette fonctionnalité de confort.</li>
 </ol>
 
-<div class="callout warning">
-<span class="callout-title">Sécurité RAM — non négociable</span>
-<p>La variable JS contenant le mot de passe maître déchiffré en clair doit être
-<strong>immédiatement écrasée (<code>= null</code>) dès que l'injection dans le moteur de Tabby est
-validée</strong>, pour limiter au minimum la fenêtre d'exposition du secret en mémoire vive. À
-respecter dès le premier prototype, pas seulement en version finale.</p>
+<div class="callout important">
+<span class="callout-title">Sécurité RAM — non négociable, reformulé le 2026-07-28</span>
+<p><strong>Énoncé d'origine</strong> : « la variable contenant le mot de passe déchiffré doit être
+immédiatement écrasée (<code>= null</code>) dès que l'injection dans le moteur de Tabby est
+validée ».</p>
+<p><strong>Pourquoi il fallait le reformuler</strong> : il n'y a plus d'étape d'injection. Le plugin
+ne pousse pas un mot de passe vers Tabby — il <em>est</em> la source que Tabby interroge, et la
+valeur rendue est une chaîne JS immuable, qu'on ne peut ni écraser ni remettre à zéro. Appliquer la
+règle à la lettre n'a donc plus de sens.</p>
+<p><strong>Énoncé applicable, de portée identique</strong> : le mot de passe en clair ne doit
+<strong>survivre à aucun appel</strong>. Il ne vit que dans les variables locales de la fonction qui
+le résout ; il n'est jamais placé dans un champ d'objet, jamais mis en cache, jamais journalisé
+(sa longueur non plus), jamais écrit sur disque autrement que chiffré par l'OS. La contrainte est
+la même — fenêtre d'exposition minimale — seule sa formulation change.</p>
+<p><strong>Conséquence assumée</strong> : puisque rien n'est mis en cache, chaque appel redéchiffre
+le jeton via le keychain. C'est le prix de la règle, et il est négligeable (DPAPI/Keychain répondent
+en quelques millisecondes).</p>
 </div>
 
-<h3>Stockage du token local</h3>
-<p>Le token chiffré (nom de clé à définir, ex. <code>vaultAutoUnlockToken</code>) est strictement
-local à la machine — ne doit <strong>jamais</strong> être exportable/synchronisable (contrairement
-aux réglages classiques d'un plugin). Si ce plugin gagne un jour ses propres réglages persistés
-dans <code>config.yaml</code> via <code>ConfigProvider</code>, cette clé doit être explicitement
-exclue de tout mécanisme d'export/partage — voir la discipline équivalente déjà appliquée aux
-workspaces de <code>tabby-better-sidebar</code>
+<h3 id="stockage">Stockage du jeton local — décidé le 2026-07-28</h3>
+<p><strong>Fichier séparé</strong> : <code>better-vault-token.bin</code>, à côté de
+<code>config.yaml</code> dans le dossier de configuration de Tabby. Jamais dans
+<code>config.yaml</code>.</p>
+<div class="callout important">
+<span class="callout-title">La raison n'est pas celle qu'on croit</span>
+<p>Question posée par l'utilisateur : quel risque à ce que le jeton soit exportable, puisqu'il n'est
+utilisable que sur une seule machine au monde ? <strong>Analyse : il a raison sur la
+confidentialité.</strong> Un blob chiffré par <code>safeStorage</code> est inexploitable ailleurs —
+sous Windows, DPAPI le lie même au compte utilisateur, pas seulement à la machine. Le risque de
+fuite du secret par export est quasi nul (à l'exception de Linux, voir plus bas).</p>
+<p><strong>Ce qui tranche est fonctionnel, pas sécuritaire.</strong> La synchronisation de config de
+Tabby (<code>tabby-settings/src/services/configSync.service.ts</code>) envoie l'intégralité de
+<code>config.yaml</code> sauf la seule clé <code>configSync</code>, et
+<code>writeConfigDataFromSync()</code> écrase le fichier local par la version distante. Un jeton
+propre à une machine placé là déclencherait une <strong>boucle de destruction mutuelle</strong> :</p>
+<ol>
+<li>La machine A enregistre son jeton → synchronisation.</li>
+<li>La machine B le reçoit, écrase son <code>config.yaml</code>, échoue à le déchiffrer, le purge
+  (garde-fou normal), sauvegarde → resynchronise.</li>
+<li>La machine A retélécharge : son jeton a disparu, l'utilisateur doit ressaisir.</li>
+</ol>
+<p>Et ainsi de suite à chaque cycle. Ce n'est pas un scénario d'attaque, c'est le fonctionnement
+nominal dès qu'on a deux machines synchronisées.</p>
+</div>
+<p>Ce fichier ne doit donc jamais être réintégré à <code>config.yaml</code> ni ajouté à un
+quelconque mécanisme d'export — même discipline que pour les workspaces de
+<code>tabby-better-sidebar</code>
 (<a href="../../tabby-ssh-sidebar/.AIRules/ROADMAP.html#workspaces">son ROADMAP.html</a>, où
 l'export ne porte jamais sur les données sensibles).</p>
+
+<h3 id="linux">Garde-fou Linux — <code>basic_text</code> refusé</h3>
+<p>Sur Linux, <code>safeStorage</code> retombe silencieusement sur un backend <code>basic_text</code>
+quand <code>XDG_CURRENT_DESKTOP</code> ne figure pas dans la liste codée en dur d'Electron — ce qui
+inclut des gestionnaires de fenêtres répandus (Sway, i3, Hyprland, bspwm, awesome). Dans ce mode, la
+clé est dérivée d'un mot de passe <strong>codé en dur</strong>, avec le sel fixe
+<code>"saltysalt"</code> et <strong>une seule</strong> itération de PBKDF2 : le chiffrement est
+décoratif et le jeton lisible par quiconque.</p>
+<p>Le plugin <strong>refuse donc de s'activer</strong> si
+<code>getSelectedStorageBackend()</code> renvoie <code>basic_text</code>, plutôt que d'offrir une
+fausse impression de sécurité. C'est le seul cas où l'argument « le jeton est inexploitable
+ailleurs » tombe.</p>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
 <p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à

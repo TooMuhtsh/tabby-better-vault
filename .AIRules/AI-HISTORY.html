@@ -24,6 +24,144 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Implémentation du déverrouillage automatique (2026-07-28)</h2>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>✅ Validé en conditions réelles par l'utilisateur — le plugin remplit son objectif.</strong>
+Cycle complet observé dans <code>better-vault.log</code> : session 19:02 « mot de passe confié au
+keychain de l'OS » après ~25 s de saisie manuelle (apprentissage), puis session 19:03 « jeton
+vérifié » et « coffre déverrouillé depuis le keychain de l'OS » — <strong>sans aucune pop-up</strong>.
+Jeton de 47 octets écrit dans <code>better-vault-token.bin</code>, chiffré par DPAPI. La chaîne
+complète fonctionne : patch de <code>getPassphrase</code>, chiffrement OS, vérification PBKDF2 locale
+contre le coffre de <code>config.yaml</code>, service du mot de passe. Activation faite à la main via
+<code>betterVault.enabled: true</code> (pas encore de panneau de réglages). Contexte de validation :
+Windows 11, config <em>non</em> chiffrée — le cas <code>encrypted: true</code> reste non
+observé.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Première implémentation fonctionnelle, compile.</strong> Le spike est retiré au profit du
+vrai service. Fichiers : <code>osKeychain.ts</code> (safeStorage + refus du backend
+<code>basic_text</code>), <code>tokenStore.ts</code> (fichier séparé
+<code>better-vault-token.bin</code>), <code>vaultCrypto.ts</code> (vérification locale du mot de
+passe), <code>tabbyConfig.ts</code> (lecture du coffre dans <code>config.yaml</code>),
+<code>config.ts</code> (<code>ConfigProvider</code>, opt-in par défaut à <code>false</code>),
+<code>vaultBridge.service.ts</code> (orchestration). Fonctionnement : jeton présent → vérifié puis
+servi ; absent → délégation à la pop-up native puis mémorisation ; périmé ou keychain indisponible →
+purge et repli silencieux. <strong>Pas encore de panneau de réglages</strong> : l'activation passe
+par <code>betterVault.enabled: true</code> dans <code>config.yaml</code>.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Décision de stockage : fichier séparé</strong>, actée après une objection pertinente de
+l'utilisateur (« quel risque, puisque le jeton n'est utilisable que sur une seule machine ? »).
+L'analyse lui a donné raison sur la confidentialité — le motif retenu est <em>fonctionnel</em> : la
+synchronisation de config de Tabby provoquerait une boucle de destruction mutuelle du jeton entre
+machines. Voir <a href="ROADMAP.html#stockage">ROADMAP.html § Stockage</a>. Ajout au passage du
+garde-fou Linux <code>basic_text</code> (<a href="ROADMAP.html#linux">§ Linux</a>), seul cas où le
+jeton exporté serait réellement lisible.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Deux corrections de documentation</strong> imposées par l'implémentation :
+<a href="AI-CONTEXT.html#piege-v6">#V6</a> affirmait que le cache natif n'est
+« jamais » rempli — c'est faux dès qu'on délègue à la méthode native (apprentissage, repli), le
+piège est donc reformulé en conditionnel ; et l'invariant de purge RAM de la ROADMAP, qui parlait
+d'« écraser la variable après injection », a été reformulé à portée constante puisqu'il n'y a plus
+d'étape d'injection et qu'une chaîne JS ne peut pas être écrasée. Nouveau piège
+<a href="AI-CONTEXT.html#piege-v10">#V10</a> : les paramètres cryptographiques de Tabby sont
+répliqués dans <code>vaultCrypto.ts</code> et devront être revérifiés à chaque mise à jour.</td></tr>
+</table>
+
+<h2>Lancement du projet — état de l'art et spike (2026-07-28)</h2>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>✅ Verdict du spike : le projet est techniquement viable.</strong> Six sessions Tabby
+journalisées dans <code>%APPDATA%\tabby\better-vault-spike.log</code>.
+<a href="AI-CONTEXT.html#piege-v7">#V7</a> entièrement levé —
+<code>require("@electron/remote")</code> OK, <code>remote.safeStorage</code> présent,
+<code>isEncryptionAvailable()</code> renvoie <code>true</code>. La délégation à l'OS est donc
+possible depuis un plugin tiers, sans repli sur <code>keytar</code>.
+<a href="AI-CONTEXT.html#piege-v4">#V4</a> levé également : <code>isEnabled=false</code> au moment
+de la pose du patch, alors que le coffre existe dans <code>config.yaml</code>, prouve que le patch
+précède <code>ConfigService.init()</code> — donc aussi la pop-up du cas « config chiffrée » (cas non
+observé directement, la machine de test étant en config non chiffrée). Le comportement natif est
+resté intact : deux appels réels à <code>getPassphrase()</code> depuis <code>decrypt()</code>, le
+premier avec saisie utilisateur (~7 s), le second servi par le cache natif (1 ms).
+<strong>Prochaine étape : implémenter le vrai service de déverrouillage.</strong></td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Analyse statique du chargeur de plugins de Tabby — <a href="AI-CONTEXT.html#piege-v7">#V7</a>
+levé sans lancer Tabby.</strong> <code>initModuleLookup()</code> (dans <code>app.asar</code>) ajoute
+<code>&lt;app.asar&gt;/node_modules</code> au <code>NODE_PATH</code> puis force
+<code>Module._initPaths()</code> ; l'en-tête de l'archive confirme la présence de
+<code>@electron/remote</code> et de <code>keytar</code> parmi ses 351 modules. Le risque jugé le
+plus élevé du projet tombe. Deux trouvailles incidentes documentées au passage :
+<a href="AI-CONTEXT.html#piege-v8">#V8</a> (liste exacte des modules pré-cachés par Tabby, donc des
+externals webpack sûrs) et <a href="AI-CONTEXT.html#piege-v9">#V9</a> (cause racine du piège hérité
+#1 : <code>TABBY_PLUGINS.split(':')</code> codé en dur, structurellement incompatible avec les
+chemins Windows <code>C:\…</code> — à remonter au projet frère, qui n'en documente que le symptôme).
+Enfin, la séquence <code>loadPlugins()</code> → <code>bootstrapModule()</code> combinée au
+<code>setTimeout</code> de <code>ConfigService.init()</code> rend
+<a href="AI-CONTEXT.html#piege-v4">#V4</a> probablement favorable, mais cela reste à confirmer par le
+spike.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Scaffold + spike d'observation écrits et compilés.</strong>
+<code>package.json</code> / <code>tsconfig.json</code> / <code>webpack.config.js</code> /
+<code>.gitignore</code> repris du projet frère (mêmes versions verrouillées Angular 15) ;
+<code>src/index.ts</code>, <code>src/spike.service.ts</code>, <code>src/spikeLogger.ts</code>.
+<code>@electron/remote</code> déclaré en external webpack. Build OK, jonction NTFS de dev créée
+dans <code>%APPDATA%\tabby\plugins\node_modules\tabby-better-vault</code>. Le spike
+<strong>enveloppe</strong> <code>getPassphrase</code> sans jamais la substituer et journalise dans
+<code>%APPDATA%\tabby\better-vault-spike.log</code> — la passphrase n'est jamais écrite dans ce
+journal, même indirectement. En attente d'exécution manuelle par l'utilisateur pour rendre son
+verdict sur <a href="AI-CONTEXT.html#piege-v4">#V4</a> et
+<a href="AI-CONTEXT.html#piege-v7">#V7</a>.</td></tr>
+<tr><td>2026-07-28</td><td>n/a</td>
+<td><strong>Décision utilisateur : projet lancé.</strong> Le contournement par monkey-patch de
+<code>getPassphrase</code> est acté malgré son caractère non officiel. Deux éléments ont motivé
+l'arbitrage : l'état de l'art (125 plugins <code>tabby-*</code> sur npm ; un seul traite le sujet,
+<code>tabby-vault-keepassxc</code> publié le 2026-07-23, et il emploie exactement ce monkey-patch)
+et l'absence d'alternative. <strong>Positionnement clarifié</strong> : le créneau n'est pas
+« déverrouiller le Vault » — déjà couvert pour les utilisateurs de KeePassXC — mais le faire sans
+gestionnaire tiers, via le keychain natif de l'OS.</td></tr>
+<tr><td>2026-07-28</td><td>n/a</td>
+<td><strong>Correction d'une erreur d'analyse commise le matin même</strong> : le patch d'instance
+avait été écarté au motif qu'il forcerait à conserver la passphrase en mémoire toute la session.
+Faux — en redéchiffrant à la demande, elle ne vit que le temps de l'appel. Le patch d'instance
+devient le mécanisme retenu et l'interception de <code>NgbModal</code> est abandonnée (plus
+fragile). Deux nouveaux pièges documentés : <a href="AI-CONTEXT.html#piege-v6">#V6</a> (le cache
+natif n'est plus rempli, <code>isOpen()</code> reste faux) et
+<a href="AI-CONTEXT.html#piege-v7">#V7</a> (rien ne prouve qu'un plugin tiers puisse résoudre
+<code>@electron/remote</code> — inconnue la plus risquée du projet).</td></tr>
+</table>
+
+<h2>Vérification de faisabilité (2026-07-28)</h2>
+<p>Exécution du garde-fou bloquant décrit dans <a href="README.html">README.html</a>, sur
+<code>tabby-core@1.0.231-nightly.0</code> (typings npm du projet frère + sources et bundle réels de
+l'app installée dans <code>C:\Program Files\Tabby\resources\builtin-plugins\tabby-core</code>).
+Aucun code de plugin écrit — lecture seule.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-28</td><td>n/a (pas de commit)</td>
+<td><strong>Résultat de la vérification : partiellement négatif.</strong> <code>VaultService</code>
+est bien accessible depuis un plugin tiers aux DEUX niveaux (typings <em>et</em> bundle webpack), mais
+<strong>aucune méthode publique n'injecte le mot de passe maître dans le cache de Tabby</strong> — la
+condition exacte posée par le garde-fou n'est donc pas remplie. Le design de la
+<a href="ROADMAP.html">ROADMAP</a> n'est pas réalisable tel quel ; un contournement par interception
+du modal a été identifié et documenté comme <em>proposition en attente de décision</em>, pas comme
+design validé. Détail des constats dans <a href="AI-CONTEXT.html#cat-vault">AI-CONTEXT.html</a>
+(pièges #V1 à #V5).</td></tr>
+</table>
+
+<h2>Mise en place du dépôt Git (2026-07-26 → constaté le 2026-07-28)</h2>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-28</td><td><code>92be359</code></td>
+<td>Constat de rattrapage documentaire : le dépôt Git existe en réalité depuis le 2026-07-26
+(<code>Initial commit: governance docs and project design</code>, remote
+<code>https://github.com/TooMuhtsh/tabby-better-vault.git</code>), avec <code>.AIRules/</code>
+versionné dans le dépôt du plugin lui-même — conforme à la leçon du projet frère. Les mentions
+« aucun dépôt Git à ce jour » de <code>README.html</code> et <code>ROADMAP.html</code> étaient
+périmées et ont été corrigées ce jour. L'entrée du 2026-07-26 ci-dessous est laissée telle quelle
+(journal non réécrit).</td></tr>
+</table>
+
 <h2>Genèse du projet (2026-07-26)</h2>
 <p>Le déverrouillage automatique du coffre-fort avait été envisagé comme une fonctionnalité de
 <code>tabby-better-sidebar</code>, puis explicitement sorti de son périmètre (pas une

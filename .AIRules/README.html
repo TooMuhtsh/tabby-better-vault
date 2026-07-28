@@ -16,12 +16,18 @@
 
 <h1>tabby-better-vault — Gouvernance IA</h1>
 
-<div class="callout note">
-<span class="callout-title">Projet pas encore démarré</span>
-<p>Aucun code, aucun <code>package.json</code>, aucun dépôt Git à ce jour — ce dossier ne contient
-que la <strong>décision de design déjà actée</strong> (voir <a href="ROADMAP.html">ROADMAP.html</a>)
-pendant le travail sur le projet frère <a href="../../tabby-ssh-sidebar/.AIRules/README.html"><code>tabby-better-sidebar</code></a>.
-Sert de point de départ le jour où ce plugin est effectivement scaffoldé.</p>
+<div class="callout important">
+<span class="callout-title">Projet lancé le 2026-07-28 — sur un mécanisme non officiel assumé</span>
+<p>La <strong>vérification de faisabilité bloquante n'a pas été franchie</strong> : Tabby n'expose
+aucune API d'injection du mot de passe maître (<a href="AI-CONTEXT.html#piege-v2">#V2</a>).
+L'utilisateur a néanmoins acté le lancement sur la base d'un <strong>monkey-patch de
+<code>VaultService.getPassphrase</code></strong>, mécanisme déjà employé par un plugin publié
+(<a href="ROADMAP.html#etat-de-lart">état de l'art</a>). Tout repose donc sur un comportement non
+contractuel de Tabby, à revérifier à chaque mise à jour.</p>
+<p><strong>Étape en cours : le <a href="ROADMAP.html#spike">spike d'observation</a></strong>, qui
+lève les deux inconnues empiriques restantes (<a href="AI-CONTEXT.html#piege-v4">#V4</a> timing,
+<a href="AI-CONTEXT.html#piege-v7">#V7</a> accès à l'OS). Il <em>observe</em> sans jamais substituer
+la passphrase — le coffre-fort n'a pas d'équivalent « données jetables ».</p>
 </div>
 
 <p>Plugin Tabby indépendant : déverrouillage automatique du coffre-fort (mot de passe maître) via
@@ -32,7 +38,8 @@ plugins de l'utilisateur.</p>
 
 <ul>
 <li>Dossier de travail : <code>C:\Users\Alex Ramirez\Documents\Développement\tabby-better-vault</code>
-  (à créer/scaffolder — rien dedans pour l'instant à part <code>.AIRules/</code>).</li>
+  — dépôt Git déjà en place, mais pas encore scaffoldé (pas de <code>package.json</code>, pas de
+  <code>src/</code>).</li>
 <li>Projet frère : <code>tabby-better-sidebar</code> —
   <a href="../../tabby-ssh-sidebar/.AIRules/README.html">.AIRules de ce projet</a>. Interfaçage
   prévu entre les deux (voir <a href="ROADMAP.html">ROADMAP.html</a>) : lien relatif valable tant
@@ -43,8 +50,10 @@ plugins de l'utilisateur.</p>
 <table>
 <tr><th>Fichier</th><th>Contenu</th></tr>
 <tr><td><a href="AI-CONTEXT.html">AI-CONTEXT.html</a></td>
-    <td>Invariants du code déjà construit — pour l'instant surtout des pièges <strong>hérités</strong>
-    du projet frère, à anticiper une fois le scaffold commencé (même stack Tabby/Angular/Electron).</td></tr>
+    <td>Invariants : l'<a href="AI-CONTEXT.html#cat-vault">anatomie réelle du Vault de Tabby</a>
+    (pièges propres <code>#V1</code>–<code>#V5</code>, établis par lecture des sources le 2026-07-28)
+    et les pièges <strong>hérités</strong> du projet frère, à anticiper une fois le scaffold commencé
+    (même stack Tabby/Angular/Electron).</td></tr>
 <tr><td><a href="AI-HISTORY.html">AI-HISTORY.html</a></td>
     <td>Journal chronologique par chantier, le plus récent en tête.</td></tr>
 <tr><td><a href="ROADMAP.html">ROADMAP.html</a></td>
@@ -56,15 +65,22 @@ plugins de l'utilisateur.</p>
 
 <h3>Avant la toute première ligne de code</h3>
 <div class="callout important">
-<span class="callout-title">Vérification bloquante</span>
-<p>Confirmer que <code>VaultService</code> (ou l'équivalent réel dans le <code>tabby-core</code>
-installé) expose bien une méthode d'injection programmatique du mot de passe maître utilisable
-depuis un plugin tiers — <strong>vérifier les DEUX niveaux</strong> : <code>typings/index.d.ts</code>
-ET le bloc d'export webpack réel de <code>dist/index.js</code> compilé. Ne jamais conclure sur un
-seul des deux (même discipline que le projet frère, pièges #6/#13/#17 de son AI-CONTEXT.html). Si
-cette vérification échoue, le design décrit dans <a href="ROADMAP.html">ROADMAP.html</a> n'est pas
-réalisable tel quel — remonter le blocage avant de continuer.</p>
+<span class="callout-title">Vérification bloquante — faite le 2026-07-28, non franchie</span>
+<p>La question posée était : <code>VaultService</code> expose-t-il une méthode d'injection
+programmatique du mot de passe maître utilisable depuis un plugin tiers ? Les deux niveaux exigés ont
+été vérifiés (typings <em>et</em> bloc d'export webpack de <code>dist/index.js</code>). Réponse :
+<strong>la classe est bien exportée, mais l'API d'injection n'existe pas</strong> — le cache du mot
+de passe est délibérément inaccessible (<a href="AI-CONTEXT.html#piege-v2">#V2</a>).</p>
+<p>Conformément à ce garde-fou, le blocage a été remonté et <strong>le design de
+<a href="ROADMAP.html">ROADMAP.html</a> n'est pas réalisable tel quel</strong>. Prochaine étape :
+arbitrage sur le <a href="ROADMAP.html#contournement">contournement proposé</a>, puis, s'il est
+retenu, vérification empirique du <a href="ROADMAP.html#timing">risque de timing</a> avant tout
+scaffold.</p>
 </div>
+<p class="muted">Leçon de méthode à conserver : <code>typings/index.d.ts</code> ne mentionne même pas
+le Vault, alors que la classe est bel et bien exportée via <code>export * from './api'</code>. Un
+grep sur le seul <code>index.d.ts</code> aurait produit un faux négatif — toujours suivre les
+réexports en cascade (<a href="AI-CONTEXT.html#piege-v1">#V1</a>).</p>
 
 <h3>En début de session sur ce projet</h3>
 <ol>
@@ -82,14 +98,15 @@ réalisable tel quel — remonter le blocage avant de continuer.</p>
 <li><strong>ROADMAP.html</strong> : dès qu'un chantier change de statut.</li>
 </ul>
 
-<div class="callout important">
-<span class="callout-title">Une fois le projet scaffoldé</span>
-<p><code>.AIRules/</code> doit vivre <strong>dans le dépôt Git</strong> du plugin dès qu'il en a un
-(pas au niveau parent <code>Développement/</code>) — leçon tirée du projet frère, où ce dossier avait
-été positionné au mauvais niveau puis déplacé pour rester versionné avec le code.</p>
+<div class="callout note">
+<span class="callout-title">Emplacement de ce dossier — déjà conforme</span>
+<p><code>.AIRules/</code> vit bien <strong>dans le dépôt Git</strong> du plugin (pas au niveau parent
+<code>Développement/</code>) — leçon tirée du projet frère, où ce dossier avait été positionné au
+mauvais niveau puis déplacé pour rester versionné avec le code. À préserver lors du scaffold.</p>
 </div>
 
-<footer>tabby-better-vault · dossier de gouvernance créé le 2026-07-26, avant tout code.</footer>
+<footer>tabby-better-vault · dossier de gouvernance créé le 2026-07-26, avant tout code ·
+dernière revue 2026-07-28 (vérification de faisabilité).</footer>
 
 </body>
 </html>
