@@ -419,6 +419,33 @@ fond dont la couleur est figée dans le SVG : impossible de la teindre en CSS, i
 pictogramme. Penser aussi à conserver le retrait à gauche (<code>padding-left</code>) qui lui réserve
 sa place, faute de quoi elle chevauche le texte.</p>
 
+<h3 id="piege-v13">#V13 — Ancrer une notification à un onglet impose de se passer de <code>ngx-toastr</code></h3>
+<p><code>ngx-toastr</code> place ses toasts dans un conteneur positionné par rapport à la
+<strong>fenêtre</strong> : <code>positionClass</code> ne propose que des coins d'écran
+(<code>toast-bottom-left</code>, etc.). Pour qu'une notification appartienne visuellement au terminal
+que l'utilisateur regarde, il faut l'insérer soi-même dans le corps de l'onglet actif, que Tabby
+marque de la classe <code>content-tab-active</code> sur son élément <code>tab-body</code>
+(<code>appRoot.component.pug</code>). C'est ce que fait <code>src/inlineToast.ts</code>.</p>
+<div class="callout warning">
+<span class="callout-title">Le piège n'est pas le positionnement, c'est le moment</span>
+<p><strong>Au démarrage, le coffre est déverrouillé avant qu'un seul onglet n'existe.</strong> Un
+<code>querySelector('tab-body.content-tab-active')</code> à cet instant renvoie <code>null</code> :
+la notification ne s'afficherait jamais dans le cas d'usage principal. Il faut donc attendre le
+premier onglet actif (<code>AppService.activeTabChange$</code>, plus un court délai pour laisser le
+DOM se rendre), avec un abandon au-delà de quelques dizaines de secondes — une notification tardive
+n'aurait plus de rapport lisible avec l'événement qu'elle annonce.</p>
+</div>
+<ul>
+<li>Ne force <code>position: relative</code> sur l'hôte que si son style calculé vaut
+  <code>static</code> : cela ne change pas le flux, seulement l'origine des coordonnées, et évite de
+  toucher au style de Tabby plus que nécessaire.</li>
+<li>Dépend d'un <strong>détail d'implémentation non contractuel</strong> (le nom de la classe) : si
+  Tabby le change, la notification disparaît silencieusement. Le déverrouillage doit rester
+  indépendant de cet affichage — il l'est.</li>
+<li>Portée : c'est l'<strong>onglet</strong>, pas le panneau actif d'un onglet splitté. Viser le
+  panneau supposerait de suivre le focus entre les splits.</li>
+</ul>
+
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>

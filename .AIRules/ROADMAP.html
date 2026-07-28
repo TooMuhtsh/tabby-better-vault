@@ -31,8 +31,8 @@
 <tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Base en place, compile</span></td><td>—</td></tr>
 <tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
 <tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
-<tr><td><a href="#audit">Journal d'audit</a></td>
-    <td><span class="pill planned">📋 Proposé — emplacement tranché, reste à implémenter</span></td><td>Suite immédiate</td></tr>
+<tr><td><a href="#audit">Journal d'audit et notifications</a></td>
+    <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
@@ -394,7 +394,19 @@ la laissant désactivée.</p>
   journal pour savoir de quel poste vient une trace.</li>
 </ul>
 
-<h2 id="audit">Journal d'audit — proposition (2026-07-28)</h2>
+<h2 id="audit">Journal d'audit et notifications — livré le 2026-07-28</h2>
+<div class="callout note">
+<span class="callout-title">Réalisé</span>
+<p>Horodatage absolu, niveaux <code>INFO</code>/<code>WARN</code>/<code>CRIT</code>, révocation
+manuelle et changements de configuration tracés, rétention réglable (défaut 90 jours) doublée d'un
+plafond de taille, boutons « Ouvrir » et « Purger » (avec confirmation), et notification de
+déverrouillage ancrée à l'onglet actif (<a href="AI-CONTEXT.html#piege-v13">#V13</a>). Le
+vocabulaire des messages a été aligné sur celui de l'interface : le journal disait « keychain » là où
+le panneau dit « trousseau », ce qui rendait une recherche infructueuse.</p>
+<p>Reste ouvert : viser le <strong>panneau</strong> actif plutôt que l'onglet dans une vue splittée,
+et décider si le README mentionne ce journal — auquel cas les deux réserves ci-dessous doivent y
+figurer telles quelles.</p>
+</div>
 <p>Enrichir <code>better-vault.log</code> pour en faire un véritable historique d'événements de
 cycle de vie : savoir quand le coffre a été ouvert, quand un jeton a expiré, quand un garde-fou
 s'est déclenché. <strong>Emplacement tranché par l'utilisateur : le fichier dédié existant</strong>,

@@ -24,6 +24,51 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Journal d'audit et notifications (2026-07-28)</h2>
+<p>Chantier mené sur la branche <code>feat/audit-log</code>, fusionnée dans <code>master</code> après
+validation de l'utilisateur — conformément à la règle « <code>.AIRules/</code> reflète
+<code>main</code> » : un état transitoire vit sur sa branche, doc comprise.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-28</td><td><code>e008d5a</code></td>
+<td><strong>Notification de déverrouillage ancrée à l'onglet actif.</strong> Demande initiale : un
+toast « en bas à gauche », précisée ensuite en « du terminal actif, pas de Tabby au global ».
+<code>ngx-toastr</code> ne sachant positionner que par rapport à la fenêtre, la notification est
+devenue un élément inséré à la main dans <code>tab-body.content-tab-active</code>
+(<code>src/inlineToast.ts</code>). <strong>Difficulté principale : au démarrage, le coffre est
+déverrouillé avant qu'aucun onglet n'existe</strong> — plutôt que de retomber sur un toast de
+fenêtre (ce que la demande visait justement à éviter), le plugin attend le premier onglet actif via
+<code>AppService.activeTabChange$</code> et renonce après 30 s. Limite assumée : c'est l'onglet, pas
+le panneau actif d'un split.</td></tr>
+<tr><td>2026-07-28</td><td><code>4b5224a</code></td>
+<td><strong>Notification à chaque déverrouillage automatique, et vocabulaire harmonisé.</strong>
+Affichée <strong>une seule fois par session</strong> : le journal réel montre trois déverrouillages
+en une seconde au démarrage, une notification par appel en aurait donc empilé trois.
+<strong>Bug d'ergonomie corrigé</strong> : l'utilisateur ne trouvait pas l'enregistrement de son mot
+de passe dans le journal, parce que celui-ci disait « confié au keychain de l'OS » là où l'interface
+dit « enregistré dans le gestionnaire d'identifiants ». Tous les messages visibles disent désormais
+« trousseau du système » ; « keychain » ne subsiste que dans les commentaires de code.</td></tr>
+<tr><td>2026-07-28</td><td><code>c5a2489</code></td>
+<td><strong>Boutons « Ouvrir » et « Purger » le journal</strong> dans le panneau. La purge demande
+confirmation (<code>platform.showMessageBox</code>) : le journal est le seul historique des
+ouvertures du coffre et l'effacer est irréversible. La purge est elle-même journalisée, un fichier
+vide étant autrement indiscernable d'un journal n'ayant jamais rien enregistré. Retrait au passage
+de la ligne « journal : … » répétée à chaque session, redondante avec le chemin affiché dans le
+panneau.</td></tr>
+<tr><td>2026-07-28</td><td><code>70cfc72</code></td>
+<td><strong>Le journal devient un historique d'audit.</strong> Horodatage absolu par ligne (les
+délais relatifs au démarrage répondaient à « combien de temps après le lancement », jamais à
+« quand »), niveaux <code>INFO</code>/<code>WARN</code>/<code>CRIT</code>, et les événements
+manquants : révocation manuelle (seule action délibérée ne laissant aucune trace),
+activation/désactivation, changement de politique d'expiration. Rétention configurable
+(30 / 90 / 365 j / illimitée, défaut 90), appliquée au démarrage, doublée d'un plafond de taille non
+configurable — la purge par date ne tournant qu'au démarrage, elle ne protégerait pas d'un incident
+journalisant en boucle en cours de session. Les lignes non horodatées sont conservées : mieux vaut
+une ligne périmée qu'un événement effacé par un changement de format. Calcul vérifié hors de Tabby
+sur les cas limites (frontière 89/90 j, mode illimité, troncature d'un fichier de 90 000
+lignes).</td></tr>
+</table>
+
 <h2>Publication du dépôt (2026-07-28)</h2>
 <table>
 <tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
