@@ -1,0 +1,85 @@
+h3.mb-3 Déverrouillage automatique du coffre-fort
+
+.alert.alert-warning(*ngIf='!keychain.available')
+  strong Trousseau du système indisponible.
+  |  {{keychain.reason}}
+  .mt-1.text-muted Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.
+
+.form-line
+  .header
+    .title Activer sur cette machine
+    .description Le mot de passe maître est confié au trousseau du système d'exploitation, jamais stocké en clair.
+  toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
+
+.form-line
+  .header
+    .title Nom de cette machine
+    .description Purement indicatif — sert à s'y retrouver dans les réglages et le journal.
+  input.form-control(
+    type='text',
+    [(ngModel)]='settings.machineName',
+    (change)='save()',
+    placeholder='poste maison',
+  )
+
+h4.mt-4.mb-2 Expiration
+
+.form-line
+  .header
+    .title Redemander le mot de passe
+    .description Prochaine échéance : {{expiryLabel}}
+  select.form-control(
+    [(ngModel)]='settings.expiry.mode',
+    (ngModelChange)='onExpiryChanged()',
+  )
+    option(value='schedule') À jour et heure fixes
+    option(value='sliding') Après un délai
+    option(value='never') Jamais
+
+.form-line(*ngIf="settings.expiry.mode === 'schedule'")
+  .header
+    .title Chaque
+    .description Choisir un créneau creux évite que la ressaisie tombe en pleine session de travail.
+  select.form-control.mr-2(
+    [(ngModel)]='settings.expiry.weekday',
+    (ngModelChange)='onExpiryChanged()',
+  )
+    option(*ngFor='let d of weekdays', [ngValue]='d.value') {{d.label}}
+  select.form-control(
+    [(ngModel)]='settings.expiry.hour',
+    (ngModelChange)='onExpiryChanged()',
+  )
+    option(*ngFor='let h of hours', [ngValue]='h') {{h}} h
+
+.form-line(*ngIf="settings.expiry.mode === 'sliding'")
+  .header
+    .title Durée de validité
+    .description En jours, à compter de la dernière saisie.
+  input.form-control(
+    type='number',
+    min='1',
+    max='365',
+    [(ngModel)]='settings.expiry.days',
+    (ngModelChange)='onExpiryChanged()',
+  )
+
+h4.mt-4.mb-2 Mot de passe enregistré
+
+.form-line
+  .header
+    .title(*ngIf='hasToken') Un mot de passe est enregistré sur cette machine
+    .title(*ngIf='!hasToken') Aucun mot de passe enregistré
+    .description(*ngIf='hasToken') Il sera oublié le {{expiryLabel}}, ou immédiatement si vous le demandez.
+    .description(*ngIf='!hasToken') Il sera enregistré à la prochaine saisie manuelle, si le plugin est activé.
+  button.btn.btn-danger(
+    *ngIf='hasToken',
+    (click)='forgetNow()',
+  )
+    i.fas.fa-trash.mr-2
+    | Oublier maintenant
+
+.form-line
+  .header
+    .title Mode observation
+    .description Journalise le déroulement sans jamais servir ni enregistrer de mot de passe. Pour diagnostiquer sans risque.
+  toggle([(ngModel)]='settings.debug', (ngModelChange)='save()')

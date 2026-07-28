@@ -26,6 +26,10 @@ module.exports = {
           configFile: path.resolve(__dirname, 'tsconfig.json'),
         },
       },
+      // Les composants Angular d'un plugin tiers ne peuvent pas utiliser
+      // `templateUrl` : le template doit être inliné via `require('./x.pug')`
+      // (.AIRules/AI-CONTEXT.html, piège hérité #3).
+      { test: /\.pug$/, use: ['apply-loader', 'pug-loader'] },
     ],
   },
   externals: [

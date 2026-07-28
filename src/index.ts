@@ -1,8 +1,11 @@
 import { NgModule } from '@angular/core'
 import { CommonModule } from '@angular/common'
-import TabbyCoreModule, { ConfigProvider } from 'tabby-core'
+import { FormsModule } from '@angular/forms'
+import TabbyCoreModule from 'tabby-core'
+import { SettingsTabProvider } from 'tabby-settings'
 
-import { BetterVaultConfigProvider } from './config'
+import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
+import { BetterVaultSettingsTabProvider } from './settings'
 import { VaultBridgeService } from './vaultBridge.service'
 import { log, startSession, LOG_PATH } from './logger'
 
@@ -11,11 +14,18 @@ startSession()
 @NgModule({
     imports: [
         CommonModule,
+        FormsModule,
         TabbyCoreModule,
     ],
     providers: [
-        { provide: ConfigProvider, useClass: BetterVaultConfigProvider, multi: true },
+        { provide: SettingsTabProvider, useClass: BetterVaultSettingsTabProvider, multi: true },
     ],
+    declarations: [
+        BetterVaultSettingsTabComponent,
+    ],
+    // Volontairement pas de ConfigProvider : les réglages de ce plugin ne
+    // peuvent pas vivre dans config.yaml, qui est lui-même chiffré dans le cas
+    // d'usage principal. Ils sont dans better-vault.json — voir src/store.ts.
 })
 export default class BetterVaultModule {
     /**

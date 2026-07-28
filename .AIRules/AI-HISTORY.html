@@ -28,6 +28,39 @@ entrées les plus récentes en tête.</p>
 <table>
 <tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
 <tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Panneau de réglages et expiration du jeton.</strong> Onglet « Coffre-fort auto » via
+<code>SettingsTabProvider</code> (<code>src/settings.ts</code>,
+<code>src/components/settingsTab.component.{ts,pug}</code>) : activation, nom de machine, politique
+d'expiration, bouton « Oublier maintenant », mode observation. Loaders Pug ajoutés au webpack
+(piège hérité #3). Expiration en trois modes, <strong>défaut « chaque lundi 3 h »</strong> choisi par
+l'utilisateur ; calcul vérifié sur les cas limites (créneau du jour déjà passé ou non, passage
+d'année, changement d'heure). Les quatre besoins « par machine » exprimés sont couverts sans
+mécanique dédiée : <code>better-vault.json</code> étant strictement local, chaque poste a
+naturellement ses propres réglages. <code>ToggleComponent</code> vérifié comme bien exporté par
+<code>TabbyCoreModule</code> avant de l'utiliser dans le template.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>✅ Cas « config chiffrée » validé en conditions réelles — <a href="AI-CONTEXT.html#piege-v4">#V4</a>
+définitivement levé.</strong> L'utilisateur ayant activé <code>encrypted: true</code>, le journal
+montre « jeton vérifié » puis « coffre déverrouillé » à <strong>+532 ms</strong> du démarrage, sans
+aucune pop-up — contre ~5 s en config non chiffrée, où l'appel n'arrive qu'à la première demande de
+secret. La preuve empirique du bon timing sur le chemin de démarrage est donc faite, là où il n'y
+avait jusque-là qu'un raisonnement. Plus aucune inconnue technique sur le projet.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
+<td><strong>Défaut de conception corrigé — les réglages ne pouvaient pas vivre dans
+<code>config.yaml</code>.</strong> Objection soulevée par l'utilisateur après avoir activé le
+chiffrement de configuration : « ça ne peut pas fonctionner puisque le paramètre lui-même est
+chiffré ». <strong>Exact</strong> — vérifié sur sa config, où seules <code>vault</code>,
+<code>encrypted</code> et <code>configSync</code> restent en clair. Le plugin lisait
+<code>config.store.betterVault</code>, qui aurait toujours renvoyé le défaut
+<code>enabled: false</code> dans ce régime : le plugin était donc inopérant en config chiffrée.
+Correctif : <code>ConfigProvider</code> supprimé, état complet (activation + jeton) déplacé dans
+<code>%APPDATA%\tabby\better-vault.json</code> (<code>src/store.ts</code>, remplace
+<code>tokenStore.ts</code> et <code>config.ts</code>). Nouveau piège
+<a href="AI-CONTEXT.html#piege-v11">#V11</a>. À noter que la vérification du mot de passe
+(<a href="AI-CONTEXT.html#piege-v10">#V10</a>) continue de fonctionner, la clé <code>vault:</code>
+restant nécessairement en clair. L'ancien <code>better-vault-token.bin</code> est supprimé au
+démarrage ; une ressaisie du mot de passe est nécessaire.</td></tr>
+<tr><td>2026-07-28</td><td>n/a (pas encore committé)</td>
 <td><strong>✅ Validé en conditions réelles par l'utilisateur — le plugin remplit son objectif.</strong>
 Cycle complet observé dans <code>better-vault.log</code> : session 19:02 « mot de passe confié au
 keychain de l'OS » après ~25 s de saisie manuelle (apprentissage), puis session 19:03 « jeton

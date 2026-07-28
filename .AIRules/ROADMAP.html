@@ -30,7 +30,7 @@
     <td><span class="pill planned">📋 Verdict rendu le 2026-07-28 : les deux levés</span></td><td>—</td></tr>
 <tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Base en place, compile</span></td><td>—</td></tr>
 <tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
-<tr><td>Panneau de réglages (opt-in, durée)</td><td><span class="pill planned">📋 Pas commencé — activation via config.yaml en attendant</span></td><td>Suite immédiate</td></tr>
+<tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill progress">🚧 Implémenté, compile — à tester</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
 </table>
 
@@ -336,6 +336,45 @@ décoratif et le jeton lisible par quiconque.</p>
 <code>getSelectedStorageBackend()</code> renvoie <code>basic_text</code>, plutôt que d'offrir une
 fausse impression de sécurité. C'est le seul cas où l'argument « le jeton est inexploitable
 ailleurs » tombe.</p>
+
+<h2 id="reglages">Panneau de réglages et politique d'expiration</h2>
+<p>Onglet « Coffre-fort auto » dans les paramètres de Tabby
+(<code>SettingsTabProvider</code> de <code>tabby-settings</code>, composant Angular avec template
+Pug inliné — piège hérité #3).</p>
+
+<h3>Expiration du jeton</h3>
+<p>Trois modes, l'échéance étant recalculée à chaque enregistrement de mot de passe :</p>
+<table>
+<tr><th>Mode</th><th>Comportement</th></tr>
+<tr><td><code>schedule</code> <strong>(défaut)</strong></td>
+    <td>Prochain créneau jour + heure fixes, <strong>lundi 3 h</strong> par défaut. Choisi pour que
+    la ressaisie tombe toujours au même moment, en début de semaine, jamais en pleine session.</td></tr>
+<tr><td><code>sliding</code></td>
+    <td>N jours à compter de la saisie, comme le « remember for » natif de Tabby. Simple, mais
+    l'échéance tombe à une heure imprévisible.</td></tr>
+<tr><td><code>never</code></td>
+    <td>Le jeton reste valide jusqu'à purge manuelle ou changement du mot de passe maître.</td></tr>
+</table>
+<p class="muted">Cas limites vérifiés sur le calcul : un jeton créé le lundi à 2 h expire le jour
+même à 3 h (pas une semaine plus tard) ; à 3 h pile ou après, il vise le lundi suivant. Passage
+d'année et changement d'heure traités — tout est calculé en heure locale.</p>
+<p>Un jeton enregistré <em>avant</em> qu'une politique d'expiration n'existe se voit attribuer une
+échéance au premier usage suivant, sans quoi il resterait éternellement valide alors que les
+réglages affichent une échéance.</p>
+
+<h3>Réglages par machine</h3>
+<p>Aucune mécanique dédiée n'a été nécessaire : <code>better-vault.json</code> étant strictement
+local et jamais synchronisé (<a href="#stockage">§ Stockage</a>), <strong>chaque machine a
+naturellement ses propres réglages</strong>. Un poste fixe peut garder le mot de passe une semaine
+pendant qu'un portable le redemande chaque jour, et l'exclusion d'une machine se fait simplement en
+la laissant désactivée.</p>
+<ul>
+<li><strong>Exclure une machine</strong> — interrupteur « Activer sur cette machine ».</li>
+<li><strong>Expiration propre à la machine</strong> — chaque poste a sa politique.</li>
+<li><strong>« Oublier maintenant »</strong> — purge immédiate du jeton, sans attendre l'échéance.</li>
+<li><strong>Nommer la machine</strong> — libellé indicatif (défaut : nom d'hôte), repris dans le
+  journal pour savoir de quel poste vient une trace.</li>
+</ul>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
 <p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à

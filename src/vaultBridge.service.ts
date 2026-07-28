@@ -1,9 +1,12 @@
 import { Injectable, Injector } from '@angular/core'
-import { ConfigService, VaultService } from 'tabby-core'
+import { VaultService } from 'tabby-core'
 
 import { log } from './logger'
 import { keychainStatus, encrypt, decrypt } from './osKeychain'
-import { readToken, writeToken, deleteToken } from './tokenStore'
+import {
+    readSettings, writeSettings, readToken, writeToken, deleteToken,
+    cleanUpLegacyToken, tokenHasExpired, computeExpiry, Settings,
+} from './store'
 import { readStoredVault } from './tabbyConfig'
 import { passphraseOpensVault } from './vaultCrypto'
 
@@ -30,7 +33,7 @@ export class VaultBridgeService {
     /** Sérialise nos propres résolutions, comme Tabby le fait pour la sienne. */
     private pending: Promise<string> | null = null
 
-    constructor (private injector: Injector, private config: ConfigService) { }
+    constructor (private injector: Injector) { }
 
     install (): void {
         if (this.installed) {
@@ -47,6 +50,7 @@ export class VaultBridgeService {
 
         this.installed = true
         this.original = vault.getPassphrase.bind(vault)
+        cleanUpLegacyToken()
 
         vault.getPassphrase = (): Promise<string> => {
             if (!this.pending) {
@@ -58,11 +62,18 @@ export class VaultBridgeService {
         }
 
         const status = keychainStatus()
-        log(`installé — keychain : ${status.available ? `disponible (${status.backend})` : `INDISPONIBLE (${status.reason})`}`)
+        const { machineName, enabled } = this.settings
+        log(`installé sur « ${machineName} » — plugin ${enabled ? 'actif' : 'inactif'} — keychain : ${status.available ? `disponible (${status.backend})` : `INDISPONIBLE (${status.reason})`}`)
     }
 
-    private get settings (): { enabled: boolean, debug: boolean } {
-        return this.config.store?.betterVault ?? { enabled: false, debug: false }
+    /**
+     * Lu depuis notre propre fichier, JAMAIS depuis ConfigService : quand la
+     * config est chiffrée, elle n'est pas encore déchiffrable à l'instant où
+     * cette méthode est appelée — et elle ne le sera qu'une fois le mot de passe
+     * fourni, c'est-à-dire par nous. Voir piège #V11.
+     */
+    private get settings (): Settings {
+        return readSettings()
     }
 
     /**
@@ -101,8 +112,26 @@ export class VaultBridgeService {
         return this.learnFromUser()
     }
 
-    /** Déverrouillage automatique : jeton présent, vérifié, servi. */
+    /** Déverrouillage automatique : jeton présent, non expiré, vérifié, servi. */
     private async serveFromToken (): Promise<string | null> {
+        const settings = this.settings
+        if (settings.token && tokenHasExpired(settings)) {
+            log('jeton arrivé à échéance — purge et saisie manuelle')
+            deleteToken()
+            this.tokenVerified = false
+            return null
+        }
+
+        // Jeton enregistré avant qu'une politique d'expiration ne soit définie
+        // (ou sous « jamais », puis la politique a changé) : on lui en attribue
+        // une maintenant, sinon il resterait éternellement valide alors que les
+        // réglages affichent une échéance.
+        if (settings.token && settings.tokenExpiresAt === null && settings.expiry.mode !== 'never') {
+            const expiresAt = computeExpiry(settings.expiry)
+            writeSettings({ ...settings, tokenExpiresAt: expiresAt })
+            log(`échéance appliquée au jeton existant : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
+        }
+
         const blob = readToken()
         if (!blob) {
             return null
@@ -150,9 +179,9 @@ export class VaultBridgeService {
     private async learnFromUser (): Promise<string> {
         const passphrase = await this.callOriginal()
         try {
-            writeToken(encrypt(passphrase))
+            const expiresAt = writeToken(encrypt(passphrase))
             this.tokenVerified = true
-            log('mot de passe confié au keychain de l\'OS pour les prochains démarrages')
+            log(`mot de passe confié au keychain de l'OS — échéance : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
         } catch (e) {
             // Échec d'enregistrement : sans conséquence pour l'utilisateur, il
             // ressaisira au prochain démarrage.

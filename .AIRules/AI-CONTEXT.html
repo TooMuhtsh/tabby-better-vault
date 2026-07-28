@@ -364,6 +364,38 @@ variable est <strong>inutilisable telle quelle sur Windows</strong>, quoi qu'on 
 NTFS n'est pas un contournement de confort, c'est la seule voie. À remonter au projet frère, dont le
 piège #1 ne documente que le symptôme.</p>
 
+<h3 id="piege-v11">#V11 — Ce plugin ne peut pas lire ses propres réglages dans <code>config.yaml</code></h3>
+<div class="callout important">
+<span class="callout-title">Impossibilité structurelle — pas un contournement de confort</span>
+<p>Quand l'utilisateur active le chiffrement de configuration, <code>config.yaml</code> ne contient
+plus que trois clés en clair : <code>vault</code>, <code>encrypted</code> et <code>configSync</code>.
+Tout le reste — profils, réglages, <strong>y compris ceux de ce plugin</strong> — vit à l'intérieur
+du blob chiffré. Or c'est exactement l'instant où le plugin doit agir. Lire
+<code>config.store.betterVault</code> exigerait donc le mot de passe que le plugin est justement
+chargé de fournir : <strong>poule et œuf</strong>.</p>
+<p>Conséquence : <code>ConfigProvider</code> est <strong>inutilisable</strong> pour ce plugin, et un
+réglage placé dans <code>config.yaml</code> serait silencieusement ignoré dans le cas d'usage
+principal. L'état complet (activation + jeton) vit dans
+<code>%APPDATA%\tabby\better-vault.json</code> — voir <code>src/store.ts</code>.</p>
+</div>
+<p>Ce qui reste lisible en clair, et sur quoi on peut donc compter :</p>
+<ul>
+<li>✅ <code>vault:</code> — le coffre chiffré lui-même, ce qui permet de vérifier un mot de passe
+  avant de le servir (<a href="#piege-v10">#V10</a>). Il <em>doit</em> rester en clair, sans quoi
+  Tabby ne pourrait pas déchiffrer sa propre config au démarrage.</li>
+<li>✅ <code>encrypted:</code> — indique le régime en vigueur.</li>
+<li>❌ Tout le reste, dès que <code>encrypted: true</code>.</li>
+</ul>
+<div class="callout note">
+<span class="callout-title">Le chiffrement de config n'est pas un obstacle, c'est le meilleur cas d'usage</span>
+<p>Réflexe initial de l'utilisateur en découvrant ce piège : désactiver le chiffrement de
+configuration pour que le plugin fonctionne. <strong>C'est l'inverse qu'il faut retenir</strong> —
+config non chiffrée, la pop-up n'apparaît qu'à la première demande de secret ; config chiffrée, elle
+apparaît à <em>chaque démarrage</em>. C'est donc là que le déverrouillage automatique apporte le
+plus de valeur, et il n'y a aucune raison de renoncer au chiffrement : il suffit que les réglages du
+plugin vivent ailleurs.</p>
+</div>
+
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>
