@@ -4,6 +4,7 @@ import { Component, HostBinding } from '@angular/core'
 // (piège hérité #3), les styles sont injectés en CSS globale.
 import './settingsTab.component.scss'
 
+import { log, LOG_PATH } from '../logger'
 import { keychainStatus } from '../osKeychain'
 import {
     Settings,
@@ -23,6 +24,7 @@ export class BetterVaultSettingsTabComponent {
 
     settings: Settings
     keychain = keychainStatus()
+    logPath = LOG_PATH
 
     readonly weekdays = [
         { value: 1, label: 'Lundi' },
@@ -35,6 +37,13 @@ export class BetterVaultSettingsTabComponent {
     ]
 
     readonly hours = Array.from({ length: 24 }, (_, h) => h)
+
+    readonly retentions = [
+        { value: 30, label: '30 jours' },
+        { value: 90, label: '90 jours' },
+        { value: 365, label: '1 an' },
+        { value: 0, label: 'Illimitée' },
+    ]
 
     constructor () {
         this.settings = readSettings()
@@ -75,6 +84,9 @@ export class BetterVaultSettingsTabComponent {
 
     forgetNow (): void {
         deleteToken()
+        // Purge délibérée de l'utilisateur : c'est l'événement le plus
+        // significatif du cycle de vie, il doit laisser une trace.
+        log('révocation manuelle depuis les réglages — jeton supprimé')
         this.settings = readSettings()
     }
 
@@ -91,12 +103,36 @@ export class BetterVaultSettingsTabComponent {
      */
     private persist (recomputeExpiry: boolean): void {
         const current = readSettings()
-        const { enabled, debug, machineName, expiry } = this.settings
+        const { enabled, debug, machineName, expiry, logRetentionDays } = this.settings
         const tokenExpiresAt = recomputeExpiry && current.token
             ? computeExpiry(expiry)
             : current.tokenExpiresAt
-        writeSettings({ ...current, enabled, debug, machineName, expiry, tokenExpiresAt })
+        writeSettings({ ...current, enabled, debug, machineName, expiry, logRetentionDays, tokenExpiresAt })
+
+        // Trace les changements qui modifient le comportement du plugin, pas
+        // les cosmétiques (le nom de machine n'en fait pas partie).
+        if (enabled !== current.enabled) {
+            log(`plugin ${enabled ? 'activé' : 'désactivé'} sur cette machine`)
+        }
+        if (debug !== current.debug) {
+            log(`mode observation ${debug ? 'activé' : 'désactivé'}`)
+        }
+        if (recomputeExpiry && JSON.stringify(expiry) !== JSON.stringify(current.expiry)) {
+            log(`politique d'expiration modifiée : ${this.describeExpiry(expiry)}`)
+        }
+
         // Relecture : l'affichage reflète le fichier, pas notre instantané.
         this.settings = readSettings()
+    }
+
+    private describeExpiry (expiry: Settings['expiry']): string {
+        if (expiry.mode === 'never') {
+            return 'aucune expiration'
+        }
+        if (expiry.mode === 'sliding') {
+            return `${expiry.days} jour(s) après la saisie`
+        }
+        const day = this.weekdays.find(d => d.value === expiry.weekday)?.label ?? '?'
+        return `chaque ${day.toLowerCase()} à ${expiry.hour} h`
     }
 }

@@ -12,8 +12,11 @@ import './toast.scss'
 import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
 import { BetterVaultSettingsTabProvider } from './settings'
 import { VaultBridgeService } from './vaultBridge.service'
-import { log, startSession, LOG_PATH } from './logger'
+import { log, crit, startSession, applyRetention, LOG_PATH } from './logger'
 
+// Purge avant d'ouvrir la session : les lignes du jour ne doivent jamais être
+// candidates à leur propre suppression.
+applyRetention()
 startSession()
 
 @NgModule({
@@ -45,7 +48,7 @@ export default class BetterVaultModule {
         } catch (e) {
             // Ce plugin est un confort : il ne doit jamais empêcher Tabby de
             // démarrer, quoi qu'il arrive.
-            log(`installation échouée — ${String(e)}`)
+            crit(`installation échouée — ${String(e)}`)
         }
         log(`journal : ${LOG_PATH}`)
     }

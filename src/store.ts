@@ -52,6 +52,8 @@ export interface Settings {
     debug: boolean
     /** Libellé de cette machine, pour s'y retrouver dans les réglages et le journal. */
     machineName: string
+    /** Durée de conservation du journal, en jours. 0 = illimitée. */
+    logRetentionDays: number
     expiry: Expiry
     /** Mot de passe maître chiffré par l'OS, encodé en base64. */
     token: string | null
@@ -67,6 +69,9 @@ function defaults (): Settings {
         enabled: false,
         debug: false,
         machineName: os.hostname(),
+        // 90 jours : assez pour enquêter sur un incident passé, pas assez pour
+        // que le fichier devienne illisible.
+        logRetentionDays: 90,
         expiry: { ...DEFAULT_EXPIRY },
         token: null,
         tokenExpiresAt: null,
@@ -96,6 +101,7 @@ export function readSettings (): Settings {
         enabled: parsed.enabled === true,
         debug: parsed.debug === true,
         machineName: typeof parsed.machineName === 'string' && parsed.machineName ? parsed.machineName : base.machineName,
+        logRetentionDays: coerceNumber(parsed.logRetentionDays, base.logRetentionDays, 0, 3650),
         expiry: {
             mode: ['schedule', 'sliding', 'never'].includes(expiry.mode) ? expiry.mode : base.expiry.mode,
             weekday: coerceNumber(expiry.weekday, base.expiry.weekday, 0, 6),

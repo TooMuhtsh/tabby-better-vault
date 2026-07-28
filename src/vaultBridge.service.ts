@@ -2,7 +2,7 @@ import { Injectable, Injector } from '@angular/core'
 import { ToastrService } from 'ngx-toastr'
 import { VaultService } from 'tabby-core'
 
-import { log } from './logger'
+import { log, warn, crit } from './logger'
 import { keychainStatus, keychainLabel, encrypt, decrypt } from './osKeychain'
 import {
     readSettings, writeSettings, readToken, writeToken, deleteToken,
@@ -47,7 +47,7 @@ export class VaultBridgeService {
         try {
             vault = this.injector.get(VaultService)
         } catch (e) {
-            log(`installation impossible : VaultService introuvable — ${String(e)}`)
+            crit(`installation impossible : VaultService introuvable — ${String(e)}`)
             return
         }
 
@@ -66,8 +66,14 @@ export class VaultBridgeService {
         }
 
         const status = keychainStatus()
-        const { machineName, enabled } = this.settings
-        log(`installé sur « ${machineName} » — plugin ${enabled ? 'actif' : 'inactif'} — keychain : ${status.available ? `disponible (${status.backend})` : `INDISPONIBLE (${status.reason})`}`)
+        if (status.available) {
+            log(`pont installé — trousseau disponible (${status.backend})`)
+        } else {
+            // Garde-fou déclenché : sans cette trace, l'utilisateur ne peut pas
+            // comprendre pourquoi le déverrouillage automatique ne se produit
+            // plus. Cas typique sous Linux : bascule sur le backend basic_text.
+            crit(`déverrouillage automatique impossible — ${status.reason}`)
+        }
     }
 
     /**
@@ -105,7 +111,7 @@ export class VaultBridgeService {
 
         const status = keychainStatus()
         if (!status.available) {
-            log(`keychain indisponible (${status.reason}) — saisie manuelle`)
+            warn(`keychain indisponible (${status.reason}) — saisie manuelle`)
             return this.callOriginal()
         }
 
@@ -120,7 +126,7 @@ export class VaultBridgeService {
     private async serveFromToken (): Promise<string | null> {
         const settings = this.settings
         if (settings.token && tokenHasExpired(settings)) {
-            log('jeton arrivé à échéance — purge et saisie manuelle')
+            warn('jeton arrivé à échéance — purge et saisie manuelle')
             deleteToken()
             this.tokenVerified = false
             return null
@@ -145,7 +151,7 @@ export class VaultBridgeService {
         try {
             passphrase = decrypt(blob)
         } catch (e) {
-            log(`jeton illisible (${String(e)}) — purge et saisie manuelle`)
+            warn(`jeton illisible (${String(e)}) — purge et saisie manuelle`)
             deleteToken()
             this.tokenVerified = false
             return null
@@ -159,11 +165,11 @@ export class VaultBridgeService {
                 // Pas de coffre lisible dans config.yaml : rien à vérifier
                 // contre. On préfère ne rien servir plutôt que de servir un
                 // mot de passe non validé.
-                log('coffre introuvable dans config.yaml — saisie manuelle')
+                warn('coffre introuvable dans config.yaml — saisie manuelle')
                 return null
             }
             if (!await passphraseOpensVault(store, passphrase)) {
-                log('jeton périmé (le mot de passe maître a changé ?) — purge et saisie manuelle')
+                warn('jeton périmé (le mot de passe maître a changé ?) — purge et saisie manuelle')
                 deleteToken()
                 this.tokenVerified = false
                 return null
@@ -210,7 +216,7 @@ export class VaultBridgeService {
         } catch (e) {
             // Échec d'enregistrement : sans conséquence pour l'utilisateur, il
             // ressaisira au prochain démarrage.
-            log(`enregistrement dans le keychain impossible — ${String(e)}`)
+            warn(`enregistrement dans le keychain impossible — ${String(e)}`)
         }
         return passphrase
     }
@@ -249,7 +255,7 @@ export class VaultBridgeService {
         } catch (e) {
             // Une notification qui échoue ne doit pas compromettre le
             // déverrouillage lui-même.
-            log(`notification impossible — ${String(e)}`)
+            warn(`notification impossible — ${String(e)}`)
         }
     }
 }

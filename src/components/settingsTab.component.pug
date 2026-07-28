@@ -86,3 +86,22 @@
       .title Mode observation
       .description Journalise le déroulement sans jamais servir ni enregistrer de mot de passe. Pour diagnostiquer sans risque.
     toggle([(ngModel)]='settings.debug', (ngModelChange)='save()')
+
+  h4.mt-4.mb-2 Journal
+
+  .form-line
+    .header
+      .title Conservation des entrées
+      .description Le journal retrace les ouvertures du coffre, les expirations et les révocations. Il ne contient jamais votre mot de passe.
+    select.form-control(
+      [(ngModel)]='settings.logRetentionDays',
+      (ngModelChange)='save()',
+    )
+      option(*ngFor='let r of retentions', [ngValue]='r.value') {{r.label}}
+
+  .form-line
+    .header
+      .title Emplacement
+      .description
+        code {{logPath}}
+      .description.mt-1 Fichier local à cette machine, jamais synchronisé.
