@@ -38,9 +38,9 @@
 <tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
     <td><span class="pill done">✅ Les trois validés sur Linux le 2026-07-29 — deux défauts nés de ces correctifs (D1, D2) corrigés depuis, non revalidés</span></td><td>—</td></tr>
 <tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
-    <td><span class="pill progress">🚧 Écrits le 2026-07-29 au soir — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs</span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill progress">🚧 Écrits et poussés le 2026-07-29 — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs ; leur validation attend la 3ᵉ campagne</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
-    <td><span class="pill planned">📋 Périmètre et protocole arrêtés le 2026-07-29 — D4 en tête, jamais mesuré</span></td><td><strong>Suite immédiate</strong></td></tr>
+    <td><span class="pill planned">⏸️ En attente — protocole prêt et versionné, rien à préparer pour la lancer</span></td><td>Sur décision</td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
     <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -760,7 +760,16 @@ et l'instance ne peut pas les purger elle-même après coup. Leur suppression ap
 pas au rattrapage.</p>
 </div>
 
-<h3 id="campagne-3">Troisième campagne — à préparer</h3>
+<h3 id="campagne-3">Troisième campagne — prête, en attente</h3>
+<div class="callout note">
+<span class="callout-title">État au 2026-07-29 : rien à préparer, seulement à lancer</span>
+<p>Protocole opérateur complet dans
+<code>.tempfiles/PROTOCOLE-TEST-LINUX-CAMPAGNE-3.md</code> — préparation du clone aveugle, valeurs
+déclarées, prompt à donner tel quel à l'instance, points de dépouillement. <strong>Mise en attente
+sur décision de l'utilisateur</strong>, pas sur un obstacle technique.</p>
+<p>Ce qui suit est le raisonnement derrière ce protocole : à lire avant de le modifier, pas avant de
+le lancer.</p>
+</div>
 <div class="callout important">
 <span class="callout-title">Pourquoi elle est nécessaire, et pas seulement souhaitable</span>
 <p>La deuxième campagne a validé les trois correctifs du matin <em>et</em> trouvé deux défauts nés de
