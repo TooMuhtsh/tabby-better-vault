@@ -291,6 +291,31 @@ export class VaultBridgeService {
      */
     private async learnFromUser (): Promise<string> {
         const passphrase = await this.callOriginal()
+
+        // VALIDER AVANT D'ENREGISTRER, ET SURTOUT AVANT D'ANNONCER.
+        //
+        // Cette vérification manquait : une phrase erronée était chiffrée,
+        // écrite, et annoncée comme « enregistrée » — au moment précis où Tabby
+        // affichait « Could not decrypt config — BAD_DECRYPT » pour la même
+        // saisie. Mesuré par la campagne du 2026-07-29 (défaut D2). La
+        // dégradation restait sûre au démarrage suivant, `serveFromToken()`
+        // purgeant le jeton invalide, mais l'utilisateur recevait une
+        // confirmation contredite à l'écran au même instant.
+        //
+        // Symétrie voulue avec `serveFromToken()` : coffre illisible, on
+        // n'enregistre rien. Refuser de servir ce qu'on n'a pas pu vérifier et
+        // accepter d'enregistrer ce qu'on n'a pas pu vérifier ne se défendent
+        // pas ensemble.
+        const store = readStoredVault()
+        if (!store) {
+            warn('coffre introuvable dans config.yaml — mot de passe non enregistré, rien à vérifier contre')
+            return passphrase
+        }
+        if (!await passphraseOpensVault(store, passphrase)) {
+            warn("le mot de passe saisi n'ouvre pas le coffre — non enregistré")
+            return passphrase
+        }
+
         try {
             const expiresAt = writeToken(encrypt(passphrase))
             this.tokenVerified = true
