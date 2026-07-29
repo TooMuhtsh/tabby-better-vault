@@ -24,6 +24,65 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Campagne indépendante et ses trois correctifs (2026-07-29)</h2>
+<p>Une instance externe, aveugle au dépôt (<code>.AIRules/</code>, <code>CLAUDE.md</code> et
+l'historique Git retirés du clone), a mené une vérification adversariale sur Ubuntu 24.04. Elle a
+rapporté trois défauts, dont un de sévérité haute qui contredisait le principe fondateur du plugin.
+Les trois correctifs ont été écrits dans la foulée. <strong>Ils ne sont pas validés</strong> : le
+banc qui les a vérifiés tourne sous Windows, et le défaut principal est un gel qui ne s'y reproduit
+pas. Détail et périmètre de la seconde campagne :
+<a href="ROADMAP.html#campagne-2">Deuxième campagne</a>.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-29</td><td><code>4c1fe0d</code></td>
+<td><strong>README : dire la garantie tenue, pas celle qu'on aurait voulue.</strong> La ligne
+« <em>the plugin never blocks access to your vault</em> » n'a délibérément <em>pas</em> été
+restaurée — la rétablir telle quelle aurait réintroduit le défaut #3 sous un commit de correction.
+Remplacée par ce que le code délivre vraiment : désactivé, aucun contact avec le trousseau ; activé,
+un démarrage figé au plus, auto-réparé au suivant. L'exposition au repos y est dite franchement
+(extraction D-Bus de la clé, mot de passe reconstitué hors ligne), là où le README ne l'admettait
+qu'en creux. Piège <a href="AI-CONTEXT.html#piege-v17">#V17</a> ajouté.</td></tr>
+<tr><td>2026-07-29</td><td><code>2dc049c</code></td>
+<td><strong><code>0600</code> devient un invariant, et l'écriture atomique.</strong>
+<code>writeFileSync(…, { mode })</code> n'applique le mode qu'à la création : un fichier préexistant
+en 644 n'était jamais re-serré. Temporaire dans le même dossier + <code>chmod</code> +
+<code>rename</code> règle les deux — le fichier qui atterrit est toujours neuf. Choix délibéré sur
+le chemin d'échec : <code>rename</code> peut échouer en EPERM/EBUSY sous Windows, et y renoncer
+perdrait le jeton que l'utilisateur vient de confier, donc repli sur l'écriture directe —
+<em>avant</em> la journalisation, pour qu'un journal défaillant ne coûte pas le jeton non
+plus.</td></tr>
+<tr><td>2026-07-29</td><td><code>f086739</code></td>
+<td><strong>Le trousseau quitte le chemin de démarrage.</strong> <code>install()</code> est appelée
+depuis le constructeur du NgModule, et <em>avant</em> que <code>enabled</code> ne soit consulté : un
+<code>keychainStatus()</code> qui n'y servait qu'à journaliser suffisait à figer Tabby, plugin
+désactivé compris. Le panneau de réglages portait le même défaut à un endroit pire — il sondait à
+l'initialisation d'un champ, et c'est le seul endroit d'où l'on peut désactiver le plugin : le gel
+emportait le moyen d'en sortir.</td></tr>
+<tr><td>2026-07-29</td><td><code>f0548f8</code></td>
+<td><strong>Garde-fou : un témoin sur disque avant tout appel à <code>safeStorage</code>.</strong>
+Aucun délai d'attente n'est possible — <code>@electron/remote</code> fait de l'IPC synchrone, le fil
+est arrêté <em>dans</em> l'appel. Le seul recours qui survive au gel est une trace écrite avant, relue
+au démarrage suivant. Enveloppé au <strong>point de passage</strong> et non aux appelants : seul
+<code>isEncryptionAvailable()</code> a été mesuré bloquant, que <code>encryptString</code> le soit
+aussi est un raisonnement — garder le point de passage rend le dispositif correct dans les deux
+cas.</td></tr>
+<tr><td>2026-07-29</td><td><code>75de08a</code></td>
+<td><strong>Consignation de la campagne et de ses trois constats</strong>, rapport intégral versionné
+dans <code>.tempfiles/RAPPORT-TEST-LINUX.md</code>.</td></tr>
+</table>
+<div class="callout important">
+<span class="callout-title">Le correctif n'a pas la forme qu'on lui prêtait</span>
+<p>La roadmap prévoyait « rendre <code>keychainStatus()</code> non bloquant ». <strong>C'est
+impossible</strong>, et il a fallu le mesurer pour l'admettre : on ne peut pas expirer, depuis le fil
+que l'on bloque, un appel qui bloque ce fil. Ce qui a été livré à la place ne supprime pas le premier
+gel — il le rend <em>dernier</em>. Garantie plus faible que celle envisagée, et c'est exactement
+celle que le README énonce, ni plus.</p>
+<p>Corollaire de méthode, le même que la veille : <strong>un plan écrit avant la mesure décrit ce
+qu'on croit possible, pas ce qui l'est.</strong> Voir aussi
+<a href="AI-CONTEXT.html#piege-v17">#V17</a> sur ce qui reste, dans ce correctif, du raisonné plutôt
+que du mesuré.</p>
+</div>
+
 <h2>Garde-fou Linux — première vérification en conditions réelles (2026-07-29)</h2>
 <p>Chantier mené sur la branche <code>fix/linux-keychain-guard</code>, fusionnée dans
 <code>master</code> après validation de l'utilisateur. Objectif initial : préparer une VM Ubuntu pour

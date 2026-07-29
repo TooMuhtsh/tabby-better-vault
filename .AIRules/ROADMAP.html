@@ -15,7 +15,7 @@
 </nav>
 
 <h1>Roadmap</h1>
-<p class="muted">Dernière revue : 2026-07-28</p>
+<p class="muted">Dernière revue : 2026-07-29</p>
 
 <h2>Vue d'ensemble</h2>
 <table>
@@ -36,7 +36,7 @@
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
-    <td><span class="pill progress">🚧 Gel du démarrage (sévérité haute), permissions, doc — à corriger</span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill progress">🚧 Les trois écrits le 2026-07-29 — à valider sur Linux, le gel n'ayant pas pu l'être depuis Windows</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
     <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -508,8 +508,10 @@ et manipule le secret le plus sensible de l'utilisateur. Publier, c'est engager 
 auprès d'inconnus, sur des configurations que nous ne maîtrisons pas. Le garde-fou Linux, lui,
 <strong>n'est plus un pari</strong> : il a été exercé dans les deux sens le 2026-07-29 (voir
 <a href="#linux">ci-dessus</a>), et les deux défauts que cette vérification a mis au jour sont
-corrigés. Reste le cas du trousseau verrouillé, non couvert. La décision de publier reste à prendre
-en connaissance de cause.</p>
+corrigés. Le cas du trousseau verrouillé, lui, a reçu son correctif le même jour
+(<a href="#campagne-linux">campagne Linux</a>) mais <strong>n'est pas encore validé sur Linux</strong> :
+publier avant cette validation reviendrait à diffuser un correctif de gel jamais vu fonctionner.
+La décision de publier reste à prendre en connaissance de cause.</p>
 </div>
 
 <h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
@@ -548,9 +550,22 @@ puisque le gel survient avant que <code>getPassphrase</code> ne soit invoqué.</
 <p><strong>Ce défaut contredit le principe fondateur du plugin</strong> — « ce plugin est un
 confort : il ne doit jamais empêcher d'ouvrir son coffre ni bloquer Tabby » — et la promesse
 publique du README (« the plugin never blocks access to your vault »).</p>
-<p><strong>Correctif à concevoir</strong> : sortir <code>keychainStatus()</code> du constructeur, ne
-pas l'appeler quand <code>enabled</code> est faux, et le rendre non bloquant (appel hors du chemin
-de démarrage, ou sonde sous délai). Les trois, pas l'un des trois.</p>
+<p><strong>Correctif écrit le 2026-07-29</strong>, les trois gestes et pas l'un des trois :
+<code>install()</code> ne touche plus au trousseau, le diagnostic vit dans <code>resolve()</code>
+donc après le test de <code>enabled</code>, et tout accès passe par <code>withSafeStorage()</code>
+sous le garde-fou de <code>src/keychainGuard.ts</code>. Le panneau de réglages, qui sondait à
+l'initialisation d'un champ — donc figeait le seul endroit d'où l'on peut désactiver le plugin —
+sonde désormais sur demande explicite ou sous <code>enabled</code>. Détail du mécanisme et de ce
+qu'il garantit : <a href="AI-CONTEXT.html#piege-v17">#V17</a>.</p>
+<p><strong>Le troisième geste n'a pas la forme prévue.</strong> « Rendre non bloquant » est
+impossible : <code>@electron/remote</code> fait de l'IPC synchrone, donc aucun délai d'attente ne
+peut expirer depuis le fil que l'appel arrête. Ce qui est fait à la place — un témoin sur disque
+écrit avant l'appel, relu au démarrage suivant — ne supprime pas le premier gel, il le rend
+<em>dernier</em>. <strong>C'est une garantie plus faible que celle envisagée, et le README dit
+exactement celle-là, pas davantage.</strong></p>
+<p><strong>Non validé.</strong> Le gel ne se reproduit pas depuis Windows : il reste à exercer sur
+Linux, dans les deux régimes (plugin désactivé — doit démarrer normalement ; plugin activé — doit
+figer une fois, puis s'effacer au redémarrage suivant).</p>
 </div>
 
 <div class="callout warning">
@@ -563,8 +578,22 @@ préexiste plus large — restauration de sauvegarde, copie manuelle, umask diff
 <p>Au même endroit, l'écriture est directe, sans fichier temporaire ni <code>rename</code> : une
 coupure en cours d'écriture tronque le fichier. Conséquence atténuée (la lecture défensive retombe
 sur les défauts, le jeton est perdu, l'utilisateur ressaisit), mais l'atomicité n'existe pas.</p>
-<p><strong>Correctif</strong> : écriture temporaire + <code>chmod</code> explicite +
-<code>rename</code>. Un seul geste règle les deux.</p>
+<p><strong>Correctif écrit le 2026-07-29</strong> : temporaire dans le <em>même</em> dossier (un
+<code>rename</code> entre volumes échoue en EXDEV) + <code>chmod</code> explicite +
+<code>rename</code>. Le fichier qui atterrit est donc toujours neuf, donc toujours créé en 600.</p>
+<p><strong>Un choix délibéré sur le chemin d'échec</strong> : <code>rename</code> sur une cible
+existante peut échouer en EPERM/EBUSY sous Windows (antivirus, client de synchronisation). Y
+renoncer perdrait l'écriture, donc le jeton que l'utilisateur vient de confier — pire que le
+comportement d'avant le correctif. On retombe sur l'écriture directe, qui rétablit l'ancien
+compromis plutôt que rien. L'écriture précède la journalisation, pour qu'un journal défaillant ne
+coûte pas le jeton non plus.</p>
+<p><strong>Vérifié, et ce qui ne l'est pas.</strong> Banc sur le <code>store.js</code> compilé,
+dossier jetable : JSON valide conservé, temporaire nettoyé, temporaire résiduel écrasé,
+<em>enchaînement</em> attesté par une trace <code>fs</code>
+(<code>write(tmp, mode=600) | chmod(tmp, 600) | rename</code>), écriture préservée avec
+<code>rename</code> <em>et</em> journal en panne. <strong>Les bits POSIX eux-mêmes ne sont pas
+mesurés</strong> — machine Windows, pas de WSL. Le cas qui reste à exercer sur Linux : fichier
+préexistant en 644 ou 666, qui doit ressortir en 600.</p>
 </div>
 
 <div class="callout note">
@@ -572,14 +601,17 @@ sur les défauts, le jeton est perdu, l'utilisateur ressaisit), mais l'atomicit�
 <p>Le commentaire d'<code>osKeychain.ts</code> et le piège
 <a href="AI-CONTEXT.html#piege-v15">#V15</a> affirmaient tous deux que le repli natif rattrapait le
 trousseau verrouillé. C'est réfuté (défaut #1). Corrigé le 2026-07-29 dans les deux fichiers.</p>
-<p>Reste à corriger : le README, dont la ligne « <em>Safe fallback — any failure quietly returns you
-to Tabby's own prompt; the plugin never blocks access to your vault</em> » est fausse dans le cas
-verrouillé. À reprendre <strong>en même temps que le correctif #1</strong>, pas avant : la promesse
-redeviendra vraie une fois le gel réglé.</p>
+<p><strong>README corrigé le 2026-07-29</strong>, dans les deux langues, en même temps que le
+correctif #1 comme prévu. La ligne « <em>the plugin never blocks access to your vault</em> »
+<strong>n'a pas été restaurée</strong> : la rétablir telle quelle aurait réintroduit le défaut #3
+sous un commit de correction. Elle est remplacée par la garantie réellement tenue — désactivé,
+aucun contact avec le trousseau ; activé, un démarrage figé au plus, auto-réparé au suivant. Deux
+sections neuves : <em>When the keychain is locked</em> et <em>What storing the passphrase actually
+costs you</em>.</p>
 </div>
 
 <div class="callout note">
-<span class="callout-title">À reformuler dans le README — l'exposition au repos</span>
+<span class="callout-title">Exposition au repos — écrite dans le README le 2026-07-29</span>
 <p>La campagne a extrait la clé <code>safeStorage</code> depuis le trousseau <strong>par simple appel
 D-Bus</strong>, sans Electron ni Chromium, puis reconstitué le mot de passe maître hors ligne à
 partir de <code>better-vault.json</code>. Ce n'est <em>pas</em> un défaut du plugin : GNOME Keyring
@@ -590,8 +622,10 @@ est un secret aléatoire de 24 octets, durcir le KDF n'apporterait rien.</p>
 <p>Le delta honnête, à écrire tel quel : <strong>sans le plugin, le mot de passe maître ne touche
 jamais le disque ; avec lui, il devient récupérable au repos, en l'absence de l'utilisateur, par
 n'importe quel processus de sa session.</strong> C'est un accroissement réel de l'exposition,
-structurel à <code>safeStorage</code> sous Linux. Le README l'admet en creux (« cannot be more secure
-than the keychain it delegates to ») ; il mérite d'être dit franchement.</p>
+structurel à <code>safeStorage</code> sous Linux. Le README l'admettait en creux (« cannot be more
+secure than the keychain it delegates to ») ; il le dit désormais franchement, sous
+<em>What storing the passphrase actually costs you</em>, en nommant l'extraction D-Bus et en
+étendant le constat à DPAPI sous Windows.</p>
 </div>
 
 <h3>Ce que la campagne n'a pas pu exercer</h3>
@@ -611,6 +645,32 @@ than the keychain it delegates to ») ; il mérite d'être dit franchement.</p>
 <p class="muted">Faux positif à ne pas reprendre : le rapport signale des renvois morts vers
 <code>.AIRules/</code> dans le code livré. C'est un artefact du dispositif de test — le dossier avait
 été retiré du clone pour préserver l'aveuglement. Dans le dépôt réel, ces renvois résolvent.</p>
+
+<h3 id="campagne-2">Deuxième campagne — ce qu'elle doit exercer</h3>
+<div class="callout important">
+<span class="callout-title">Les correctifs ne sont pas validés, ils sont écrits</span>
+<p>Les trois correctifs ont été écrits et poussés le 2026-07-29 (commits <code>f0548f8</code> →
+<code>4c1fe0d</code>), vérifiés par un banc sur dossier jetable depuis <strong>Windows</strong>.
+Ce banc ne peut par construction rien dire du gel, qui est le défaut principal. <strong>Aucun des
+trois n'est validé sur Linux.</strong></p>
+</div>
+<ul>
+<li><strong>Le gel, dans les deux régimes</strong>, trousseau verrouillé. Plugin <em>désactivé</em> :
+  Tabby doit démarrer normalement et atteindre sa pop-up — c'est le correctif principal, celui qui
+  rétablit le principe fondateur. Plugin <em>activé</em> : Tabby doit figer <em>une fois</em>, puis,
+  après fermeture forcée et relance, s'effacer et laisser revenir la pop-up native, avec l'état
+  « suspendu » visible dans Paramètres → Better Vault et levable de là.</li>
+<li><strong>Le mode <code>0600</code> comme sémantique POSIX</strong>, pas seulement comme
+  enchaînement : fichier préexistant en 644 ou 666, qui doit ressortir en 600.</li>
+<li><strong><code>encryptString</code>/<code>decryptString</code> bloquent-ils aussi</strong> sur
+  trousseau verrouillé ? C'est aujourd'hui un <em>raisonnement</em>, jamais une mesure — seul
+  <code>isEncryptionAvailable()</code> a été mesuré. Le garde-fou est correct dans les deux cas, mais
+  la réponse change ce qu'il faut écrire dans <a href="AI-CONTEXT.html#piege-v17">#V17</a>.</li>
+<li><strong>Le témoin lui-même</strong> : <code>better-vault-keychain.lock</code> doit apparaître
+  pendant l'appel et disparaître au retour ; il doit survivre au gel, et lui seul doit provoquer le
+  refus au démarrage suivant.</li>
+<li>Les non-testés reconduits de la première campagne, ci-dessus, qui restent ouverts.</li>
+</ul>
 
 <h2 id="i18n">Internationalisation — interface et journal</h2>
 <p><strong>Priorisé le 2026-07-29 : c'est le prochain chantier</strong>, devant la granularité par profil — motif donné par l'utilisateur : « à l'usage c'est ce qui est le plus important maintenant, le reste c'est du bonus ».</p>
