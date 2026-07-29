@@ -749,16 +749,15 @@ CDP en lecture seule pour <em>mesurer</em> le blocage du renderer plutôt que le
   du périmètre imposé.</li>
 </ul>
 
-<div class="callout warning">
-<span class="callout-title">Incident de la campagne — à ne pas reproduire</span>
-<p>L'opérateur a saisi son <strong>mot de passe de session</strong> dans la pop-up de Tabby au lieu de
-la phrase de test. Le plugin l'a chiffré et écrit sur disque, et l'instance l'a relu en clair pendant
-le diagnostic. Les artefacts du banc ont été purgés, mais le secret subsiste dans les transcripts de
-l'agent sur la VM.</p>
-<p><strong>Protocole pour la suite</strong> : la phrase maîtresse de test doit figurer dans le
-protocole AVANT la campagne, et l'opérateur ne doit jamais avoir à l'improviser devant une pop-up. La
-discipline de test sur données jetables valait déjà pour les données de Tabby ; elle vaut aussi pour
-ce que l'humain tape.</p>
+<div class="callout note">
+<span class="callout-title">Ce qu'une campagne avec opérateur humain impose au protocole</span>
+<p>Faire saisir un secret par un humain déplace la discipline de test : elle ne porte plus seulement
+sur les données que la machine manipule, mais sur <strong>ce que l'humain tape</strong>. Toute valeur
+qu'il devra fournir doit donc figurer dans le protocole AVANT la campagne — jamais improvisée devant
+une pop-up, où le premier réflexe est de taper un vrai mot de passe.</p>
+<p>Corollaire, sur la trace : les transcripts de l'agent conservent en clair tout ce qui a transité,
+et l'instance ne peut pas les purger elle-même après coup. Leur suppression appartient au protocole,
+pas au rattrapage.</p>
 </div>
 
 <h3 id="campagne-3">Troisième campagne — à préparer</h3>
@@ -775,17 +774,18 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 
 <h4>Changements de protocole — issus des deux campagnes précédentes</h4>
 <ul>
-<li><strong>La phrase maîtresse de test est écrite dans le protocole AVANT la campagne.</strong>
-  L'opérateur ne doit jamais avoir à l'improviser devant une pop-up : le 2026-07-29 il a saisi son
-  mot de passe de session, que le plugin a chiffré et écrit sur disque, et que l'instance a relu en
-  clair pendant le diagnostic. Valeur retenue : <code>PhraseDeTestJetable-2026!</code>. Elle ne doit
-  ressembler à aucun mot de passe réel, et ne jamais être réutilisée.</li>
+<li><strong>Toute valeur que l'opérateur devra saisir est écrite dans le protocole AVANT la
+  campagne.</strong> Deux ici, et il en faut bien deux : la phrase maîtresse du coffre de test,
+  <code>PhraseDeTestJetable-2026!</code>, avec laquelle la fixture <code>config.yaml</code> est
+  fabriquée ; et la phrase volontairement fausse du scénario D2,
+  <code>PhraseVolontairementFausse-2026!</code>. Déclarer la première sans la seconde reviendrait à
+  faire improviser la seconde.</li>
 <li><strong>L'opérateur ne saisit rien qui ne figure pas dans le protocole.</strong> Si une instance
   lui demande une valeur non prévue, la réponse est de refuser et de le signaler — pas d'improviser.</li>
-<li><strong>Purge des transcripts en fin de campagne</strong>, dans le protocole et non en rattrapage :
-  <code>~/.claude/history.jsonl</code> et <code>~/.claude/projects/*/*.jsonl</code> sur la VM. Ce sont
-  eux qui ont conservé le secret la fois précédente, l'instance ayant correctement purgé ses propres
-  artefacts sans pouvoir toucher aux siens.</li>
+<li><strong>Purge des transcripts en fin de campagne</strong>, dans le protocole et non en
+  rattrapage : <code>~/.claude/history.jsonl</code> et <code>~/.claude/projects/*/*.jsonl</code> sur
+  la VM. L'instance est la seule en position de le faire à la fin de sa propre exécution, donc la
+  consigne doit figurer dans SON prompt, pas dans le dépouillement.</li>
 <li><strong>L'opérateur humain reste dans la boucle pour toute saisie GUI.</strong> C'est ce qui a
   permis d'exercer <code>learnFromUser</code> de bout en bout, resté non testé lors de la première
   campagne. À reconduire tel quel.</li>
@@ -803,7 +803,11 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
   Observable attendu si le défaut est réel : une ligne <code>CRIT … accès au trousseau suspendu</code>
   <em>sans</em> qu'aucun blocage réel n'ait eu lieu, et un déverrouillage automatique qui échoue dans
   la seconde fenêtre alors que le trousseau est déverrouillé. <strong>Mesurer avant de redessiner</strong> :
-  c'est une piste tirée du code, pas un constat.</li>
+  c'est une piste tirée du code, pas un constat.
+  <br>Le dispositif lui-même n'est pas acquis : rien ne garantit qu'une seconde instance concurrente
+  soit atteignable, ni que le module du plugin s'instancie une fois par renderer. <strong>Si le banc
+  ne peut pas être monté, le verdict est « non testé », avec la raison</strong> — jamais « aucun
+  défaut trouvé ». Un dispositif qui ne tourne pas ne prouve rien.</li>
 <li><strong>Le correctif de D1, dans le scénario exact qui l'a révélé.</strong> Trousseau verrouillé,
   plugin activé, jeton en place → blocage → fermeture forcée → relance → état « suspendu » →
   <em>clic sur « Lever la suspension et vérifier »</em>. Trois issues à distinguer, et les trois
