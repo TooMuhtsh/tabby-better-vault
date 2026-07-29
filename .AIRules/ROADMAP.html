@@ -35,6 +35,10 @@
     <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
+<tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
+    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td>À planifier</td></tr>
+<tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
+    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>À planifier</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
     <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
@@ -484,6 +488,93 @@ backend <code>basic_text</code> n'a encore jamais été exercé en vrai</strong>
 clairement, mais la décision de publier reste à prendre en connaissance de cause.</p>
 </div>
 
+<h2 id="i18n">Internationalisation — interface et journal</h2>
+<p>Demandé par l'utilisateur le 2026-07-29 : les cinq langues les plus utilisées sur Tabby,
+<strong>journal d'audit compris</strong>.</p>
+
+<h3>État de départ</h3>
+<p>Aucune infrastructure i18n aujourd'hui. Tout est en français, en dur :
+<code>src/components/settingsTab.component.pug</code> (114 lignes), les libellés des notifications
+(<code>src/inlineToast.ts</code>, le toast d'enregistrement) et les messages du journal
+(<code>src/logger.ts</code>, qui ne transporte qu'une <code>string</code> libre).</p>
+
+<div class="callout warning">
+<span class="callout-title">Contrainte structurante — l'UI doit d'abord repasser en anglais</span>
+<p>Vérifié dans <code>tabby-core/src/services/locale.service.ts</code> : Tabby charge des fichiers
+<strong><code>.po</code> gettext dont le <code>msgid</code> est la chaîne source anglaise</strong>
+(<code>translation[k] = po[k].msgstr[0] || k</code>), et son
+<code>CustomMissingTranslationHandler</code> <strong>compile la clé elle-même</strong> lorsqu'aucune
+traduction n'existe. Autrement dit, la chaîne source sert de repli universel.</p>
+<p>Conséquence non négociable : tant que les chaînes sources restent en français, tout utilisateur
+d'une locale non couverte verrait l'interface en français. <strong>Réécrire l'UI en anglais est donc
+la première étape du chantier, pas une option.</strong> Le compilateur est
+<code>ngx-translate-messageformat-compiler</code> : pluriels et interpolations en syntaxe ICU
+MessageFormat, pas en concaténation.</p>
+</div>
+
+<h3>Choix des langues — non tranché</h3>
+<p>L'utilisateur a nommé le français, l'anglais, l'espagnol et l'allemand. <strong>La cinquième
+reste à décider</strong> : nous n'avons aucune donnée d'usage réelle de Tabby, et la liste des
+24 locales déclarées dans <code>LocaleService.allLanguages</code> ne dit rien de leur popularité.
+Piège de comptage : Tabby distingue <code>en-US</code> de <code>en-GB</code> et <code>pt-PT</code>
+de <code>pt-BR</code> — « cinq langues » ne fait pas cinq codes.</p>
+
+<div class="callout note">
+<span class="callout-title">Réserve sur le journal d'audit — à trancher avant d'implémenter</span>
+<p>La demande inclut explicitement le journal. Or <code>better-vault.log</code> est un fichier
+<strong>persistant</strong>, dont la raison d'être est d'être relu après coup. Le traduire au moment
+de l'écriture fige chaque ligne dans la langue active à cet instant : un même fichier change de
+langue en cours de route si l'utilisateur change de locale, et devient opaque à qui l'analyse — y
+compris nous, en support.</p>
+<p>Proposition prudente, à valider : écrire dans le fichier des <strong>codes d'événement stables</strong>
+accompagnés de leurs paramètres, et ne localiser qu'à l'affichage. Cela satisfait la demande côté
+interface sans sacrifier l'auditabilité — mais c'est un <strong>changement de format du journal</strong>,
+donc une décision de l'utilisateur, pas un détail d'implémentation.</p>
+</div>
+
+<h2 id="granularite">Granularité par profil / groupe</h2>
+<p>Demandé par l'utilisateur le 2026-07-29 : pouvoir désactiver le plugin sur un profil ou un
+groupe donné, via les réglages, et si possible depuis le menu contextuel de
+<code>tabby-better-sidebar</code> — l'occasion de resserrer l'intégration entre les deux plugins.</p>
+
+<div class="callout important">
+<span class="callout-title">Difficulté centrale — à trancher avant d'écrire la moindre ligne</span>
+<p><strong>Le coffre de Tabby est un blob chiffré unique.</strong> <code>getPassphrase()</code> sert
+à le déchiffrer <em>en entier</em>, pas connexion par connexion — et ce plugin le déverrouille
+<strong>au démarrage</strong>, avant même qu'un onglet existe (cf. #V13). Une fois ouvert, tous les
+secrets sont en mémoire, pour tous les profils.</p>
+<p>Donc « désactiver l'auto-déverrouillage pour le profil X » <strong>ne peut pas</strong> vouloir
+dire « les secrets de X restent protégés ». Livrer cette lecture-là serait un faux sentiment de
+sécurité — exactement ce qu'un plugin qui manipule le secret le plus sensible de l'utilisateur ne
+doit jamais faire. Deux lectures à faire arbitrer :</p>
+<ul>
+<li><strong>(a) Organisationnelle</strong> — le réglage n'est qu'un marquage, sans effet sur
+  l'accessibilité réelle des secrets. Peu coûteux, mais il faut alors le dire explicitement dans
+  l'interface, sans quoi il ment.</li>
+<li><strong>(b) Réelle</strong> — rendre le déverrouillage <strong>paresseux</strong> : ne plus
+  ouvrir le coffre au démarrage, mais à la première connexion à un profil non exclu. Cela répond
+  vraiment à la demande, au prix d'une refonte du cœur du plugin et de la perte du confort actuel
+  (coffre prêt avant le premier onglet). Se combine mal avec le re-verrouillage : rien ne referme
+  le coffre entre deux connexions.</li>
+</ul>
+</div>
+
+<h3>Contrainte de stockage</h3>
+<p>Rappel de #V11 : <strong>aucun réglage de ce plugin ne peut vivre dans <code>config.yaml</code></strong>.
+La liste des profils/groupes exclus ira donc dans <code>%APPDATA%\tabby\better-vault.json</code> et
+devra référencer des <strong>identifiants</strong> de profil/groupe. Conséquence à prévoir dès le
+départ : des entrées orphelines dès qu'un profil est supprimé — et côté sidebar, le re-parentage
+d'un groupe passe par recréation puis migration (piège hérité #12), donc l'identifiant change sans
+que l'utilisateur ait le sentiment d'avoir supprimé quoi que ce soit. Prévoir un nettoyage, et ne
+jamais faire échouer un déverrouillage à cause d'une entrée périmée.</p>
+
+<h3>Intégration au menu contextuel de la sidebar</h3>
+<p>C'est précisément le cas d'usage que la section <a href="#interfacage">Interfaçage</a> anticipait :
+<code>VaultBridgeService</code> exposerait la bascule, <code>tabby-better-sidebar</code>
+l'appellerait depuis son menu contextuel Profil/Groupe — qui existe déjà et porte déjà des bascules
+du même genre (favoris). L'optionalité reste la règle : sans <code>tabby-better-vault</code>
+installé, l'entrée de menu disparaît, sans erreur ni dépendance dure.</p>
+
 <h2 id="panneau-unifie">Panneau de réglages unifié « Tabby Better * » — intention, pas un chantier ouvert</h2>
 <div class="callout note">
 <span class="callout-title">Volontairement repoussé (2026-07-28)</span>
@@ -550,6 +641,10 @@ fonctionner normalement si ce plugin n'est pas installé.</p>
   injecteur, pas une API documentée par Tabby. Le contrat entre les deux packages est à notre
   charge (versioning à gérer entre les deux — envisager de figer une interface minimale tôt pour
   éviter la casse croisée).</li>
+<li><strong>Premier cas d'usage concret</strong> : la bascule par profil/groupe décrite en
+  <a href="#granularite">Granularité par profil / groupe</a>. C'est elle qui devrait dimensionner
+  l'interface minimale à figer — la définir dans l'abstrait avant d'avoir ce besoin risquerait de
+  produire un contrat à côté de la plaque.</li>
 <li>Même discipline de vérification que le reste de l'écosystème : si un service est exporté,
   vérifier les DEUX niveaux (typings ET bundle compilé) avant que l'autre plugin ne s'y fie.</li>
 </ul>
