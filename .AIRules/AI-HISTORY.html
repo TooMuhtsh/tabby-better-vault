@@ -24,6 +24,48 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Deuxième campagne — les correctifs validés, et deux défauts qu'ils ont créés (2026-07-29)</h2>
+<p>Seconde vérification adversariale, sur VM remise au propre, avec un <strong>opérateur humain</strong>
+pour les saisies GUI. Les cinq revendications tiennent à la mesure. Mais la campagne a réfuté la
+<em>justification</em> du garde-fou, et trouvé deux défauts dans le code écrit le matin même — dont un
+de sévérité haute qui annulait la garantie centrale du plugin. Résultats complets :
+<a href="ROADMAP.html#campagne-2">Deuxième campagne</a>.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-29</td><td><em>(cette série)</em></td>
+<td><strong>D1 — la vérification du panneau ne vérifiait rien, et réarmait le gel.</strong> « Lever la
+suspension <em>et vérifier</em> » appelait <code>keychainStatus()</code>, qui sur Linux ne lit que le
+nom du backend — mesuré comme ne touchant jamais le trousseau. Le bouton annonçait donc « disponible »
+sur un trousseau verrouillé, effaçait le témoin, et le démarrage suivant regelait. Corrigé par
+<code>keychainRoundTrip()</code> : aller-retour chiffrement/déchiffrement réel sur une valeur jetable,
+réservé aux actions explicites de l'utilisateur.</td></tr>
+<tr><td>2026-07-29</td><td><em>(cette série)</em></td>
+<td><strong>D2 — <code>learnFromUser()</code> annonçait un enregistrement sans avoir validé la
+phrase.</strong> Une saisie erronée était chiffrée, écrite et annoncée « enregistrée » pendant que
+Tabby affichait <code>BAD_DECRYPT</code> pour la même phrase.
+<code>passphraseOpensVault()</code> existait déjà et servait dans <code>serveFromToken()</code> ;
+seule l'écriture s'en dispensait (<a href="AI-CONTEXT.html#piege-v18">#V18</a>).</td></tr>
+<tr><td>2026-07-29</td><td><em>(cette série)</em></td>
+<td><strong>Réfutation mesurée de la justification du garde-fou.</strong> « L'appel ne revient jamais,
+sans afficher de dialogue » est faux sur ses deux termes : le système affiche une invite
+d'authentification et l'appel rend la main en 4 à 7 secondes dès qu'on y répond. Corrigé dans
+<code>keychainGuard.ts</code>, <code>osKeychain.ts</code>,
+<a href="AI-CONTEXT.html#piege-v17">#V17</a> et les deux README. Le dispositif reste nécessaire — un
+utilisateur absent bloque indéfiniment — mais c'est cette nuance qui rend praticable la vérification
+réelle de D1.</td></tr>
+</table>
+<div class="callout important">
+<span class="callout-title">Une optimisation correcte à un endroit, ruineuse à un autre</span>
+<p>Le raccourci Linux — ne plus appeler <code>isEncryptionAvailable()</code> quand le backend est
+résolu — était juste sur le chemin de <code>resolve()</code>, et il a été écrit en connaissance de
+cause, avec la mention explicite qu'il ne corrigeait pas le gel. <strong>Personne n'a vu qu'il vidait
+du même coup la vérification du panneau de réglages</strong>, qui passait par la même fonction. Le
+défaut n'est pas dans le raccourci : il est dans le fait qu'une fonction bon marché servait à la fois
+de diagnostic interne et de preuve montrée à l'utilisateur.</p>
+<p>Règle qui en sort : <strong>une vérification qui ne peut pas échouer ne vérifie rien.</strong>
+Quand un test cesse de coûter, se demander ce qu'il mesure encore.</p>
+</div>
+
 <h2>Campagne indépendante et ses trois correctifs (2026-07-29)</h2>
 <p>Une instance externe, aveugle au dépôt (<code>.AIRules/</code>, <code>CLAUDE.md</code> et
 l'historique Git retirés du clone), a mené une vérification adversariale sur Ubuntu 24.04. Elle a

@@ -6,13 +6,26 @@ import { configDir } from './tabbyConfig'
 /**
  * Garde-fou contre le gel du démarrage par un appel bloquant au trousseau.
  *
- * LE PROBLÈME, MESURÉ. Sur un trousseau Linux présent mais VERROUILLÉ,
- * `safeStorage.isEncryptionAvailable()` NE REVIENT JAMAIS : il déclenche une
- * demande de déverrouillage qui n'aboutit pas, sans afficher de dialogue.
- * Constaté par une campagne de vérification indépendante le 2026-07-29
- * (.AIRules/ROADMAP.html#campagne-linux), banc Electron 38.8.6, avec contrôle
- * décisif — plugin retiré, trousseau toujours verrouillé, Tabby atteint sa
- * pop-up normalement.
+ * LE PROBLÈME, MESURÉ. Sur un trousseau Linux présent mais VERROUILLÉ, tout
+ * appel à `safeStorage` bloque le renderer tant que personne ne répond :
+ * `isEncryptionAvailable()`, `encryptString()` et `decryptString()` — les trois,
+ * mesurés 6/6 bloqués à 45 s en l'absence de réponse (campagnes des 2026-07-29,
+ * .AIRules/ROADMAP.html#campagne-linux), avec contrôle décisif : plugin retiré,
+ * trousseau toujours verrouillé, Tabby atteint sa pop-up normalement.
+ *
+ * CE QUI BLOQUE EXACTEMENT — et une première version de ce commentaire s'est
+ * trompée sur les deux termes. Elle affirmait que l'appel « ne revient jamais,
+ * sans afficher de dialogue ». Réfuté par mesure : le système AFFICHE une invite
+ * d'authentification, et l'appel REND LA MAIN en 4 à 7 secondes dès qu'on y
+ * répond. Ce n'est pas un gel irrécupérable, c'est une invite bloquante. Le
+ * garde-fou reste nécessaire — un utilisateur absent bloque indéfiniment — mais
+ * la nuance change ce qu'on doit dire à l'utilisateur, et elle rend praticable
+ * la vérification réelle de `keychainRoundTrip()`.
+ *
+ * `getSelectedStorageBackend()`, lui, ne touche jamais le trousseau : mesuré à
+ * 0,00 s, sans trafic D-Bus, verrou inchangé. C'est ce qui rend le raccourci
+ * Linux d'`osKeychain.ts` légitime — et c'est aussi ce qui rendait creuse la
+ * vérification du panneau de réglages avant `keychainRoundTrip()`.
  *
  * POURQUOI UN TÉMOIN SUR DISQUE, ET PAS UN DÉLAI D'ATTENTE. `@electron/remote`
  * fait de l'IPC SYNCHRONE : le fil du renderer est arrêté dans l'appel, plus
@@ -21,20 +34,28 @@ import { configDir } from './tabbyConfig'
  * plus — un appel bloquant n'est pas une exception. Le seul recours qui survive
  * au gel est donc une trace laissée AVANT l'appel, relue au démarrage suivant.
  *
- * CE QUE ÇA GARANTIT, ET CE QUE ÇA NE GARANTIT PAS. Le premier gel n'est pas
- * évité : il faut toucher le trousseau avant de savoir s'il répond. Ce qui est
- * garanti, c'est qu'il est le dernier — l'utilisateur force la fermeture de
- * Tabby, et au démarrage suivant le témoin subsiste, le plugin s'efface et
- * Tabby retrouve sa pop-up native. Le README dit exactement ceci.
+ * CE QUE ÇA GARANTIT, ET CE QUE ÇA NE GARANTIT PAS. Le premier blocage n'est
+ * pas évité : il faut toucher le trousseau avant de savoir s'il répond. Ce qui
+ * est garanti, c'est qu'il est le dernier tant que l'utilisateur ne demande pas
+ * lui-même une nouvelle tentative — il ferme Tabby, et au démarrage suivant le
+ * témoin subsiste, le plugin s'efface et Tabby retrouve sa pop-up native. Le
+ * README dit exactement ceci.
+ *
+ * L'EXCEPTION EST DÉLIBÉRÉE, et elle a failli être un défaut. `keychainRoundTrip()`,
+ * déclenchée depuis les réglages, peut poser un nouveau témoin et donc bloquer à
+ * nouveau. C'est le prix d'une vérification qui vérifie. Ce qui était fautif,
+ * c'est de lever le témoin SANS rien vérifier : le plugin repartait alors vers
+ * un gel certain en ayant annoncé que tout allait bien (défaut D1).
  *
  * POURQUOI LE POINT DE PASSAGE EST `getSafeStorage()` ET PAS LES APPELANTS.
- * `isEncryptionAvailable()` est le seul appel dont on ait MESURÉ le blocage,
- * mais `encryptString`/`decryptString` passent par la même acquisition de clé
- * OSCrypt et bloquent très probablement de la même manière — c'est un
- * raisonnement, pas une mesure, et ce projet a déjà vu trois déductions de ce
- * genre réfutées en une journée. Envelopper le point de passage unique rend le
- * dispositif correct dans les deux cas, et interdit qu'un futur appelant passe
- * à côté.
+ * Au moment d'écrire ce dispositif, seul `isEncryptionAvailable()` avait été
+ * mesuré bloquant ; que `encryptString`/`decryptString` le soient aussi (même
+ * acquisition de clé OSCrypt) n'était qu'un raisonnement. Envelopper le point de
+ * passage unique rendait le dispositif correct dans les deux cas — sans quoi il
+ * aurait fallu parier. La deuxième campagne a tranché : les trois bloquent, le
+ * pari aurait été perdu deux fois sur trois. Le point de passage reste unique
+ * pour la même raison qu'avant : un futur appelant ne doit pas pouvoir passer à
+ * côté.
  *
  * Ce fichier est strictement local à la machine, comme better-vault.json : il
  * décrit l'état d'un trousseau, qui n'a aucun sens ailleurs.

@@ -9,7 +9,7 @@ Dépôt distant : https://github.com/TooMuhtsh/tabby-better-vault
 
 **Avant toute session de travail sur ce projet, lire `.AIRules/README.html`**
 (index + protocole), puis `.AIRules/AI-CONTEXT.html` (invariants et pièges
-numérotés `#V1`–`#V16`, plus les pièges hérités du projet frère) et
+numérotés `#V1`–`#V18`, plus les pièges hérités du projet frère) et
 `.AIRules/AI-HISTORY.html`/`.AIRules/ROADMAP.html` pour l'état d'avancement.
 Ouvrir ces fichiers directement dans un navigateur.
 

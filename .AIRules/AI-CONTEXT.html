@@ -571,10 +571,23 @@ d'un élément d'interface.</strong> <code>persist()</code> porte un second verr
 </ul>
 
 <h3 id="piege-v17">#V17 — Tout appel à <code>safeStorage</code> peut bloquer indéfiniment : garder le point de passage, pas les appelants</h3>
-<p>Mesuré (campagne du 2026-07-29, banc Electron 38.8.6) : sur un trousseau Linux présent mais
-<strong>verrouillé</strong>, <code>safeStorage.isEncryptionAvailable()</code> <em>ne revient
-jamais</em>. Il attend un déverrouillage qui n'aboutit pas, sans afficher de dialogue. Voir #V15
-pour l'historique de la fausse affirmation qui masquait ce cas.</p>
+<p>Mesuré (deux campagnes du 2026-07-29, banc Electron 38.8.6) : sur un trousseau Linux présent mais
+<strong>verrouillé</strong>, <code>isEncryptionAvailable()</code>, <code>encryptString()</code> et
+<code>decryptString()</code> <strong>bloquent tous les trois</strong> — 6/6 essais tués à 45 s sans
+retour, en série entrelacée. Voir #V15 pour l'historique de la fausse affirmation qui masquait ce
+cas.</p>
+<div class="callout warning">
+<span class="callout-title">Ce n'est pas un gel silencieux — corrigé le 2026-07-29 au soir</span>
+<p>La première rédaction de ce piège affirmait que l'appel « ne revient jamais, sans afficher de
+dialogue ». <strong>Les deux termes sont réfutés par mesure</strong> : le système affiche une invite
+d'authentification GNOME, et l'appel <strong>rend la main en 4 à 7 secondes</strong> dès qu'on y
+répond (3/3 essais, avec déverrouillage effectif de la collection). C'est une invite bloquante, pas
+un gel irrécupérable.</p>
+<p>La conséquence est double. Le garde-fou <strong>reste nécessaire</strong> — un utilisateur absent
+bloque indéfiniment, et c'est le cas nominal d'un démarrage. Mais il devient <strong>praticable de
+vérifier réellement</strong> le trousseau depuis une action de l'utilisateur, puisqu'il est devant
+son écran pour répondre à l'invite : c'est ce que fait <code>keychainRoundTrip()</code>.</p>
+</div>
 <div class="callout important">
 <span class="callout-title">Un appel bloquant n'est pas une exception</span>
 <p>Aucun <code>try/catch</code> ne rattrape un gel, et <code>@electron/remote</code> fait de l'IPC
@@ -595,11 +608,25 @@ relue au démarrage suivant — c'est <code>src/keychainGuard.ts</code>.</p>
   occurrences étant des commentaires ou des chaînes :
   <code>grep -rn "require('@electron/remote')" src/</code> (attendu : <code>osKeychain.ts</code>,
   une ligne, dans <code>withSafeStorage()</code>).</li>
-<li><strong>Seul <code>isEncryptionAvailable()</code> a été MESURÉ bloquant.</strong> Que
-  <code>encryptString</code>/<code>decryptString</code> bloquent aussi (même acquisition de clé
-  OSCrypt) est un <em>raisonnement</em>, pas une mesure — à traiter comme tel, ce projet ayant déjà
-  vu trois déductions de ce genre réfutées en une journée. Envelopper le point de passage rend le
-  dispositif correct dans les deux cas : c'est précisément l'argument en sa faveur.</li>
+<li><strong>Le raisonnement qui a justifié ce point de passage a été validé, et il aurait pu ne pas
+  l'être.</strong> À l'écriture, seul <code>isEncryptionAvailable()</code> avait été mesuré bloquant ;
+  que <code>encryptString</code>/<code>decryptString</code> le soient aussi n'était qu'une déduction.
+  La deuxième campagne a tranché : <strong>les trois bloquent</strong>. Envelopper le point de
+  passage plutôt que de parier sur l'un des trois était donc le bon choix — et l'argument tient
+  indépendamment du résultat, ce qui est précisément ce qu'on attend d'un tel choix.</li>
+<li><strong>Un <code>available: true</code> de <code>keychainStatus()</code> ne dit RIEN, sur Linux,
+  de la capacité du trousseau à répondre.</strong> Il ne rapporte que le nom du backend, et
+  <code>getSelectedStorageBackend()</code> est mesuré comme ne touchant jamais le trousseau (0,00 s,
+  aucun trafic D-Bus, verrou inchangé). C'est voulu sur le chemin de <code>resolve()</code>, où le
+  vrai test est le <code>decrypt()</code> qui suit. <strong>C'était ruineux dans le panneau de
+  réglages</strong> : le bouton « Lever la suspension et vérifier » annonçait « disponible » sur un
+  trousseau verrouillé, effaçait le témoin, et le démarrage suivant regelait — défaut D1 de la
+  deuxième campagne, sévérité haute, sur le SEUL chemin de sortie offert à l'utilisateur. Toute
+  vérification qui engage quelque chose doit passer par <code>keychainRoundTrip()</code>, jamais par
+  <code>keychainStatus()</code>.</li>
+<li><strong>Corollaire général, qui vaut au-delà de ce piège :</strong> une vérification qui ne peut
+  pas échouer ne vérifie rien. Un test dont on a retiré tout ce qui coûte finit par ne plus mesurer
+  que sa propre existence.</li>
 <li><strong>Rien sur le chemin de démarrage.</strong> <code>install()</code> est appelée depuis le
   constructeur du NgModule, et AVANT que <code>enabled</code> ne soit consulté (le test vit dans
   <code>resolve()</code>). Un <code>keychainStatus()</code> qui n'y servait qu'à journaliser suffisait
@@ -613,13 +640,43 @@ relue au démarrage suivant — c'est <code>src/keychainGuard.ts</code>.</p>
   Y sonder le trousseau à l'initialisation d'un champ (<code>keychain = keychainStatus()</code>)
   emportait, avec le gel, le moyen d'en sortir. La sonde est désormais explicite, ou conditionnée à
   <code>enabled</code>.</li>
-<li><strong>Ce que le garde-fou garantit, et ce qu'il ne garantit pas.</strong> Le premier gel n'est
-  pas évité — il faut toucher le trousseau pour savoir s'il répond. Il est le <em>dernier</em> : au
-  démarrage suivant le témoin subsiste, le plugin s'efface, Tabby retrouve sa pop-up. Le README dit
-  exactement cela, et pas davantage : ne jamais y restaurer « the plugin never blocks access to your
-  vault ».</li>
+<li><strong>Ce que le garde-fou garantit, et ce qu'il ne garantit pas.</strong> Le premier blocage
+  n'est pas évité — il faut toucher le trousseau pour savoir s'il répond. Il est le <em>dernier</em>
+  tant que l'utilisateur ne redemande pas lui-même une tentative : au démarrage suivant le témoin
+  subsiste, le plugin s'efface, Tabby retrouve sa pop-up. Le README dit exactement cela, et pas
+  davantage : ne jamais y restaurer « the plugin never blocks access to your vault ».
+  <br><strong>L'exception par <code>keychainRoundTrip()</code> est délibérée</strong> : cette
+  vérification peut poser un nouveau témoin, donc bloquer à nouveau. C'est le prix d'un test réel, et
+  l'utilisateur qui l'a déclenché est là pour répondre à l'invite. Ce qui était fautif, c'est de
+  lever le témoin <em>sans rien vérifier</em>.</li>
 <li><strong>Témoin non écrivable ⇒ accès refusé</strong>, pas tenté sans filet. Un trousseau qui ne
   se déverrouille pas seul est une gêne ; un Tabby qui ne démarre plus est une panne.</li>
+</ul>
+
+<h3 id="piege-v18">#V18 — Servir et enregistrer n'avaient pas les mêmes exigences, sans raison</h3>
+<p>Mesuré (deuxième campagne du 2026-07-29, défaut D2) : une phrase erronée saisie dans la pop-up
+native était chiffrée, écrite et <strong>annoncée comme enregistrée</strong> — à l'instant précis où
+Tabby affichait <code>Could not decrypt config — BAD_DECRYPT</code> pour la même saisie. Relecture du
+jeton : c'était bien la valeur fausse qui avait été stockée.</p>
+<div class="callout important">
+<span class="callout-title">L'asymétrie était le défaut, pas l'absence de contrôle</span>
+<p><code>passphraseOpensVault()</code> existait déjà, et <code>serveFromToken()</code> s'en servait —
+il refuse de servir un mot de passe qu'il n'a pas pu vérifier. <code>learnFromUser()</code> ne
+l'appelait pas. <strong>Refuser de servir ce qu'on n'a pas vérifié et accepter d'enregistrer ce qu'on
+n'a pas vérifié ne se défendent pas ensemble</strong> : c'est le même secret, la même incertitude,
+et l'enregistrement est le geste le plus engageant des deux.</p>
+</div>
+<ul>
+<li>La dégradation restait <em>sûre</em> — au démarrage suivant, <code>serveFromToken()</code> purge
+  le jeton invalide et rend la main à la saisie manuelle. <strong>Ce n'est pas ce qui rendait le
+  défaut réel.</strong> Ce qui le rendait réel, c'est qu'une notification affirmait à l'utilisateur
+  que son mot de passe était enregistré pendant que l'écran d'à côté lui disait l'inverse. Un
+  comportement sûr n'excuse pas un message faux.</li>
+<li>Le coût est de 50 à 100 ms de PBKDF2, sur un chemin où l'utilisateur vient de taper au clavier —
+  invisible. Il n'y avait pas d'arbitrage à faire, seulement un oubli.</li>
+<li>Cas <code>readStoredVault()</code> nul : on n'enregistre rien, symétriquement à
+  <code>serveFromToken()</code>. Le journal le dit (« rien à vérifier contre »), plutôt que
+  d'enregistrer en silence une valeur non validée.</li>
 </ul>
 
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>

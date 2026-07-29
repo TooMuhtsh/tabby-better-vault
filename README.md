@@ -163,16 +163,25 @@ and recovered a test master passphrase without Electron or Chromium involved.
 On Windows, DPAPI is scoped to your user account, which means the same thing for
 anything running as you.
 
+One smaller detail, measured rather than assumed: the stored token is
+**deterministic**. Encrypting the same passphrase twice yields byte-identical
+output, because Chromium's OSCrypt uses a fixed IV. That is a property of the
+platform, not of this plugin, and the file is `0600` — but it does mean anyone
+who can read `better-vault.json` on two dates can tell whether your master
+passphrase changed, without decrypting anything.
+
 This plugin cannot be more secure than the keychain it delegates to. The
 trade-off it offers is convenience against an attacker who can already run code
 in your session — weigh it deliberately.
 
 ### When the keychain is locked
 
-A keyring that is present but **locked** makes `safeStorage` calls block
-indefinitely: they wait on an unlock that never arrives, and no dialog is
-shown. A `try/catch` is no help — a blocking call is not an exception — and a
-synchronous call cannot be timed out from the thread it is blocking.
+A keyring that is present but **locked** blocks every `safeStorage` call —
+measured, all three of them. Your system does show an authentication prompt,
+and the call returns within seconds once you answer it; if nobody does, it
+blocks for as long as the prompt stands. A `try/catch` is no help — a blocking
+call is not an exception — and a synchronous call cannot be timed out from the
+thread it is blocking.
 
 Until 2026-07-29 the plugin probed the keychain from its module constructor, on
 Tabby's startup path and **regardless of whether it was switched on**. On a
@@ -183,13 +192,19 @@ What the plugin guarantees now:
 
 - **Switched off** — it never touches the keychain, so its mere presence cannot
   delay startup at all.
-- **Switched on** — the first contact with a locked keyring still hangs. There
-  is no way to learn that a keychain will not answer other than asking it. But
-  it hangs **once**: a marker is written to disk before every keychain call and
-  removed after it returns. Force-quit Tabby and start it again — the leftover
-  marker tells the plugin to stand aside, and you get Tabby's own prompt as
-  usual. **Settings → Better Vault** shows the suspended state and clears it on
-  request, once your keyring is unlocked again.
+- **Switched on** — the first contact with a locked keyring still blocks. There
+  is no way to learn that a keychain will not answer other than asking it. If
+  you are at your screen, answer your system's prompt and Tabby carries on. If
+  you are not, it blocks **once**: a marker is written to disk before every
+  keychain call and removed after it returns. Quit Tabby and start it again —
+  the leftover marker tells the plugin to stand aside, and you get Tabby's own
+  prompt as usual. **Settings → Better Vault** shows the suspended state and
+  clears it on request.
+- **Clearing that state really re-checks the keychain** — it encrypts and
+  decrypts a throwaway value rather than just reading the backend's name. That
+  can prompt you to authenticate, which is the point: a check that cannot fail
+  checks nothing. Between 2026-07-29 and the fix, it only read the name, so it
+  reported success on a locked keyring and the next start blocked again.
 
 ## Roadmap
 

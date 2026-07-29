@@ -170,17 +170,25 @@ passe maître de test, sans Electron ni Chromium. Sous Windows, DPAPI est lié �
 votre compte utilisateur, ce qui revient au même pour tout ce qui s'exécute en
 votre nom.
 
+Un détail moindre, mesuré et non supposé : le jeton stocké est
+**déterministe**. Chiffrer deux fois le même mot de passe donne un résultat
+identique octet pour octet, l'OSCrypt de Chromium utilisant une IV fixe. C'est
+une propriété de la plateforme, pas du plugin, et le fichier est en `0600` —
+mais cela signifie que quiconque peut lire `better-vault.json` à deux dates sait
+si votre mot de passe maître a changé, sans rien déchiffrer.
+
 Ce plugin ne peut pas être plus sûr que le trousseau auquel il délègue. Le
 compromis qu'il propose, c'est du confort contre un attaquant capable
 d'exécuter du code dans votre session — à peser délibérément.
 
 ### Trousseau verrouillé
 
-Un trousseau présent mais **verrouillé** rend les appels à `safeStorage`
-bloquants sans fin : ils attendent un déverrouillage qui n'arrive jamais, sans
-afficher de dialogue. Un `try/catch` n'y peut rien — un appel bloquant n'est pas
-une exception — et un appel synchrone ne peut pas être interrompu depuis le fil
-qu'il bloque.
+Un trousseau présent mais **verrouillé** bloque tous les appels à `safeStorage`
+— mesuré, les trois. Votre système affiche bien une invite d'authentification,
+et l'appel rend la main en quelques secondes dès que vous y répondez ; si
+personne ne répond, il bloque aussi longtemps que l'invite reste affichée. Un
+`try/catch` n'y peut rien — un appel bloquant n'est pas une exception — et un
+appel synchrone ne peut pas être interrompu depuis le fil qu'il bloque.
 
 Jusqu'au 2026-07-29, le plugin interrogeait le trousseau depuis le constructeur
 de son module, donc sur le chemin de démarrage de Tabby, et **qu'il soit activé
@@ -192,14 +200,20 @@ Ce que le plugin garantit désormais :
 
 - **Désactivé** — il ne touche pas au trousseau, sa seule présence ne peut donc
   pas retarder le démarrage.
-- **Activé** — le premier contact avec un trousseau verrouillé fige toujours.
+- **Activé** — le premier contact avec un trousseau verrouillé bloque toujours.
   Il n'existe aucun moyen d'apprendre qu'un trousseau ne répondra pas sans le
-  lui demander. Mais il ne fige **qu'une fois** : un témoin est écrit sur le
-  disque avant chaque appel au trousseau, et retiré au retour. Forcez la
-  fermeture de Tabby et relancez-le — le témoin resté en place indique au
-  plugin de s'effacer, et vous retrouvez la fenêtre native de Tabby. Le panneau
-  **Paramètres → Better Vault** affiche cet état suspendu et permet de le lever
-  une fois le trousseau déverrouillé.
+  lui demander. Si vous êtes devant votre écran, répondez à l'invite de votre
+  système et Tabby poursuit. Sinon, il ne bloque **qu'une fois** : un témoin est
+  écrit sur le disque avant chaque appel au trousseau, et retiré au retour.
+  Quittez Tabby et relancez-le — le témoin resté en place indique au plugin de
+  s'effacer, et vous retrouvez la fenêtre native de Tabby. Le panneau
+  **Paramètres → Better Vault** affiche cet état suspendu et permet de le lever.
+- **Lever cet état vérifie réellement le trousseau** — un aller-retour de
+  chiffrement sur une valeur jetable, et non la simple lecture du nom du
+  backend. Votre système peut vous demander de vous authentifier, et c'est le
+  but : une vérification qui ne peut pas échouer ne vérifie rien. Entre le
+  2026-07-29 et ce correctif, elle ne lisait que le nom : elle annonçait donc un
+  succès sur un trousseau verrouillé, et le démarrage suivant rebloquait.
 
 ## Feuille de route
 

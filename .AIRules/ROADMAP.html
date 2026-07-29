@@ -36,7 +36,9 @@
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
-    <td><span class="pill progress">🚧 Les trois écrits le 2026-07-29 — à valider sur Linux, le gel n'ayant pas pu l'être depuis Windows</span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill done">✅ Les trois validés sur Linux le 2026-07-29 — deux défauts nés de ces correctifs (D1, D2) corrigés depuis, non revalidés</span></td><td>—</td></tr>
+<tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
+    <td><span class="pill progress">🚧 Écrits le 2026-07-29 au soir — D1 non validable depuis Windows</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
     <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -508,10 +510,13 @@ et manipule le secret le plus sensible de l'utilisateur. Publier, c'est engager 
 auprès d'inconnus, sur des configurations que nous ne maîtrisons pas. Le garde-fou Linux, lui,
 <strong>n'est plus un pari</strong> : il a été exercé dans les deux sens le 2026-07-29 (voir
 <a href="#linux">ci-dessus</a>), et les deux défauts que cette vérification a mis au jour sont
-corrigés. Le cas du trousseau verrouillé, lui, a reçu son correctif le même jour
-(<a href="#campagne-linux">campagne Linux</a>) mais <strong>n'est pas encore validé sur Linux</strong> :
-publier avant cette validation reviendrait à diffuser un correctif de gel jamais vu fonctionner.
-La décision de publier reste à prendre en connaissance de cause.</p>
+corrigés. Le cas du trousseau verrouillé a reçu son correctif le même jour et
+<strong>a été validé sur Linux</strong> (<a href="#campagne-2">deuxième campagne</a>).</p>
+<p><strong>Ce qui bloque encore la publication n'est plus le gel, c'est le rythme des découvertes.</strong>
+La journée du 2026-07-29 a produit trois défauts corrigés, puis deux défauts <em>nés de ces
+correctifs</em> — dont un de sévérité haute qui annulait la garantie centrale. Les correctifs de D1
+et D2 ne sont pas revalidés. Publier maintenant, ce serait diffuser à des inconnus un code dont la
+dernière révision n'a jamais été exercée sur la seule plateforme qui sait la mettre en défaut.</p>
 </div>
 
 <h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
@@ -563,9 +568,14 @@ peut expirer depuis le fil que l'appel arrête. Ce qui est fait à la place — 
 écrit avant l'appel, relu au démarrage suivant — ne supprime pas le premier gel, il le rend
 <em>dernier</em>. <strong>C'est une garantie plus faible que celle envisagée, et le README dit
 exactement celle-là, pas davantage.</strong></p>
-<p><strong>Non validé.</strong> Le gel ne se reproduit pas depuis Windows : il reste à exercer sur
-Linux, dans les deux régimes (plugin désactivé — doit démarrer normalement ; plugin activé — doit
-figer une fois, puis s'effacer au redémarrage suivant).</p>
+<p><strong>Validé sur Linux le 2026-07-29</strong>, dans les deux régimes — voir
+<a href="#campagne-2">Deuxième campagne</a>. Plugin désactivé : zéro appel au Secret Service, et le
+contrôle « plugin retiré » est indiscernable. Plugin activé : un blocage, témoin survivant au
+<code>SIGKILL</code>, relance sur la pop-up native sans toucher au trousseau.</p>
+<p><strong>Mais ce correctif a engendré D1</strong>, de sévérité haute : le raccourci Linux qui
+retire <code>isEncryptionAvailable()</code> du chemin a du même coup vidé de sa substance la
+vérification du panneau de réglages, seul chemin de sortie offert à l'utilisateur. Corrigé le soir
+même par <code>keychainRoundTrip()</code>, <strong>non revalidé</strong>.</p>
 </div>
 
 <div class="callout warning">
@@ -591,9 +601,13 @@ coûte pas le jeton non plus.</p>
 dossier jetable : JSON valide conservé, temporaire nettoyé, temporaire résiduel écrasé,
 <em>enchaînement</em> attesté par une trace <code>fs</code>
 (<code>write(tmp, mode=600) | chmod(tmp, 600) | rename</code>), écriture préservée avec
-<code>rename</code> <em>et</em> journal en panne. <strong>Les bits POSIX eux-mêmes ne sont pas
-mesurés</strong> — machine Windows, pas de WSL. Le cas qui reste à exercer sur Linux : fichier
-préexistant en 644 ou 666, qui doit ressortir en 600.</p>
+<code>rename</code> <em>et</em> journal en panne.</p>
+<p><strong>Les bits POSIX ont été mesurés sur Linux le 2026-07-29</strong> : fichier préexistant en
+644 comme en 666 → 600 après écriture, et l'inode de la cible devient celui du temporaire, donc le
+fichier qui atterrit est bien neuf. La campagne a en outre <em>contrôlé le mécanisme hors plugin</em>
+— <code>writeFileSync(…, {mode: 0o600})</code> sur un fichier préexistant en 666 laisse bien 666 :
+le défaut que ce correctif prétend régler existe réellement. Seule la non-troncature sous coupure
+réelle reste déduite de <code>rename(2)</code>.</p>
 </div>
 
 <div class="callout note">
@@ -646,31 +660,100 @@ secure than the keychain it delegates to ») ; il le dit désormais franchement,
 <code>.AIRules/</code> dans le code livré. C'est un artefact du dispositif de test — le dossier avait
 été retiré du clone pour préserver l'aveuglement. Dans le dépôt réel, ces renvois résolvent.</p>
 
-<h3 id="campagne-2">Deuxième campagne — ce qu'elle doit exercer</h3>
+<h3 id="campagne-2">Deuxième campagne — résultats (2026-07-29)</h3>
+<p>Menée sur la VM remise au propre, avec un <strong>opérateur humain</strong> pour toute saisie
+GUI — c'est ce qui a permis d'exercer enfin <code>learnFromUser</code> de bout en bout, resté non
+testé la première fois faute d'injection clavier atteignant le renderer de Tabby. Banc Electron
+38.8.6 identique à celui de Tabby, <code>dbus-monitor</code> comme instrument indépendant du plugin,
+CDP en lecture seule pour <em>mesurer</em> le blocage du renderer plutôt que le constater à l'œil.</p>
+
+<h4>Les cinq revendications tiennent</h4>
+<table>
+<tr><th>Revendication</th><th>Verdict</th><th>Preuve décisive</th></tr>
+<tr><td>Plugin désactivé → Tabby démarre, zéro contact avec le trousseau</td><td><strong>CONFORME</strong></td>
+    <td>0 appel Secret Service au <code>dbus-monitor</code> ; le contrôle « plugin retiré » est <em>indiscernable</em> du plugin présent</td></tr>
+<tr><td>Plugin activé → un blocage, puis relance sur la pop-up native, état « suspendu » levable</td><td><strong>CONFORME</strong></td>
+    <td>Renderer muet à CDP de t=10 à 60 s, témoin <code>relecture du mot de passe</code> survivant au <code>SIGKILL</code>, relance sans aucun appel au trousseau</td></tr>
+<tr><td><code>encryptString</code>/<code>decryptString</code> bloquent comme <code>isEncryptionAvailable</code></td><td><strong>CONFIRMÉ</strong></td>
+    <td>Série entrelacée : 6/6 bloqués à 45 s sans réponse ; 3/3 rendus en 3,8–6,7 s avec réponse</td></tr>
+<tr><td><code>0600</code> sur fichier préexistant en 644 ou 666, et atomicité</td><td><strong>CONFORME</strong></td>
+    <td>L'inode de la cible devient celui du temporaire ; le comportement fautif de <code>writeFileSync</code> est contrôlé hors plugin</td></tr>
+<tr><td><code>learnFromUser</code> de bout en bout depuis la vraie pop-up</td><td><strong>CONFORME</strong></td>
+    <td>Saisie humaine → jeton en 600 → <code>jeton vérifié</code> + <code>coffre déverrouillé</code> à la relance</td></tr>
+</table>
+
 <div class="callout important">
-<span class="callout-title">Les correctifs ne sont pas validés, ils sont écrits</span>
-<p>Les trois correctifs ont été écrits et poussés le 2026-07-29 (commits <code>f0548f8</code> →
-<code>4c1fe0d</code>), vérifiés par un banc sur dossier jetable depuis <strong>Windows</strong>.
-Ce banc ne peut par construction rien dire du gel, qui est le défaut principal. <strong>Aucun des
-trois n'est validé sur Linux.</strong></p>
+<span class="callout-title">Mais la justification du dispositif était fausse — et un correctif l'annulait</span>
+<p>Deux réfutations, toutes deux mesurées, et la seconde porte sur du code écrit le matin même.</p>
 </div>
 <ul>
-<li><strong>Le gel, dans les deux régimes</strong>, trousseau verrouillé. Plugin <em>désactivé</em> :
-  Tabby doit démarrer normalement et atteindre sa pop-up — c'est le correctif principal, celui qui
-  rétablit le principe fondateur. Plugin <em>activé</em> : Tabby doit figer <em>une fois</em>, puis,
-  après fermeture forcée et relance, s'effacer et laisser revenir la pop-up native, avec l'état
-  « suspendu » visible dans Paramètres → Better Vault et levable de là.</li>
-<li><strong>Le mode <code>0600</code> comme sémantique POSIX</strong>, pas seulement comme
-  enchaînement : fichier préexistant en 644 ou 666, qui doit ressortir en 600.</li>
-<li><strong><code>encryptString</code>/<code>decryptString</code> bloquent-ils aussi</strong> sur
-  trousseau verrouillé ? C'est aujourd'hui un <em>raisonnement</em>, jamais une mesure — seul
-  <code>isEncryptionAvailable()</code> a été mesuré. Le garde-fou est correct dans les deux cas, mais
-  la réponse change ce qu'il faut écrire dans <a href="AI-CONTEXT.html#piege-v17">#V17</a>.</li>
-<li><strong>Le témoin lui-même</strong> : <code>better-vault-keychain.lock</code> doit apparaître
-  pendant l'appel et disparaître au retour ; il doit survivre au gel, et lui seul doit provoquer le
-  refus au démarrage suivant.</li>
-<li>Les non-testés reconduits de la première campagne, ci-dessus, qui restent ouverts.</li>
+<li><strong>« L'appel ne revient jamais, sans afficher de dialogue » — RÉFUTÉ sur ses deux termes.</strong>
+  Le système affiche une invite d'authentification, et l'appel rend la main en 4 à 7 secondes dès
+  qu'on y répond. C'est une <em>invite bloquante</em>, pas un gel irrécupérable. Le garde-fou reste
+  nécessaire — un utilisateur absent bloque indéfiniment, et c'est le cas nominal d'un démarrage —
+  mais la nuance rend praticable une vérification réelle déclenchée par l'utilisateur. Corrigé
+  partout : <a href="AI-CONTEXT.html#piege-v17">#V17</a>, les deux README, les commentaires de
+  <code>keychainGuard.ts</code> et <code>osKeychain.ts</code>.</li>
+<li><strong>D1 — la vérification du panneau ne vérifiait rien, et réarmait le gel. Sévérité haute.</strong>
+  « Lever la suspension <em>et vérifier</em> » appelait <code>keychainStatus()</code>, qui sur Linux
+  ne lit que le nom du backend — l'appel dont la même campagne mesure qu'il ne touche jamais le
+  trousseau. Sur trousseau verrouillé, le bouton annonçait « disponible », effaçait le témoin, et le
+  démarrage suivant regelait à l'identique, <em>mesuré</em>. La garantie « le premier blocage est le
+  dernier » tenait face à un utilisateur passif et était annulée par le seul chemin de sortie que le
+  plugin lui-même désigne. <strong>Le raccourci Linux introduit le matin pour retirer un appel
+  bloquant du chemin de démarrage est exactement ce qui a vidé la vérification de sa substance</strong> —
+  une optimisation correcte à un endroit, ruineuse à un autre. Corrigé par
+  <code>keychainRoundTrip()</code> : aller-retour chiffrement/déchiffrement réel sur une valeur
+  jetable, réservé aux actions explicites de l'utilisateur.</li>
+<li><strong>D2 — enregistrement annoncé sans validation.</strong> Une phrase erronée était chiffrée,
+  écrite et annoncée « enregistrée » pendant que Tabby affichait <code>BAD_DECRYPT</code> pour la
+  même saisie. <code>passphraseOpensVault()</code> existait et servait déjà dans
+  <code>serveFromToken()</code> ; <code>learnFromUser()</code> ne l'appelait pas. Corrigé, voir
+  <a href="AI-CONTEXT.html#piege-v18">#V18</a>.</li>
 </ul>
+
+<h4>Signalé, non corrigé</h4>
+<ul>
+<li><strong>D3 — le jeton chiffré est déterministe.</strong> Deux chiffrements de la même phrase
+  donnent un résultat identique octet pour octet : l'OSCrypt de Chromium utilise une IV fixe.
+  Propriété de la plateforme, pas du plugin. Qui lit <code>better-vault.json</code> à deux dates sait
+  si le mot de passe maître a changé, sans rien déchiffrer. Le fichier est en 600, l'exposition est
+  faible : <strong>dit dans les README, pas corrigé côté plugin</strong> — il n'y a rien à y corriger.</li>
+<li><strong>D4 — le témoin est un verrou global, non réentrant entre processus. NON MESURÉ.</strong>
+  <code>guardState()</code> conclut à la suspension sur la seule présence du fichier, et
+  <code>depth</code> ne compte qu'au sein d'un processus. Deux fenêtres Tabby démarrant ensemble
+  verraient donc la seconde se refuser le trousseau et journaliser une suspension fictive. À
+  <strong>exercer avant de redessiner quoi que ce soit</strong> : c'est une piste issue du code, pas
+  un constat. Premier point de la campagne suivante.</li>
+</ul>
+
+<h4>Toujours non exercé</h4>
+<ul>
+<li><strong>Windows (DPAPI) et macOS</strong> — une seule machine Linux. C'est là que le chemin
+  <code>isEncryptionAvailable()</code> seul est emprunté, <code>getSelectedStorageBackend</code>
+  n'existant pas ; donc là où <code>keychainStatus()</code> engage davantage que sur Linux.</li>
+<li><strong>Le refus du backend <code>basic_text</code></strong> — non rejoué cette fois (exigerait
+  <code>--password-store=basic</code>). Vérifié lors de la première campagne.</li>
+<li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
+<li><strong>L'atomicité sous coupure réelle</strong> — déduite de <code>rename(2)</code>, jamais provoquée.</li>
+<li><strong>Le blocage en écriture</strong> (<code>learnFromUser</code> sur trousseau verrouillé) —
+  couvert par déduction depuis la mesure de <code>encryptString</code>, pas par une exécution Tabby
+  dédiée.</li>
+<li><strong>Expiration <code>sliding</code>/<code>never</code>, rétention du journal</strong> — hors
+  du périmètre imposé.</li>
+</ul>
+
+<div class="callout warning">
+<span class="callout-title">Incident de la campagne — à ne pas reproduire</span>
+<p>L'opérateur a saisi son <strong>mot de passe de session</strong> dans la pop-up de Tabby au lieu de
+la phrase de test. Le plugin l'a chiffré et écrit sur disque, et l'instance l'a relu en clair pendant
+le diagnostic. Les artefacts du banc ont été purgés, mais le secret subsiste dans les transcripts de
+l'agent sur la VM.</p>
+<p><strong>Protocole pour la suite</strong> : la phrase maîtresse de test doit figurer dans le
+protocole AVANT la campagne, et l'opérateur ne doit jamais avoir à l'improviser devant une pop-up. La
+discipline de test sur données jetables valait déjà pour les données de Tabby ; elle vaut aussi pour
+ce que l'humain tape.</p>
+</div>
 
 <h2 id="i18n">Internationalisation — interface et journal</h2>
 <p><strong>Priorisé le 2026-07-29 : c'est le prochain chantier</strong>, devant la granularité par profil — motif donné par l'utilisateur : « à l'usage c'est ce qui est le plus important maintenant, le reste c'est du bonus ».</p>
