@@ -48,6 +48,8 @@
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
     <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
+<tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
+    <td><span class="pill done">✅ Revue faite (2026-07-29)</span></td><td>Entretien récurrent</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -1018,6 +1020,30 @@ fonctionner normalement si ce plugin n'est pas installé.</p>
 <li>Même discipline de vérification que le reste de l'écosystème : si un service est exporté,
   vérifier les DEUX niveaux (typings ET bundle compilé) avant que l'autre plugin ne s'y fie.</li>
 </ul>
+
+<h2 id="gouvernance">Conformité de la gouvernance à la charte</h2>
+<p>Revue faite le 2026-07-29 (Règle 7, Cas B) — écarts constatés et corrigés détaillés dans
+<a href="AI-HISTORY.html">AI-HISTORY</a>, commits <code>a1243ba</code> et <code>76e950f</code>. Ce
+n'est pas un état acquis : la <a href="GOUVERNANCE-IA.md">charte</a> évolue, ce projet doit suivre.
+Ce qui reste à faire de façon récurrente :</p>
+<ul>
+<li><strong>Comparer les deux dates en début de session</strong> : celle du pied de page de
+  <a href="README.html">README.html</a> (« Conforme à la charte du … ») et celle du pied de page de
+  <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a>. Si la première est antérieure,
+  <strong>signaler l'écart et proposer</strong> une remise à niveau — jamais l'appliquer d'office.</li>
+<li><strong>Repropager la copie de la charte à chaque révision de l'original</strong> (qui vit à la
+  racine du workspace, hors dépôt Git). La copie de ce dossier doit rester <em>conforme</em> : jamais
+  adaptée au projet, comparable à l'original par un simple <code>diff</code>.</li>
+<li><strong>Corriger la dérive dès qu'elle est constatée</strong>, sans attendre une revue générale.
+  C'est ce qui a manqué ici : le README a décrit un projet « pas encore scaffoldé » pendant que le
+  plugin tournait, en se contredisant à l'intérieur d'une même page.</li>
+</ul>
+<div class="callout warning"><span class="callout-title">Une mention de conformité vaut promesse</span>
+<p>Le marqueur « Conforme à la charte du … » a d'abord été posé sur un <code>README.html</code>
+auquel il manquait les deux callouts obligatoires. C'est le pire cas de figure : une session
+ultérieure compare cette date <em>au lieu</em> de relire la charte, donc un marqueur trop généreux
+étouffe la détection même qu'il sert à déclencher. Ne l'avancer qu'après avoir vérifié les éléments
+exigés, pas seulement la date.</p></div>
 
 <footer>tabby-better-vault · voir <a href="../../tabby-ssh-sidebar/.AIRules/ROADMAP.html#vault">la section Vault du projet frère</a> pour l'historique de cette décision.</footer>
 </body>
