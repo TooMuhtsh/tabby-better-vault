@@ -6,12 +6,17 @@
     strong Trousseau du système indisponible.
     |  {{keychain.reason}}
     .mt-1 Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.
+    .mt-1 L'activation et la politique d'expiration sont désactivées tant que c'est le cas. La révocation, le journal et le mode observation restent accessibles.
 
   .form-line
     .header
       .title Activer sur cette machine
       .description Le mot de passe maître est confié au trousseau du système d'exploitation, jamais stocké en clair.
-    toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
+    toggle(
+      [(ngModel)]='settings.enabled',
+      (ngModelChange)='save()',
+      [disabled]='!keychain.available',
+    )
 
   .form-line
     .header
@@ -33,6 +38,7 @@
     select.form-control(
       [(ngModel)]='settings.expiry.mode',
       (ngModelChange)='onExpiryChanged()',
+      [disabled]='!keychain.available',
     )
       option(value='schedule') À jour et heure fixes
       option(value='sliding') Après un délai
@@ -46,11 +52,13 @@
       select.form-control.mr-2(
         [(ngModel)]='settings.expiry.weekday',
         (ngModelChange)='onExpiryChanged()',
+        [disabled]='!keychain.available',
       )
         option(*ngFor='let d of weekdays', [ngValue]='d.value') {{d.label}}
       select.form-control(
         [(ngModel)]='settings.expiry.hour',
         (ngModelChange)='onExpiryChanged()',
+        [disabled]='!keychain.available',
       )
         option(*ngFor='let h of hours', [ngValue]='h') {{h}} h
 
@@ -64,6 +72,7 @@
       max='365',
       [(ngModel)]='settings.expiry.days',
       (ngModelChange)='onExpiryChanged()',
+      [disabled]='!keychain.available',
     )
 
   h4.mt-4.mb-2 Mot de passe enregistré
