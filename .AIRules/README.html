@@ -103,6 +103,26 @@ réexports en cascade (<a href="AI-CONTEXT.html#piege-v1">#V1</a>).</p>
   d'office.</li>
 </ol>
 
+<div class="callout important">
+<span class="callout-title">Règle de détection de dérive</span>
+<p>Si l'état réel du code contredit un invariant d'<a href="AI-CONTEXT.html">AI-CONTEXT.html</a>
+(méthode renommée, comportement de Tabby différent, statut de chantier faux) : ne pas coder par-dessus
+l'hypothèse périmée. Corriger la documentation d'abord, puis continuer. Ce projet y est
+<strong>particulièrement exposé</strong> : tout repose sur le remplacement de
+<code>VaultService.getPassphrase</code>, un comportement non contractuel de Tabby
+(<a href="AI-CONTEXT.html#piege-v2">#V2</a>) — une mise à jour de l'application peut invalider un
+invariant sans le moindre message d'erreur.</p>
+</div>
+
+<div class="callout important">
+<span class="callout-title">Validation utilisateur avant toute écriture dans AI-HISTORY.html / ROADMAP.html</span>
+<p>Ne rien écrire dans ces deux pages avant que l'utilisateur ait confirmé le résultat en conditions
+réelles (test dans Tabby, pas une relecture de code) — pas même une ligne d'état intermédiaire du
+type « implémenté, en attente de test ». Un build qui passe ou un déploiement réussi ne valent pas
+validation. Ici le test réel est double par nature : le plugin doit être exercé en configuration
+<strong>chiffrée et non chiffrée</strong>, un succès dans un seul des deux régimes ne prouve rien.</p>
+</div>
+
 <h3>Quand mettre à jour</h3>
 <p>Deux cadences opposées, à ne pas confondre :</p>
 <ul>
