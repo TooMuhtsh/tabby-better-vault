@@ -5,7 +5,14 @@
  * `@electron/remote`, que le chargeur de plugins de Tabby rend résolvable en
  * ajoutant `<app.asar>/node_modules` au NODE_PATH
  * (.AIRules/AI-CONTEXT.html, piège #V7).
+ *
+ * TOUT accès au trousseau passe par `withSafeStorage()`, qui l'enveloppe dans
+ * le garde-fou de `keychainGuard.ts` — voir l'en-tête de ce fichier pour le
+ * pourquoi. Ne jamais appeler `require('@electron/remote')` directement
+ * ailleurs : le garde-fou ne protège que ce qu'il enveloppe.
  */
+
+import { runGuarded, isSuspendedError } from './keychainGuard'
 
 /**
  * Champs optionnels plutôt qu'union discriminée : le tsconfig de ce projet
@@ -19,16 +26,30 @@ export interface KeychainStatus {
     backend?: string
     /** Renseigné si `!available` — cause, destinée au journal. */
     reason?: string
+    /**
+     * Le refus vient du garde-fou, pas du trousseau lui-même : l'utilisateur
+     * peut le lever depuis les réglages. Une panne ordinaire, non.
+     */
+    suspended?: boolean
 }
 
-function getSafeStorage (): any | null {
-    try {
+/**
+ * Point de passage unique vers `safeStorage`.
+ *
+ * `label` étiquette l'opération dans le témoin du garde-fou : c'est ce que
+ * l'utilisateur lira si un gel survient, et le seul indice de l'endroit exact
+ * où le trousseau a cessé de répondre.
+ */
+function withSafeStorage<T> (label: string, fn: (safeStorage: any) => T): T {
+    return runGuarded(label, () => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const remote = require('@electron/remote')
-        return remote?.safeStorage ?? null
-    } catch {
-        return null
-    }
+        const safeStorage = remote?.safeStorage
+        if (!safeStorage) {
+            throw new Error('@electron/remote ou safeStorage inaccessible')
+        }
+        return fn(safeStorage)
+    })
 }
 
 /**
@@ -51,55 +72,41 @@ function getSafeStorage (): any | null {
  * l'utilisateur lisait « le système n'offre pas de chiffrement », un message
  * exact mais inexploitable.
  *
- * Le backend est donc interrogé d'abord. Le test de disponibilité reste utile
- * derrière, pour les plateformes où `getSelectedStorageBackend` n'existe pas
- * (Windows, macOS) et pour les Electron antérieurs à ce changement.
+ * SUR LINUX, LE BACKEND SUFFIT : `isEncryptionAvailable()` n'y est plus appelé
+ * du tout quand `getSelectedStorageBackend()` a répondu autre chose que
+ * `basic_text`. Il n'apportait aucune information que le backend ne donne déjà,
+ * et c'est l'appel dont on a MESURÉ qu'il gèle sur trousseau verrouillé. Il
+ * reste le seul test possible là où `getSelectedStorageBackend` n'existe pas
+ * (Windows, macOS) et sur les Electron antérieurs à ce changement.
  *
- * TROUSSEAU VERROUILLÉ — DÉFAUT CONNU, NON CORRIGÉ À CE JOUR.
- *
- * Ce commentaire affirmait que le cas « trousseau présent mais verrouillé »
- * n'était pas couvert par le diagnostic, mais que le repli sur la méthode
- * native de Tabby le rattrapait. C'était une déduction, pas une mesure, et elle
- * est fausse : une campagne de vérification indépendante (2026-07-29) a montré
- * qu'`isEncryptionAvailable()` NE REVIENT JAMAIS sur un trousseau verrouillé —
- * il déclenche une demande de déverrouillage qui n'aboutit pas, sans afficher
- * de dialogue.
- *
- * Cette fonction étant synchrone et passant par l'IPC bloquant
- * d'`@electron/remote`, et `install()` étant appelée depuis le constructeur du
- * NgModule, **Tabby gèle à son écran de démarrage** et n'atteint jamais sa
- * propre pop-up. Le repli n'est pas tardif : il est inatteignable. Le
- * `try/catch` ci-dessous n'y change rien — un appel bloquant n'est pas une
- * exception.
- *
- * Aggravant : `install()` appelle cette fonction même quand le plugin est
- * désactivé (à seule fin de journaliser), donc la simple présence du plugin
- * suffit à figer Tabby.
- *
- * Correctif à concevoir avant toute autre modification de ce fichier — voir
- * .AIRules/ROADMAP.html#campagne-linux.
+ * Attention à ne pas lire ce raccourci comme un correctif du gel : il retire un
+ * appel bloquant du chemin, pas le risque. `encryptString`/`decryptString`
+ * déclenchent la même acquisition de clé OSCrypt et bloquent selon toute
+ * vraisemblance de la même façon. C'est le garde-fou qui répond de ce cas, pas
+ * l'ordre des tests.
  */
 export function keychainStatus (): KeychainStatus {
-    const safeStorage = getSafeStorage()
-    if (!safeStorage) {
-        return { available: false, reason: '@electron/remote ou safeStorage inaccessible' }
-    }
     try {
-        let backend = 'natif'
-        if (process.platform === 'linux' && safeStorage.getSelectedStorageBackend) {
-            backend = String(safeStorage.getSelectedStorageBackend())
-            if (backend === 'basic_text') {
-                return {
-                    available: false,
-                    reason: 'trousseau Linux indisponible (backend basic_text : clé codée en dur, chiffrement non fiable)',
+        return withSafeStorage('diagnostic du trousseau', safeStorage => {
+            if (process.platform === 'linux' && safeStorage.getSelectedStorageBackend) {
+                const backend = String(safeStorage.getSelectedStorageBackend())
+                if (backend === 'basic_text') {
+                    return {
+                        available: false,
+                        reason: 'trousseau Linux indisponible (backend basic_text : clé codée en dur, chiffrement non fiable)',
+                    }
                 }
+                return { available: true, backend }
             }
-        }
-        if (!safeStorage.isEncryptionAvailable()) {
-            return { available: false, reason: "le système n'offre pas de chiffrement (isEncryptionAvailable=false)" }
-        }
-        return { available: true, backend }
+            if (!safeStorage.isEncryptionAvailable()) {
+                return { available: false, reason: "le système n'offre pas de chiffrement (isEncryptionAvailable=false)" }
+            }
+            return { available: true, backend: 'natif' }
+        })
     } catch (e) {
+        if (isSuspendedError(e)) {
+            return { available: false, suspended: true, reason: String((e as Error).message) }
+        }
         return { available: false, reason: `safeStorage inutilisable — ${String(e)}` }
     }
 }
@@ -116,17 +123,9 @@ export function keychainLabel (): string {
 }
 
 export function encrypt (plaintext: string): Buffer {
-    const safeStorage = getSafeStorage()
-    if (!safeStorage) {
-        throw new Error('safeStorage indisponible')
-    }
-    return safeStorage.encryptString(plaintext)
+    return withSafeStorage('enregistrement du mot de passe', s => s.encryptString(plaintext))
 }
 
 export function decrypt (blob: Buffer): string {
-    const safeStorage = getSafeStorage()
-    if (!safeStorage) {
-        throw new Error('safeStorage indisponible')
-    }
-    return safeStorage.decryptString(blob)
+    return withSafeStorage('relecture du mot de passe', s => s.decryptString(blob))
 }
