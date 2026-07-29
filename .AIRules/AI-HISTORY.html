@@ -24,6 +24,50 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Revue de gouvernance — mise en conformité à la charte (2026-07-29)</h2>
+<p>Revue au sens de la <a href="GOUVERNANCE-IA.md">charte</a>, Règle 7 Cas B : audit d'un
+<code>.AIRules/</code> déjà au format mais qui a dérivé. Déclenchée depuis le projet frère
+<code>tabby-better-sidebar</code>, après un rappel de l'utilisateur sur une règle déjà écrite dans la
+charte (Règle 1) et restée lettre morte — les fichiers de <code>.AIRules/</code> se commitent et se
+poussent à chaque mise à jour. Cette entrée acte la revue et les écarts constatés.</p>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+
+<tr><td>2026-07-29</td><td><code>76e950f</code></td>
+<td><strong>Les deux callouts <code>.important</code> obligatoires manquaient</strong> à
+<code>README.html</code> — détection de dérive, et validation utilisateur avant toute écriture dans
+<code>AI-HISTORY</code>/<code>ROADMAP</code>. Défaut relevé <em>après</em> que la mention de
+conformité eut été posée au commit précédent : le marqueur promettait donc plus que la page ne
+tenait, et aurait étouffé la détection même qu'il existe pour déclencher, une session ultérieure
+comparant cette date au lieu de relire la charte. Les deux sont rédigés pour ce projet et non
+recopiés : la dérive y est aggravée par le socle non contractuel
+(<a href="AI-CONTEXT.html#piege-v2">#V2</a> — Tabby peut invalider un invariant sans le moindre
+message), et un test réel y est double par nature, configuration chiffrée <em>et</em> non chiffrée,
+un succès dans un seul régime ne prouvant rien.</td></tr>
+
+<tr><td>2026-07-29</td><td><code>a1243ba</code></td>
+<td><strong><code>README.html</code> décrivait encore un projet qui n'existait pas.</strong> « Dépôt
+Git en place, mais pas encore scaffoldé (pas de <code>package.json</code>, pas de <code>src/</code>) »,
+vérification de faisabilité « non franchie », prochaine étape « arbitrage puis, s'il est retenu,
+scaffold » — tout cela dépassé depuis le 2026-07-28, l'utilisateur ayant arbitré en faveur du
+monkey-patch et le plugin étant livré et validé, ce que le callout en haut de la <em>même page</em>
+disait déjà. La section conserve ce qui reste vrai de cette vérification : le socle est un
+comportement non contractuel de Tabby, à revérifier à chaque mise à jour de l'application.
+<br><br>
+Corrigés au passage : les cadences d'écriture, restées sur « <code>AI-HISTORY</code> à chaque commit,
+<code>ROADMAP</code> à chaque changement de statut » alors que la charte exige depuis le 2026-07-28
+le feu vert explicite de l'utilisateur pour ces deux pages ; l'absence de mention « Conforme à la
+charte du … » au pied de page ; et <code>.tempfiles/</code>, non ignoré par Git contrairement à la
+Règle 1.
+<br><br>
+<strong>La charte voyage désormais avec le projet</strong> : <code>GOUVERNANCE-IA.md</code> est copié
+à l'identique dans ce <code>.AIRules/</code>, la racine du workspace n'étant pas un dépôt Git — cette
+copie versionnée en est la seule sauvegarde. <code>CLAUDE.md</code> enregistre la décision par dépôt
+qu'exige la Règle 3 sur les <strong>métadonnées d'attribution IA</strong> : admises, ce qui
+enregistre la pratique déjà présente dans l'historique public.</td></tr>
+</table>
+
 <h2>Deuxième campagne — les correctifs validés, et deux défauts qu'ils ont créés (2026-07-29)</h2>
 <p>Seconde vérification adversariale, sur VM remise au propre, avec un <strong>opérateur humain</strong>
 pour les saisies GUI. Les cinq revendications tiennent à la mesure. Mais la campagne a réfuté la
