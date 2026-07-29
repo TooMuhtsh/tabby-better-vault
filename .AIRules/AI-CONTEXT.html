@@ -495,6 +495,76 @@ glissement.</p>
   <code>configSync</code>.</li>
 </ul>
 
+<h3 id="piege-v15">#V15 — <code>isEncryptionAvailable()</code> est déjà <code>false</code> en <code>basic_text</code></h3>
+<p>Le commentaire d'origine de <code>osKeychain.ts</code> affirmait le contraire : que
+<code>safeStorage.isEncryptionAvailable()</code> restait <code>true</code> en mode dégradé sous
+Linux, et que seul <code>getSelectedStorageBackend()</code> permettait de détecter la supercherie.
+<strong>C'est faux.</strong> Mesuré le 2026-07-29 sur Electron 38.8.6 (Tabby 1.0.235, Ubuntu Desktop,
+lancement <code>tabby --password-store=basic</code>) :</p>
+<pre><code>{ "isEncryptionAvailable": false, "hasMethod": "function", "backend": "basic_text" }</code></pre>
+<div class="callout warning">
+<span class="callout-title">Conséquence : l'ordre des tests décide du message lu par l'utilisateur</span>
+<p><code>keychainStatus()</code> testait la disponibilité en premier et sortait donc systématiquement
+par le motif générique « le système n'offre pas de chiffrement ». La branche <code>basic_text</code>
+— la seule qui explique <em>pourquoi</em> ce mode n'est pas fiable (clé codée en dur, sel fixe
+« saltysalt », une itération de PBKDF2) — n'était <strong>jamais atteinte</strong>. L'utilisateur
+était bien protégé, mais avec un message exact et inexploitable.</p>
+<p>Le backend est désormais interrogé <strong>avant</strong>. Le test de disponibilité reste derrière,
+utile pour Windows et macOS où <code>getSelectedStorageBackend</code> n'existe pas, et pour les
+Electron antérieurs à ce changement de comportement.</p>
+</div>
+<ul>
+<li><strong>Le bureau n'est pas le levier.</strong> On a d'abord supposé qu'un gestionnaire de
+  fenêtres non reconnu ferait retomber Chromium sur <code>basic_text</code>. Mesuré : en session i3
+  (<code>XDG_CURRENT_DESKTOP=i3</code>, <code>XDG_SESSION_TYPE=x11</code>), le backend retenu reste
+  <code>gnome_libsecret</code> — parce que <code>gnome-keyring-daemon</code> tourne et revendique
+  <code>org.freedesktop.secrets</code>, indépendamment du bureau. <strong>Ce qui compte est la
+  disponibilité du service Secret, pas la détection du bureau.</strong> Bonne nouvelle collatérale :
+  un utilisateur i3 disposant de gnome-keyring obtient le chemin nominal, pas un refus abusif.</li>
+<li><strong>Pour reproduire l'état dégradé</strong>, deux voies : le commutateur Chromium
+  <code>--password-store=basic</code> (déterministe, immédiat), ou l'absence réelle de service
+  Secret sur le bus de session. Aucune préparation particulière de la machine n'est nécessaire.</li>
+<li><strong>Ce que <code>keychainStatus()</code> ne couvre pas</strong>, et qui reste ouvert : un
+  trousseau présent mais <em>verrouillé</em>. <code>getSelectedStorageBackend()</code> répond
+  <code>gnome_libsecret</code> et <code>isEncryptionAvailable()</code> répond <code>true</code>,
+  alors que <code>encryptString</code> échouera à l'usage. C'est le repli sur la méthode native qui
+  rattrape ce cas — la fonction de diagnostic, elle, ne le voit pas.</li>
+<li>Sonde réutilisable, à coller dans la console des DevTools de Tabby (Réglages → Application →
+  Debugging → <em>Open DevTools</em> ; aucun raccourci clavier n'est lié) :
+  <code>(() =&gt; { const ss = require('@electron/remote').safeStorage; return { isEncryptionAvailable: ss.isEncryptionAvailable(), hasMethod: typeof ss.getSelectedStorageBackend, backend: ss.getSelectedStorageBackend ? String(ss.getSelectedStorageBackend()) : 'METHODE ABSENTE' } })()</code></li>
+</ul>
+
+<h3 id="piege-v16">#V16 — <code>[disabled]</code> sur le <code>toggle</code> de Tabby ne neutralise pas le contrôle</h3>
+<p>Tout laisse pourtant croire l'inverse : <code>ToggleComponent</code> hérite de
+<code>CheckboxComponent</code>, qui expose un <code>@Input() disabled</code>, un
+<code>@HostBinding('class.disabled')</code> et un <code>@HostListener('click')</code> qui sort
+immédiatement quand l'entrée est posée — et <code>toggle.component.scss</code> style déjà
+<code>&amp;.disabled { opacity: 0.5 }</code>. <strong>Mesuré sur Tabby 1.0.235 : le contrôle
+apparaît bien atténué, et reste actionnable.</strong> La case à cocher interne porte son propre
+<code>[(ngModel)]</code>, que le garde du <code>@HostListener</code> ne couvre pas.</p>
+<div class="callout important">
+<span class="callout-title">Masquer plutôt que griser</span>
+<p>Un réglage qui <em>paraît</em> inerte sans l'être est pire qu'un réglage franchement absent : il
+invite exactement à la fausse confiance que le garde-fou existe pour empêcher. Un
+<code>*ngIf</code> ne dépend d'aucun comportement tiers et ne peut pas mentir.</p>
+<p>Corollaire à ne pas oublier : <strong>ne jamais faire reposer une garantie sur la seule absence
+d'un élément d'interface.</strong> <code>persist()</code> porte un second verrou qui refuse d'écrire
+<code>enabled: true</code> sans trousseau utilisable, indépendamment du gabarit.</p>
+</div>
+<ul>
+<li>Ce verrou est <strong>asymétrique à dessein</strong> : il empêche d'activer, mais ne réécrit
+  jamais un <code>enabled: true</code> existant en <code>false</code>. Le fichier est propre à la
+  machine, pas à la session — ouvrir le panneau depuis une session dégradée ne doit pas effacer un
+  réglage posé depuis une session où le trousseau fonctionne.</li>
+<li>Ce qui reste visible sans trousseau, et pourquoi : la <strong>révocation</strong> dès qu'un jeton
+  existe (<code>deleteToken()</code> ne fait que réécrire notre fichier ; un jeton enregistré avant la
+  panne doit rester supprimable, c'est le moment où ça compte le plus), le <strong>mode
+  observation</strong> (<code>VaultBridgeService.resolve()</code> teste <code>debug</code> AVANT
+  <code>enabled</code> et avant l'état du trousseau — c'est le seul moyen d'observer le plugin dans
+  une session dégradée), le <strong>journal</strong> et le <strong>nom de machine</strong> qui
+  étiquette ses entrées.</li>
+</ul>
+
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>
