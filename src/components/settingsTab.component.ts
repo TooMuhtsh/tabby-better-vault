@@ -5,8 +5,9 @@ import { PlatformService } from 'tabby-core'
 // (piège hérité #3), les styles sont injectés en CSS globale.
 import './settingsTab.component.scss'
 
+import { guardState, describeState, rearm } from '../keychainGuard'
 import { log, purge, LOG_PATH } from '../logger'
-import { keychainStatus } from '../osKeychain'
+import { keychainStatus, KeychainStatus } from '../osKeychain'
 import {
     Settings,
     readSettings,
@@ -24,7 +25,33 @@ export class BetterVaultSettingsTabComponent {
     @HostBinding('class.content-box') true
 
     settings: Settings
-    keychain = keychainStatus()
+    /**
+     * Résultat du diagnostic, ou `null` tant qu'il n'a pas été fait.
+     *
+     * Ce champ valait `keychainStatus()` en initialiseur, donc la sonde partait
+     * à la construction du composant, sans égard pour `enabled`. Sur trousseau
+     * verrouillé, ouvrir les réglages figeait l'interface — et ce panneau est le
+     * SEUL endroit d'où l'on peut désactiver le plugin : le gel emportait avec
+     * lui le moyen d'en sortir. Voir `keychainGuard.ts`.
+     *
+     * La sonde n'a donc plus lieu qu'à la demande, ou quand le plugin est déjà
+     * activé : dans ce cas le pont l'a de toute façon déjà faite au démarrage,
+     * et l'utilisateur a explicitement consenti à ce contact.
+     */
+    keychain: KeychainStatus | null = null
+
+    /**
+     * Champs et non accesseurs : le gabarit les lit, et Angular réévalue une
+     * expression de gabarit à CHAQUE cycle de détection — chaque frappe dans le
+     * champ « nom de cette machine », chaque événement de souris. Un
+     * `guardState()` derrière un `get` y ferait autant de `readFileSync`, dont
+     * la plupart sur un fichier absent, donc autant d'exceptions levées puis
+     * rattrapées. L'état ne change qu'aux endroits qui appellent
+     * `refreshGuard()`.
+     */
+    suspended = false
+    suspendedDetail = ''
+
     logPath = LOG_PATH
 
     readonly weekdays = [
@@ -48,6 +75,45 @@ export class BetterVaultSettingsTabComponent {
 
     constructor (private platform: PlatformService) {
         this.settings = readSettings()
+        this.refreshGuard()
+        if (this.settings.enabled) {
+            this.probeKeychain()
+        }
+    }
+
+    private refreshGuard (): void {
+        const state = guardState()
+        this.suspended = state.suspended
+        this.suspendedDetail = state.suspended ? describeState(state) : ''
+    }
+
+    /**
+     * Interroge le trousseau, à la demande explicite de l'utilisateur.
+     *
+     * C'est le seul appel de ce panneau susceptible de bloquer. Il est protégé
+     * par le garde-fou : si le trousseau ne répond pas, ce clic gèle Tabby une
+     * fois, et une seule — au redémarrage suivant le panneau s'ouvre
+     * instantanément sur l'état « suspendu », interrupteur d'arrêt compris.
+     */
+    probeKeychain (): void {
+        this.keychain = keychainStatus()
+        // La sonde peut consigner le trousseau à son tour : l'affichage doit
+        // suivre sans attendre une réouverture du panneau.
+        this.refreshGuard()
+    }
+
+    /**
+     * Lève la consignation et re-sonde dans la foulée.
+     *
+     * Enchaîner les deux est délibéré : l'utilisateur ne clique ici qu'après
+     * avoir déverrouillé son trousseau, et le laisser sur un état « suspendu »
+     * levé mais non vérifié n'apprendrait rien de plus qu'avant le clic.
+     */
+    rearmKeychain (): void {
+        rearm()
+        log('garde-fou du trousseau levé manuellement depuis les réglages')
+        this.refreshGuard()
+        this.probeKeychain()
     }
 
     openLog (): void {
@@ -140,7 +206,10 @@ export class BetterVaultSettingsTabComponent {
         // depuis une session où le trousseau fonctionne, puis ouvrant ce panneau
         // depuis une session dégradée, perdrait son réglage sans l'avoir
         // demandé. On laisse donc la valeur du fichier intacte.
-        const enabled = this.keychain.available ? this.settings.enabled : current.enabled
+        //
+        // `keychain` vaut `null` tant que le diagnostic n'a pas eu lieu : c'est
+        // aussi un cas où l'on ne doit pas pouvoir activer, pour la même raison.
+        const enabled = this.keychain?.available ? this.settings.enabled : current.enabled
         const tokenExpiresAt = recomputeExpiry && current.token
             ? computeExpiry(expiry)
             : current.tokenExpiresAt

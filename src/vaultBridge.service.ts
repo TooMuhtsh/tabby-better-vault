@@ -3,6 +3,7 @@ import { ToastrService } from 'ngx-toastr'
 import { AppService, VaultService } from 'tabby-core'
 
 import { showInlineToast } from './inlineToast'
+import { guardState, describeState } from './keychainGuard'
 import { log, warn, crit } from './logger'
 import { keychainStatus, keychainLabel, encrypt, decrypt } from './osKeychain'
 import {
@@ -74,14 +75,27 @@ export class VaultBridgeService {
             return this.pending
         }
 
-        const status = keychainStatus()
-        if (status.available) {
-            log(`pont installé — trousseau disponible (${status.backend})`)
+        // AUCUN ACCÈS AU TROUSSEAU ICI. Cette méthode est appelée depuis le
+        // constructeur du NgModule, donc sur le chemin de démarrage de Tabby, et
+        // AVANT même que `enabled` ne soit consulté — le test vit dans
+        // `resolve()`. Un `keychainStatus()` à cet endroit, qui n'y servait qu'à
+        // journaliser, gelait Tabby à son écran de démarrage sur trousseau
+        // verrouillé, y compris quand le plugin était désactivé : la simple
+        // présence du plugin suffisait. Défaut de sévérité haute relevé par la
+        // campagne du 2026-07-29, contraire au principe fondateur du plugin.
+        //
+        // Le diagnostic est désormais fait dans `resolve()`, c'est-à-dire une
+        // fois `enabled` vérifié, et sous garde-fou. Plugin désactivé = zéro
+        // contact avec le trousseau, garanti par la structure et non par un
+        // `try/catch` (qui n'attrape rien face à un appel bloquant).
+        const guard = guardState()
+        if (guard.suspended) {
+            // Le garde-fou s'est déclenché : sans cette trace, l'utilisateur ne
+            // pourrait pas comprendre pourquoi le déverrouillage automatique a
+            // cessé de fonctionner du jour au lendemain.
+            crit(`pont installé, mais accès au trousseau suspendu — ${describeState(guard)} ; à lever dans Paramètres → Better Vault`)
         } else {
-            // Garde-fou déclenché : sans cette trace, l'utilisateur ne peut pas
-            // comprendre pourquoi le déverrouillage automatique ne se produit
-            // plus. Cas typique sous Linux : bascule sur le backend basic_text.
-            crit(`déverrouillage automatique impossible — ${status.reason}`)
+            log('pont installé — le trousseau ne sera interrogé qu\'au premier déverrouillage')
         }
     }
 
@@ -118,7 +132,17 @@ export class VaultBridgeService {
             return this.callOriginal()
         }
 
+        // Premier contact avec le trousseau, et le plus tôt possible dans la vie
+        // du plugin : ici `enabled` est vrai, donc l'utilisateur a explicitement
+        // demandé ce contact. Tout ce qui précède s'en passe.
         const status = keychainStatus()
+        if (status.suspended) {
+            // Distinct d'une indisponibilité ordinaire : l'état persiste d'un
+            // démarrage à l'autre et ne se lèvera pas tout seul. Le message doit
+            // donc dire quoi faire, pas seulement ce qui ne va pas.
+            crit(`${status.reason} — saisie manuelle ; à lever dans Paramètres → Better Vault une fois le trousseau déverrouillé`)
+            return this.callOriginal()
+        }
         if (!status.available) {
             warn(`trousseau indisponible (${status.reason}) — saisie manuelle`)
             return this.callOriginal()

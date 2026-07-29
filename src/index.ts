@@ -41,6 +41,10 @@ export default class BetterVaultModule {
      * plus tard : c'est le point le plus précoce où une instance de
      * VaultService existe, et il précède `ConfigService.init()` — donc la
      * demande de mot de passe du cas « config chiffrée » (piège #V4, vérifié).
+     *
+     * CE CHEMIN NE DOIT TOUCHER NI LE TROUSSEAU, NI RIEN QUI PUISSE BLOQUER.
+     * `install()` s'y tient ; c'est une contrainte de l'endroit, pas une
+     * préférence de style. Voir le commentaire d'`install()`.
      */
     constructor (bridge: VaultBridgeService) {
         try {
@@ -48,6 +52,10 @@ export default class BetterVaultModule {
         } catch (e) {
             // Ce plugin est un confort : il ne doit jamais empêcher Tabby de
             // démarrer, quoi qu'il arrive.
+            //
+            // Ce filet ne couvre QUE les exceptions. Un appel bloquant n'en est
+            // pas une : rien ici ne rattraperait un gel, d'où la règle ci-dessus
+            // et le garde-fou de `keychainGuard.ts`.
             crit(`installation échouée — ${String(e)}`)
         }
     }

@@ -2,7 +2,30 @@
   h3.mb-1 Déverrouillage automatique du coffre-fort
   .machine-badge.mb-3 Réglages propres à cette machine — jamais synchronisés.
 
-  .alert.alert-warning(*ngIf='!keychain.available')
+  //- Garde-fou déclenché : un accès au trousseau n'est jamais revenu lors d'une
+      session précédente, et le plugin s'est mis en retrait pour que Tabby
+      redémarre. C'est le seul état que l'utilisateur peut lever lui-même — d'où
+      un encadré distinct de l'indisponibilité ordinaire, avec l'action à faire.
+  .alert.alert-danger(*ngIf='suspended')
+    strong Accès au trousseau suspendu.
+    |  {{suspendedDetail}}.
+    .mt-1 Le plugin ne le sollicite plus, pour ne pas figer le démarrage de Tabby. Le mot de passe reste demandé normalement à chaque fois.
+    .mt-1 Déverrouillez votre trousseau, puis relancez la vérification ci-dessous.
+    button.btn.btn-warning.mt-2((click)='rearmKeychain()')
+      i.fas.fa-unlock.mr-2
+      | Lever la suspension et vérifier
+
+  //- Sonde non encore faite : l'interroger peut bloquer sur un trousseau
+      verrouillé, ce doit donc rester un geste de l'utilisateur tant que le
+      plugin n'est pas activé.
+  .alert.alert-info(*ngIf='!suspended && !keychain')
+    strong Trousseau du système non vérifié.
+    .mt-1 Le plugin n'interroge pas le trousseau tant qu'il n'est pas activé — c'est ce qui garantit que sa seule présence ne peut pas retarder le démarrage de Tabby.
+    button.btn.btn-primary.mt-2((click)='probeKeychain()')
+      i.fas.fa-key.mr-2
+      | Vérifier le trousseau
+
+  .alert.alert-warning(*ngIf='keychain && !keychain.available && !keychain.suspended')
     strong Trousseau du système indisponible.
     |  {{keychain.reason}}
     .mt-1 Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.
@@ -14,7 +37,7 @@
       contrôle restait actionnable alors qu'il paraissait inactif — pire qu'un
       contrôle franchement absent. Un `*ngIf` ne dépend d'aucun comportement
       tiers.
-  ng-container(*ngIf='keychain.available')
+  ng-container(*ngIf='keychain?.available')
     .form-line
       .header
         .title Activer sur cette machine
@@ -34,7 +57,7 @@
       placeholder='poste maison',
     )
 
-  ng-container(*ngIf='keychain.available')
+  ng-container(*ngIf='keychain?.available')
     h4.mt-4.mb-2 Expiration
 
     .form-line
@@ -83,7 +106,7 @@
       doit rester révocable — c'est le moment où ça compte le plus. En revanche
       le cas « aucun jeton » est masqué : il annoncerait un enregistrement futur
       qui ne se produira pas.
-  ng-container(*ngIf='keychain.available || hasToken')
+  ng-container(*ngIf='keychain?.available || hasToken')
     h4.mt-4.mb-2 Mot de passe enregistré
 
     .form-line
