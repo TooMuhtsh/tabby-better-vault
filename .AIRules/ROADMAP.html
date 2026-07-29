@@ -38,7 +38,9 @@
 <tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
     <td><span class="pill done">✅ Les trois validés sur Linux le 2026-07-29 — deux défauts nés de ces correctifs (D1, D2) corrigés depuis, non revalidés</span></td><td>—</td></tr>
 <tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
-    <td><span class="pill progress">🚧 Écrits le 2026-07-29 au soir — D1 non validable depuis Windows</span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill progress">🚧 Écrits le 2026-07-29 au soir — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs</span></td><td><strong>Priorité absolue</strong></td></tr>
+<tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
+    <td><span class="pill planned">📋 Périmètre et protocole arrêtés le 2026-07-29 — D4 en tête, jamais mesuré</span></td><td><strong>Suite immédiate</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
     <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -517,6 +519,10 @@ La journée du 2026-07-29 a produit trois défauts corrigés, puis deux défauts
 correctifs</em> — dont un de sévérité haute qui annulait la garantie centrale. Les correctifs de D1
 et D2 ne sont pas revalidés. Publier maintenant, ce serait diffuser à des inconnus un code dont la
 dernière révision n'a jamais été exercée sur la seule plateforme qui sait la mettre en défaut.</p>
+<p><strong>Condition de levée, explicite</strong> : la <a href="#campagne-3">troisième campagne</a>
+passée sans défaut nouveau de sévérité haute, D4 mesuré dans un sens ou dans l'autre. Si elle produit
+à nouveau des régressions issues de ses propres correctifs, ce n'est plus un correctif qui manque
+mais une revue de conception — et la publication attend d'autant plus.</p>
 </div>
 
 <h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
@@ -724,7 +730,7 @@ CDP en lecture seule pour <em>mesurer</em> le blocage du renderer plutôt que le
   <code>depth</code> ne compte qu'au sein d'un processus. Deux fenêtres Tabby démarrant ensemble
   verraient donc la seconde se refuser le trousseau et journaliser une suspension fictive. À
   <strong>exercer avant de redessiner quoi que ce soit</strong> : c'est une piste issue du code, pas
-  un constat. Premier point de la campagne suivante.</li>
+  un constat. Premier point de la <a href="#campagne-3">troisième campagne</a>.</li>
 </ul>
 
 <h4>Toujours non exercé</h4>
@@ -754,6 +760,89 @@ protocole AVANT la campagne, et l'opérateur ne doit jamais avoir à l'improvise
 discipline de test sur données jetables valait déjà pour les données de Tabby ; elle vaut aussi pour
 ce que l'humain tape.</p>
 </div>
+
+<h3 id="campagne-3">Troisième campagne — à préparer</h3>
+<div class="callout important">
+<span class="callout-title">Pourquoi elle est nécessaire, et pas seulement souhaitable</span>
+<p>La deuxième campagne a validé les trois correctifs du matin <em>et</em> trouvé deux défauts nés de
+ces correctifs, dont un de sévérité haute qui annulait la garantie centrale du plugin. Les correctifs
+de D1 et D2, écrits le soir même, <strong>n'ont jamais été exercés sur Linux</strong> — et D1 n'est
+pas exerçable ailleurs : il ne se manifeste que sur un trousseau qui répond à son nom sans répondre à
+un chiffrement, ce qui n'existe pas sous DPAPI.</p>
+<p>La leçon à ne pas perdre : <strong>ce projet a produit deux régressions en corrigeant trois
+défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est un pari.</p>
+</div>
+
+<h4>Changements de protocole — issus des deux campagnes précédentes</h4>
+<ul>
+<li><strong>La phrase maîtresse de test est écrite dans le protocole AVANT la campagne.</strong>
+  L'opérateur ne doit jamais avoir à l'improviser devant une pop-up : le 2026-07-29 il a saisi son
+  mot de passe de session, que le plugin a chiffré et écrit sur disque, et que l'instance a relu en
+  clair pendant le diagnostic. Valeur retenue : <code>PhraseDeTestJetable-2026!</code>. Elle ne doit
+  ressembler à aucun mot de passe réel, et ne jamais être réutilisée.</li>
+<li><strong>L'opérateur ne saisit rien qui ne figure pas dans le protocole.</strong> Si une instance
+  lui demande une valeur non prévue, la réponse est de refuser et de le signaler — pas d'improviser.</li>
+<li><strong>Purge des transcripts en fin de campagne</strong>, dans le protocole et non en rattrapage :
+  <code>~/.claude/history.jsonl</code> et <code>~/.claude/projects/*/*.jsonl</code> sur la VM. Ce sont
+  eux qui ont conservé le secret la fois précédente, l'instance ayant correctement purgé ses propres
+  artefacts sans pouvoir toucher aux siens.</li>
+<li><strong>L'opérateur humain reste dans la boucle pour toute saisie GUI.</strong> C'est ce qui a
+  permis d'exercer <code>learnFromUser</code> de bout en bout, resté non testé lors de la première
+  campagne. À reconduire tel quel.</li>
+<li><strong>Aveuglement maintenu</strong> : clone sans <code>.AIRules/</code>, <code>CLAUDE.md</code>,
+  <code>.tempfiles/</code> ni <code>.git</code>. Rappeler le faux positif attendu — des renvois vers
+  <code>.AIRules/</code> dans les commentaires, qui résolvent dans le dépôt réel.</li>
+</ul>
+
+<h4>Périmètre, par ordre de priorité</h4>
+<ol>
+<li><strong>D4 — le témoin comme verrou global entre processus. Jamais mesuré, à mesurer d'abord.</strong>
+  <code>guardState()</code> conclut à la suspension sur la seule présence du fichier, et
+  <code>depth</code> ne compte qu'au sein d'un processus. Deux fenêtres Tabby ouvertes en même temps
+  devraient donc voir la seconde se refuser le trousseau et journaliser une suspension fictive.
+  Observable attendu si le défaut est réel : une ligne <code>CRIT … accès au trousseau suspendu</code>
+  <em>sans</em> qu'aucun blocage réel n'ait eu lieu, et un déverrouillage automatique qui échoue dans
+  la seconde fenêtre alors que le trousseau est déverrouillé. <strong>Mesurer avant de redessiner</strong> :
+  c'est une piste tirée du code, pas un constat.</li>
+<li><strong>Le correctif de D1, dans le scénario exact qui l'a révélé.</strong> Trousseau verrouillé,
+  plugin activé, jeton en place → blocage → fermeture forcée → relance → état « suspendu » →
+  <em>clic sur « Lever la suspension et vérifier »</em>. Trois issues à distinguer, et les trois
+  comptent :
+  <ul>
+  <li>l'opérateur <strong>répond</strong> à l'invite d'authentification → la vérification doit réussir,
+    le panneau afficher un trousseau vérifié, et le démarrage suivant se passer normalement ;</li>
+  <li>l'opérateur <strong>rejette</strong> l'invite → la vérification doit échouer <em>avec un motif
+    lisible</em>, sans laisser le plugin dans un état où il repartirait vers un blocage certain ;</li>
+  <li>l'opérateur <strong>ne répond pas du tout</strong> → Tabby bloque, le témoin doit avoir été posé,
+    et le démarrage suivant doit retrouver l'état « suspendu ». C'est le cas qui vérifie que
+    l'exception délibérée de <code>keychainRoundTrip()</code> ne rouvre pas le trou.</li>
+  </ul>
+  <strong>Le défaut à guetter</strong> : que le bouton annonce un succès sans que rien n'ait été
+  chiffré. C'était exactement D1.</li>
+<li><strong>Le correctif de D2.</strong> Saisir une phrase <em>erronée</em> dans la pop-up native, sur
+  un coffre dont la vraie phrase est connue. Attendu : aucun jeton écrit, aucune notification de
+  succès, et une ligne <code>WARN le mot de passe saisi n'ouvre pas le coffre — non enregistré</code>.
+  Puis saisir la bonne phrase et vérifier que le chemin nominal fonctionne toujours — le risque d'un
+  contrôle ajouté est qu'il refuse aussi le cas valide.</li>
+<li><strong>Non-régression des cinq revendications déjà validées.</strong> Le code a changé depuis :
+  <code>osKeychain.ts</code>, <code>vaultBridge.service.ts</code> et le panneau de réglages ont tous
+  été touchés. Rejouer les mesures de la deuxième campagne, pas les relire.</li>
+<li><strong>Le refus du backend <code>basic_text</code></strong>, non rejoué la deuxième fois. La
+  branche Linux de <code>keychainStatus()</code> a été modifiée depuis sa dernière vérification : le
+  garde-fou doit toujours refuser, avec son motif explicite.</li>
+</ol>
+
+<h4>Hors périmètre, et pourquoi</h4>
+<ul>
+<li><strong>Windows (DPAPI) et macOS</strong> — pas la bonne machine. Reste le plus gros angle mort du
+  projet : c'est là que <code>keychainStatus()</code> emprunte le chemin
+  <code>isEncryptionAvailable()</code> seul, donc là où il engage davantage que sur Linux.</li>
+<li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
+<li><strong>L'atomicité sous coupure réelle</strong> — déduite de <code>rename(2)</code>. La mesurer
+  supposerait de couper l'alimentation de la VM au bon moment ; le rapport coût/information est
+  mauvais tant que rien ne suggère un problème.</li>
+<li><strong>L'i18n</strong> — pas encore écrite. Ne rien auditer qui n'existe pas.</li>
+</ul>
 
 <h2 id="i18n">Internationalisation — interface et journal</h2>
 <p><strong>Priorisé le 2026-07-29 : c'est le prochain chantier</strong>, devant la granularité par profil — motif donné par l'utilisateur : « à l'usage c'est ce qui est le plus important maintenant, le reste c'est du bonus ».</p>
