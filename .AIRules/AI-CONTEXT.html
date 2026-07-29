@@ -570,6 +570,58 @@ d'un élément d'interface.</strong> <code>persist()</code> porte un second verr
   étiquette ses entrées.</li>
 </ul>
 
+<h3 id="piege-v17">#V17 — Tout appel à <code>safeStorage</code> peut bloquer indéfiniment : garder le point de passage, pas les appelants</h3>
+<p>Mesuré (campagne du 2026-07-29, banc Electron 38.8.6) : sur un trousseau Linux présent mais
+<strong>verrouillé</strong>, <code>safeStorage.isEncryptionAvailable()</code> <em>ne revient
+jamais</em>. Il attend un déverrouillage qui n'aboutit pas, sans afficher de dialogue. Voir #V15
+pour l'historique de la fausse affirmation qui masquait ce cas.</p>
+<div class="callout important">
+<span class="callout-title">Un appel bloquant n'est pas une exception</span>
+<p>Aucun <code>try/catch</code> ne rattrape un gel, et <code>@electron/remote</code> fait de l'IPC
+<strong>synchrone</strong> : le fil du renderer est arrêté <em>dans</em> l'appel, plus aucun
+JavaScript ne s'exécute. On ne peut donc pas non plus poser de délai d'attente depuis le fil que
+l'on bloque. Le seul recours qui survive au gel est une trace écrite sur disque AVANT l'appel,
+relue au démarrage suivant — c'est <code>src/keychainGuard.ts</code>.</p>
+</div>
+<ul>
+<li><strong>Le point de passage est <code>withSafeStorage()</code> dans <code>osKeychain.ts</code>,
+  et il doit le rester.</strong> Ne jamais appeler <code>require('@electron/remote')</code> ailleurs :
+  le garde-fou ne protège que ce qu'il enveloppe, et un futur appelant qui l'oublierait ramènerait le
+  défaut sans qu'aucun test ne s'en aperçoive. Quatre entrées aujourd'hui —
+  <code>keychainStatus</code>, <code>encrypt</code>, <code>decrypt</code>, et le panneau de réglages
+  qui appelle la première.
+  <br>Vérification mécanique de l'invariant, à rejouer après toute modification de
+  <code>osKeychain.ts</code> — un seul APPEL doit subsister dans <code>src/</code>, les autres
+  occurrences étant des commentaires ou des chaînes :
+  <code>grep -rn "require('@electron/remote')" src/</code> (attendu : <code>osKeychain.ts</code>,
+  une ligne, dans <code>withSafeStorage()</code>).</li>
+<li><strong>Seul <code>isEncryptionAvailable()</code> a été MESURÉ bloquant.</strong> Que
+  <code>encryptString</code>/<code>decryptString</code> bloquent aussi (même acquisition de clé
+  OSCrypt) est un <em>raisonnement</em>, pas une mesure — à traiter comme tel, ce projet ayant déjà
+  vu trois déductions de ce genre réfutées en une journée. Envelopper le point de passage rend le
+  dispositif correct dans les deux cas : c'est précisément l'argument en sa faveur.</li>
+<li><strong>Rien sur le chemin de démarrage.</strong> <code>install()</code> est appelée depuis le
+  constructeur du NgModule, et AVANT que <code>enabled</code> ne soit consulté (le test vit dans
+  <code>resolve()</code>). Un <code>keychainStatus()</code> qui n'y servait qu'à journaliser suffisait
+  à figer Tabby même plugin désactivé. Le diagnostic a lieu dans <code>resolve()</code>, une fois
+  <code>enabled</code> vérifié.</li>
+<li><strong>Sur Linux, <code>isEncryptionAvailable()</code> n'est plus appelé du tout</strong> quand
+  <code>getSelectedStorageBackend()</code> a répondu autre chose que <code>basic_text</code> : il
+  n'apportait aucune information de plus. À ne pas lire comme le correctif du gel — il retire un
+  appel bloquant du chemin, pas le risque.</li>
+<li><strong>Le panneau de réglages est le seul endroit d'où l'on peut désactiver le plugin.</strong>
+  Y sonder le trousseau à l'initialisation d'un champ (<code>keychain = keychainStatus()</code>)
+  emportait, avec le gel, le moyen d'en sortir. La sonde est désormais explicite, ou conditionnée à
+  <code>enabled</code>.</li>
+<li><strong>Ce que le garde-fou garantit, et ce qu'il ne garantit pas.</strong> Le premier gel n'est
+  pas évité — il faut toucher le trousseau pour savoir s'il répond. Il est le <em>dernier</em> : au
+  démarrage suivant le témoin subsiste, le plugin s'efface, Tabby retrouve sa pop-up. Le README dit
+  exactement cela, et pas davantage : ne jamais y restaurer « the plugin never blocks access to your
+  vault ».</li>
+<li><strong>Témoin non écrivable ⇒ accès refusé</strong>, pas tenté sans filet. Un trousseau qui ne
+  se déverrouille pas seul est une gêne ; un Tabby qui ne démarre plus est une panne.</li>
+</ul>
+
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>

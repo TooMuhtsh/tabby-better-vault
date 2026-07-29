@@ -35,9 +35,12 @@ confie une fois au trousseau du système, puis répond à votre place.
 - [x] **Mode observation** — voir ce que ferait le plugin sans le laisser rien
       enregistrer
 - [x] **Repli sûr** — en cas d'anomalie, retour silencieux à la fenêtre native
-      de Tabby ; le plugin ne bloque jamais l'accès au coffre-fort
+      de Tabby. Désactivé, il ne touche pas du tout au trousseau ; activé, un
+      trousseau qui cesse de répondre coûte au pire un démarrage figé (voir
+      [Trousseau verrouillé](#trousseau-verrouillé))
 - [ ] Publication sur npm, installable depuis le gestionnaire de plugins
-- [x] Vérification sous Linux, dont le refus du backend `basic_text`
+- [x] Vérification adversariale indépendante sous Linux, dont le refus du
+      backend `basic_text`
 - [ ] Panneau de réglages commun aux autres plugins `tabby-better-*`
 
 ## Installation
@@ -151,10 +154,52 @@ Ce qui décide, c'est la disponibilité du trousseau, pas le bureau utilisé : u
 session i3 ou Sway sur laquelle `gnome-keyring` tourne obtient le vrai backend,
 et le plugin fonctionne normalement.
 
-Ce plugin ne peut pas être plus sûr que le trousseau auquel il délègue. Si
-votre modèle de menace inclut un attaquant ayant accès à votre session
-utilisateur déverrouillée, enregistrer le mot de passe reste un compromis à
-peser.
+### Ce que coûte réellement l'enregistrement du mot de passe
+
+Sans ce plugin, votre mot de passe maître ne touche jamais le disque. Avec lui,
+il y est écrit — chiffré par le trousseau du système — dans
+`better-vault.json`, et il devient **récupérable au repos, en votre absence, par
+n'importe quel processus tournant sous votre compte**.
+
+Ce n'est pas un défaut du plugin : c'est ce que signifie déléguer à
+`safeStorage`. C'est le plus net sous Linux : GNOME Keyring n'applique aucun
+contrôle d'accès par application, donc tout processus de votre session peut lire
+l'entrée via D-Bus et déchiffrer le fichier hors ligne. Une vérification
+indépendante l'a fait exactement ainsi le 2026-07-29 et a récupéré un mot de
+passe maître de test, sans Electron ni Chromium. Sous Windows, DPAPI est lié à
+votre compte utilisateur, ce qui revient au même pour tout ce qui s'exécute en
+votre nom.
+
+Ce plugin ne peut pas être plus sûr que le trousseau auquel il délègue. Le
+compromis qu'il propose, c'est du confort contre un attaquant capable
+d'exécuter du code dans votre session — à peser délibérément.
+
+### Trousseau verrouillé
+
+Un trousseau présent mais **verrouillé** rend les appels à `safeStorage`
+bloquants sans fin : ils attendent un déverrouillage qui n'arrive jamais, sans
+afficher de dialogue. Un `try/catch` n'y peut rien — un appel bloquant n'est pas
+une exception — et un appel synchrone ne peut pas être interrompu depuis le fil
+qu'il bloque.
+
+Jusqu'au 2026-07-29, le plugin interrogeait le trousseau depuis le constructeur
+de son module, donc sur le chemin de démarrage de Tabby, et **qu'il soit activé
+ou non**. Sur un trousseau verrouillé, cela figeait Tabby à son écran de
+démarrage, qui n'atteignait plus sa propre demande de mot de passe. Défaut
+relevé par la vérification indépendante citée plus haut ; corrigé.
+
+Ce que le plugin garantit désormais :
+
+- **Désactivé** — il ne touche pas au trousseau, sa seule présence ne peut donc
+  pas retarder le démarrage.
+- **Activé** — le premier contact avec un trousseau verrouillé fige toujours.
+  Il n'existe aucun moyen d'apprendre qu'un trousseau ne répondra pas sans le
+  lui demander. Mais il ne fige **qu'une fois** : un témoin est écrit sur le
+  disque avant chaque appel au trousseau, et retiré au retour. Forcez la
+  fermeture de Tabby et relancez-le — le témoin resté en place indique au
+  plugin de s'effacer, et vous retrouvez la fenêtre native de Tabby. Le panneau
+  **Paramètres → Better Vault** affiche cet état suspendu et permet de le lever
+  une fois le trousseau déverrouillé.
 
 ## Feuille de route
 

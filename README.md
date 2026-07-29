@@ -32,9 +32,12 @@ OS keychain once, then answers on your behalf.
 - [x] **Observation mode** — see what the plugin would do without letting it
       store anything
 - [x] **Safe fallback** — any failure quietly returns you to Tabby's own
-      prompt; the plugin never blocks access to your vault
+      prompt. Switched off, it never touches the keychain at all; switched on,
+      a keychain that stops answering costs you at most one hung start (see
+      [When the keychain is locked](#when-the-keychain-is-locked))
 - [ ] Published on npm, installable from Tabby's plugin manager
-- [x] Verified on Linux, including refusing the insecure `basic_text` backend
+- [x] Verified on Linux by an independent adversarial review, including
+      refusing the insecure `basic_text` backend
 - [ ] Shared settings panel with other `tabby-better-*` plugins
 
 ## Installation
@@ -145,9 +148,48 @@ What decides this is whether the keyring is reachable, not which desktop you
 run: an i3 or Sway session with `gnome-keyring` running still gets the real
 backend, and the plugin works normally.
 
-This plugin cannot be more secure than the keychain it delegates to. If your
-threat model includes an attacker with access to your unlocked user session,
-storing the passphrase at all is a trade-off you should weigh.
+### What storing the passphrase actually costs you
+
+Without this plugin, your master passphrase never touches the disk. With it, it
+is written — encrypted by the OS keychain — into `better-vault.json`, and it
+becomes **recoverable at rest, while you are away, by any process running as
+your user**.
+
+That is not a flaw in the plugin; it is what delegating to `safeStorage` means.
+It is starkest on Linux: GNOME Keyring enforces no per-application access
+control, so any process in your session can read the entry over D-Bus and
+decrypt the file offline. An independent review did exactly that on 2026-07-29
+and recovered a test master passphrase without Electron or Chromium involved.
+On Windows, DPAPI is scoped to your user account, which means the same thing for
+anything running as you.
+
+This plugin cannot be more secure than the keychain it delegates to. The
+trade-off it offers is convenience against an attacker who can already run code
+in your session — weigh it deliberately.
+
+### When the keychain is locked
+
+A keyring that is present but **locked** makes `safeStorage` calls block
+indefinitely: they wait on an unlock that never arrives, and no dialog is
+shown. A `try/catch` is no help — a blocking call is not an exception — and a
+synchronous call cannot be timed out from the thread it is blocking.
+
+Until 2026-07-29 the plugin probed the keychain from its module constructor, on
+Tabby's startup path and **regardless of whether it was switched on**. On a
+locked keyring that froze Tabby at its splash screen, and Tabby never reached
+its own passphrase prompt. Found by the independent review cited above; fixed.
+
+What the plugin guarantees now:
+
+- **Switched off** — it never touches the keychain, so its mere presence cannot
+  delay startup at all.
+- **Switched on** — the first contact with a locked keyring still hangs. There
+  is no way to learn that a keychain will not answer other than asking it. But
+  it hangs **once**: a marker is written to disk before every keychain call and
+  removed after it returns. Force-quit Tabby and start it again — the leftover
+  marker tells the plugin to stand aside, and you get Tabby's own prompt as
+  usual. **Settings → Better Vault** shows the suspended state and clears it on
+  request, once your keyring is unlocked again.
 
 ## Roadmap
 
