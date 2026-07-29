@@ -446,6 +446,55 @@ n'aurait plus de rapport lisible avec l'événement qu'elle annonce.</p>
   panneau supposerait de suivre le focus entre les splits.</li>
 </ul>
 
+<h3 id="piege-v14">#V14 — Le processus principal lit <code>config.yaml</code> <em>avant</em> tout déchiffrement</h3>
+<p><strong>Invariant à retenir bien au-delà de ce cas précis : tout réglage que le processus
+principal consomme au moment de créer la fenêtre retombe silencieusement sur sa valeur par défaut
+quand la config est chiffrée.</strong> Le blob chiffré ne laisse en clair que <code>vault</code>,
+<code>encrypted</code> et <code>configSync</code> ; le processus principal n'a aucune passphrase à
+cet instant, donc pour lui <code>appearance</code>, <code>terminal</code>, <code>hacks</code>…
+valent <code>undefined</code>. Le renderer, lui, tourne après le déverrouillage du coffre et voit
+les vraies valeurs. Les deux processus peuvent donc être en désaccord — sans le moindre message
+d'erreur.</p>
+<div class="callout warning">
+<span class="callout-title">Cas réel diagnostiqué le 2026-07-29 — barre de titre Windows</span>
+<p>Symptôme : les boutons natifs réduire/agrandir/fermer de Windows peints
+<strong>par-dessus</strong> la tab-bar de Tabby, et impossibilité de déplacer la fenêtre en
+attrapant le haut. Suspectés à tort : <code>tabby-better-sidebar</code>,
+<code>tabby-better-vault</code>, <code>tabby-sftp-plus</code>. Aucun n'était en cause.</p>
+<p>Mécanisme : le processus principal fait
+<code>"native" === configStore.appearance?.frame ? o.frame = true : (o.titleBarStyle = "hidden",
+"win32" === process.platform &amp;&amp; (o.titleBarOverlay = {…}))</code>. Config chiffrée,
+<code>appearance</code> est <code>undefined</code> → branche <code>else</code> → overlay natif
+activé. Le renderer, lui, lit le vrai <code>frame: native</code> et ne rend donc
+<em>ni</em> <code>title-bar</code>, <em>ni</em> <code>window-controls</code>, <em>ni</em>
+<code>window-controls-spacer</code> (leurs <code>*ngIf</code> exigent <code>frame == "thin"</code>,
+cf. <code>appRoot.component.pug</code> lignes 99–108). Personne ne réserve les 138 px : le
+<code>.btn-group</code> droit se retrouve sous les boutons natifs. <code>.btn-space</code> perd au
+passage ses classes <code>.persistent</code> et <code>.drag</code>, d'où la perte de la zone de
+glissement.</p>
+</div>
+<ul>
+<li><strong>Correctif retenu : <code>appearance.frame: thin</code></strong> — seule valeur
+  cohérente sous config chiffrée, puisque le processus principal ne peut de toute façon jamais la
+  lire et active toujours l'overlay. Mesuré : le <code>.btn-group</code> droit passe de
+  <code>x=2002..2048</code> (collision avec la zone WCO <code>x=1911..2048</code>) à
+  <code>x=1864..1910</code>, et un <code>window-controls-spacer</code> de 138 px apparaît.</li>
+<li><strong>Méthode de diagnostic réutilisable</strong> : <code>navigator.windowControlsOverlay</code>
+  (<code>.visible</code> + <code>.getTitlebarAreaRect()</code>) dit si Chromium peint des boutons
+  natifs par-dessus le contenu web, et <code>env(titlebar-area-*)</code> donne la même information
+  en CSS. Interrogeable via CDP (piège hérité #8) sans rien instrumenter.</li>
+<li><strong>L'introspection Angular est fermée en production</strong> : sur l'app installée,
+  <code>el.__ngContext__</code> est un <em>index numérique</em>, pas le LView, et
+  <code>window.ng</code> n'existe pas. On ne peut donc pas lire <code>config.store</code> depuis
+  CDP — passer par <code>config.yaml</code> (déchiffré temporairement) ou par les classes CSS que
+  les <code>*ngIf</code> laissent dans le DOM, qui trahissent les valeurs de config.</li>
+<li>Issue rédigée pour l'amont dans <code>ISSUE-tabby-titlebar-overlay.md</code> à la racine du
+  dépôt, publiée sous <a href="https://github.com/Eugeny/tabby/issues/11539">Eugeny/tabby#11539</a>
+  (Tabby 1.0.235 / Electron 38.8.6) — le fichier local et le corps de l'issue sont identiques. Correctif propre côté Tabby : sortir
+  <code>appearance.frame</code> du blob chiffré, comme <code>vault</code>/<code>encrypted</code>/
+  <code>configSync</code>.</li>
+</ul>
+
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">
 <span class="callout-title">Non négociable, à respecter dès la première implémentation</span>
