@@ -21,22 +21,6 @@
             border-color: rgba(120, 170, 255, 0.9);
             box-shadow: 0 0 0 2px rgba(120, 170, 255, 0.2);
         }
-
-        // Le style par défaut du navigateur pour `:disabled` ne traverse pas les
-        // couleurs posées ci-dessus : sans cette règle, un champ grisé resterait
-        // visuellement identique à un champ actif. On aligne l'opacité sur celle
-        // que Tabby applique déjà à ses `toggle` désactivés (0.5), pour que tous
-        // les contrôles neutralisés se ressemblent.
-        &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-
-            // Neutralise la réaction au survol déclarée plus haut, qui
-            // suggérerait à tort que le champ reste actionnable.
-            &:hover {
-                border-color: rgba(128, 128, 128, 0.45);
-            }
-        }
     }
 
     // Regroupe visuellement chaque réglage et détache les champs modifiables du

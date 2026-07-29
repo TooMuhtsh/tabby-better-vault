@@ -129,9 +129,11 @@ export class BetterVaultSettingsTabComponent {
         const current = readSettings()
         const { debug, machineName, expiry, logRetentionDays } = this.settings
 
-        // Second verrou, derrière le `[disabled]` du gabarit : sans trousseau
+        // Second verrou, derrière le `*ngIf` du gabarit : sans trousseau
         // utilisable, ce panneau ne doit pas pouvoir activer le plugin — écrire
-        // `enabled: true` promettrait un comportement inatteignable.
+        // `enabled: true` promettrait un comportement inatteignable. L'interrupteur
+        // est masqué dans ce cas, mais on ne fait pas reposer une garantie de
+        // sécurité sur la seule absence d'un élément d'interface.
         //
         // Mais il ne doit pas non plus l'ÉTEINDRE. Le fichier est propre à la
         // machine, pas à la session : un utilisateur ayant activé le plugin
