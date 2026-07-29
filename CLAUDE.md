@@ -67,3 +67,15 @@ puis relancer entièrement `Tabby.exe` — un rechargement de fenêtre ne suffit
 Identité configurée **localement** pour ce dépôt (pas globalement) :
 `TooMuhtsh <188712716+TooMuhtsh@users.noreply.github.com>`. Ne pas committer
 avec une autre adresse sans confirmation explicite.
+
+**Métadonnées d'attribution IA : admises** (`Co-Authored-By: Claude ...` et
+`Claude-Session: ...` en pied de message). Décision requise une fois par dépôt
+par la charte de gouvernance (Règle 3) ; celle-ci enregistre la pratique déjà
+en place — l'historique public en contient sur la majorité des commits, revenir
+dessus imposerait de le réécrire. À rediscuter avec l'utilisateur si ce choix
+doit changer, pas à trancher au coup par coup.
+
+Le dossier `.AIRules/` se commite et se pousse **à chaque modification**, dans
+la foulée du travail qu'il décrit (Règle 1 de la charte). Le feu vert de
+l'utilisateur porte sur le fait d'écrire dans `AI-HISTORY.html`/`ROADMAP.html`,
+pas sur le push.

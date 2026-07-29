@@ -42,8 +42,10 @@ plugins de l'utilisateur.</p>
 
 <ul>
 <li>Dossier de travail : <code>C:\Users\Alex Ramirez\Documents\Développement\tabby-better-vault</code>
-  — dépôt Git déjà en place, mais pas encore scaffoldé (pas de <code>package.json</code>, pas de
-  <code>src/</code>).</li>
+  — dépôt Git en place et projet scaffoldé (<code>package.json</code>, <code>src/</code>,
+  <code>webpack.config.js</code>), plugin fonctionnel. Dépôt distant :
+  <a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>
+  (public).</li>
 <li>Projet frère : <code>tabby-better-sidebar</code> —
   <a href="../../tabby-ssh-sidebar/.AIRules/README.html">.AIRules de ce projet</a>. Interfaçage
   prévu entre les deux (voir <a href="ROADMAP.html">ROADMAP.html</a>) : lien relatif valable tant
@@ -63,23 +65,27 @@ plugins de l'utilisateur.</p>
 <tr><td><a href="ROADMAP.html">ROADMAP.html</a></td>
     <td>Design complet déjà validé pour la fonctionnalité de déverrouillage automatique, et
     prochaines étapes concrètes pour démarrer le projet.</td></tr>
+<tr><td><a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a></td>
+    <td>Copie conforme de la charte de gouvernance appliquée par ce projet (original à la racine du
+    workspace). Ne pas l'adapter au projet : elle doit rester comparable à l'original par un
+    <code>diff</code>.</td></tr>
 </table>
 
 <h2>Protocole</h2>
 
-<h3>Avant la toute première ligne de code</h3>
+<h3>Comment ce projet a démarré — vérification bloquante, puis arbitrage</h3>
 <div class="callout important">
-<span class="callout-title">Vérification bloquante — faite le 2026-07-28, non franchie</span>
+<span class="callout-title">Vérification bloquante du 2026-07-28 : non franchie, et c'est toujours vrai</span>
 <p>La question posée était : <code>VaultService</code> expose-t-il une méthode d'injection
 programmatique du mot de passe maître utilisable depuis un plugin tiers ? Les deux niveaux exigés ont
 été vérifiés (typings <em>et</em> bloc d'export webpack de <code>dist/index.js</code>). Réponse :
 <strong>la classe est bien exportée, mais l'API d'injection n'existe pas</strong> — le cache du mot
 de passe est délibérément inaccessible (<a href="AI-CONTEXT.html#piege-v2">#V2</a>).</p>
-<p>Conformément à ce garde-fou, le blocage a été remonté et <strong>le design de
-<a href="ROADMAP.html">ROADMAP.html</a> n'est pas réalisable tel quel</strong>. Prochaine étape :
-arbitrage sur le <a href="ROADMAP.html#contournement">contournement proposé</a>, puis, s'il est
-retenu, vérification empirique du <a href="ROADMAP.html#timing">risque de timing</a> avant tout
-scaffold.</p>
+<p>Le blocage a été remonté conformément au garde-fou, et <strong>l'utilisateur a arbitré en faveur
+du <a href="ROADMAP.html#contournement">contournement par monkey-patch</a></strong> — d'où le plugin
+existant, fonctionnel et validé (voir le callout en haut de page). Ce qui reste valable de cette
+étape : le socle est un comportement <strong>non contractuel</strong> de Tabby, pas une API, donc à
+revérifier à chaque mise à jour de l'application.</p>
 </div>
 <p class="muted">Leçon de méthode à conserver : <code>typings/index.d.ts</code> ne mentionne même pas
 le Vault, alors que la classe est bel et bien exportée via <code>export * from './api'</code>. Un
@@ -91,15 +97,24 @@ réexports en cascade (<a href="AI-CONTEXT.html#piege-v1">#V1</a>).</p>
 <li>Lire <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les pièges hérités à anticiper.</li>
 <li>Lire <a href="ROADMAP.html">ROADMAP.html</a> pour le design déjà validé.</li>
 <li>Lire le haut d'<a href="AI-HISTORY.html">AI-HISTORY.html</a> pour l'état d'avancement réel.</li>
+<li>Comparer la date de conformité du pied de page à celle du pied de page de
+  <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a> : si elle est antérieure, <strong>signaler
+  l'écart et proposer</strong> une remise à niveau (charte, Règle 7, Cas B) — ne jamais l'appliquer
+  d'office.</li>
 </ol>
 
 <h3>Quand mettre à jour</h3>
+<p>Deux cadences opposées, à ne pas confondre :</p>
 <ul>
-<li><strong>AI-HISTORY.html</strong> : à chaque commit Git une fois le dépôt créé, ou dès qu'un
-  piège est découvert.</li>
-<li><strong>AI-CONTEXT.html</strong> : dès qu'un piège propre à ce projet (pas juste hérité) est
-  rencontré.</li>
-<li><strong>ROADMAP.html</strong> : dès qu'un chantier change de statut.</li>
+<li><strong>AI-CONTEXT.html — au fil de l'eau, sans rien demander.</strong> Dès qu'un piège propre à
+  ce projet (pas juste hérité) est rencontré ou qu'un invariant apparaît, il est consigné
+  immédiatement, sans attendre la fin du chantier. C'est le seul document alimenté proactivement.</li>
+<li><strong>AI-HISTORY.html et ROADMAP.html — sur feu vert explicite de l'utilisateur.</strong> Aucun
+  changement de statut ni décision de design n'y est écrit avant confirmation, pas même une mention
+  intermédiaire « implémenté, en attente de test ». <em>Exception</em> — session qui s'éternise :
+  proposer un point de gouvernance et n'écrire que ce que l'utilisateur valide à ce moment-là.</li>
+<li><strong>Toute modification de ce dossier se commite et se pousse dans la foulée</strong> (charte,
+  Règle 1). Le feu vert porte sur l'écriture, pas sur le push.</li>
 </ul>
 
 <div class="callout note">
@@ -110,7 +125,8 @@ mauvais niveau puis déplacé pour rester versionné avec le code. À préserver
 </div>
 
 <footer>tabby-better-vault · dossier de gouvernance créé le 2026-07-26, avant tout code ·
-dernière revue 2026-07-28 (plugin fonctionnel, dépôt publié).</footer>
+dernière revue 2026-07-29 (mise en conformité : cadences d'écriture, copie de la charte, état du
+scaffold corrigé) · <strong>Conforme à la charte de gouvernance du 2026-07-29</strong></footer>
 
 </body>
 </html>
