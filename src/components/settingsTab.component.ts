@@ -6,8 +6,8 @@ import { PlatformService } from 'tabby-core'
 import './settingsTab.component.scss'
 
 import { guardState, describeState, rearm } from '../keychainGuard'
-import { log, purge, LOG_PATH } from '../logger'
-import { keychainStatus, KeychainStatus } from '../osKeychain'
+import { log, warn, purge, LOG_PATH } from '../logger'
+import { keychainStatus, keychainRoundTrip, KeychainStatus } from '../osKeychain'
 import {
     Settings,
     readSettings,
@@ -88,14 +88,10 @@ export class BetterVaultSettingsTabComponent {
     }
 
     /**
-     * Interroge le trousseau, à la demande explicite de l'utilisateur.
-     *
-     * C'est le seul appel de ce panneau susceptible de bloquer. Il est protégé
-     * par le garde-fou : si le trousseau ne répond pas, ce clic gèle Tabby une
-     * fois, et une seule — au redémarrage suivant le panneau s'ouvre
-     * instantanément sur l'état « suspendu », interrupteur d'arrêt compris.
+     * Diagnostic bon marché, à l'ouverture du panneau quand le plugin est déjà
+     * actif. Ne prouve pas que le trousseau répond — voir `verifyKeychain()`.
      */
-    probeKeychain (): void {
+    private probeKeychain (): void {
         this.keychain = keychainStatus()
         // La sonde peut consigner le trousseau à son tour : l'affichage doit
         // suivre sans attendre une réouverture du panneau.
@@ -103,17 +99,48 @@ export class BetterVaultSettingsTabComponent {
     }
 
     /**
-     * Lève la consignation et re-sonde dans la foulée.
+     * Vérification réelle, à la demande explicite de l'utilisateur.
+     *
+     * `keychainStatus()` ne convient PAS ici : sur Linux il se contente de lire
+     * le nom du backend, mesuré comme ne touchant jamais le trousseau. Le
+     * bouton annonçait donc « disponible » sur un trousseau verrouillé, effaçait
+     * le témoin, et le démarrage suivant regelait — défaut D1 de la campagne du
+     * 2026-07-29, sur le seul chemin de sortie offert à l'utilisateur.
+     *
+     * C'est le seul appel de ce panneau susceptible de bloquer, et c'est
+     * délibéré : une vérification qui ne peut pas échouer ne vérifie rien. Sur
+     * trousseau verrouillé, l'utilisateur voit l'invite d'authentification du
+     * système et l'appel rend la main dès qu'il y répond.
+     */
+    verifyKeychain (): void {
+        this.keychain = keychainRoundTrip()
+        this.refreshGuard()
+
+        // Tracé dans les deux sens : c'est le seul geste par lequel
+        // l'utilisateur peut remettre le plugin en marche, son résultat doit
+        // rester lisible après coup.
+        if (this.keychain.verified) {
+            log(`trousseau vérifié depuis les réglages — aller-retour de chiffrement réussi (${this.keychain.backend})`)
+        } else {
+            warn(`vérification du trousseau infructueuse depuis les réglages — ${this.keychain.reason}`)
+        }
+    }
+
+    /**
+     * Lève la consignation, puis vérifie réellement dans la foulée.
      *
      * Enchaîner les deux est délibéré : l'utilisateur ne clique ici qu'après
      * avoir déverrouillé son trousseau, et le laisser sur un état « suspendu »
-     * levé mais non vérifié n'apprendrait rien de plus qu'avant le clic.
+     * levé mais non vérifié serait précisément le défaut D1 sous un autre nom.
+     * Si le trousseau est en réalité toujours verrouillé, la vérification le
+     * découvre — et si elle bloque, le témoin qu'elle vient de poser protège le
+     * démarrage suivant.
      */
     rearmKeychain (): void {
         rearm()
         log('garde-fou du trousseau levé manuellement depuis les réglages')
         this.refreshGuard()
-        this.probeKeychain()
+        this.verifyKeychain()
     }
 
     openLog (): void {

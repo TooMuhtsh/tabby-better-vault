@@ -11,6 +11,7 @@
     |  {{suspendedDetail}}.
     .mt-1 Le plugin ne le sollicite plus, pour ne pas figer le démarrage de Tabby. Le mot de passe reste demandé normalement à chaque fois.
     .mt-1 Déverrouillez votre trousseau, puis relancez la vérification ci-dessous.
+    .mt-1.muted Cette vérification chiffre et déchiffre réellement une valeur jetable — c'est le seul moyen de savoir si le trousseau répond. Si le vôtre est encore verrouillé, votre système vous demandera de vous authentifier.
     button.btn.btn-warning.mt-2((click)='rearmKeychain()')
       i.fas.fa-unlock.mr-2
       | Lever la suspension et vérifier
@@ -21,7 +22,8 @@
   .alert.alert-info(*ngIf='!suspended && !keychain')
     strong Trousseau du système non vérifié.
     .mt-1 Le plugin n'interroge pas le trousseau tant qu'il n'est pas activé — c'est ce qui garantit que sa seule présence ne peut pas retarder le démarrage de Tabby.
-    button.btn.btn-primary.mt-2((click)='probeKeychain()')
+    .mt-1.muted La vérification chiffre et déchiffre une valeur jetable. Si votre trousseau est verrouillé, votre système vous demandera de vous authentifier.
+    button.btn.btn-primary.mt-2((click)='verifyKeychain()')
       i.fas.fa-key.mr-2
       | Vérifier le trousseau
 

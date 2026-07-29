@@ -31,6 +31,12 @@ export interface KeychainStatus {
      * peut le lever depuis les réglages. Une panne ordinaire, non.
      */
     suspended?: boolean
+    /**
+     * Le trousseau a réellement chiffré ET déchiffré, il ne s'est pas contenté
+     * de se nommer. Seul `keychainRoundTrip()` pose ce drapeau — voir pourquoi
+     * la distinction n'est pas cosmétique dans le commentaire de cette fonction.
+     */
+    verified?: boolean
 }
 
 /**
@@ -81,9 +87,13 @@ function withSafeStorage<T> (label: string, fn: (safeStorage: any) => T): T {
  *
  * Attention à ne pas lire ce raccourci comme un correctif du gel : il retire un
  * appel bloquant du chemin, pas le risque. `encryptString`/`decryptString`
- * déclenchent la même acquisition de clé OSCrypt et bloquent selon toute
- * vraisemblance de la même façon. C'est le garde-fou qui répond de ce cas, pas
- * l'ordre des tests.
+ * bloquent identiquement — mesuré, plus supposé, par la campagne du 2026-07-29.
+ * C'est le garde-fou qui répond de ce cas, pas l'ordre des tests.
+ *
+ * COROLLAIRE À NE PAS OUBLIER : sur Linux, un `available: true` rendu par cette
+ * fonction ne dit RIEN de la capacité du trousseau à répondre — il ne fait que
+ * rapporter son nom. Pour une vérification qui engage quelque chose, c'est
+ * `keychainRoundTrip()` qu'il faut appeler, jamais celle-ci.
  */
 export function keychainStatus (): KeychainStatus {
     try {
@@ -108,6 +118,60 @@ export function keychainStatus (): KeychainStatus {
             return { available: false, suspended: true, reason: String((e as Error).message) }
         }
         return { available: false, reason: `safeStorage inutilisable — ${String(e)}` }
+    }
+}
+
+/** Valeur jetable de la sonde. N'a jamais rien de secret, par construction. */
+const PROBE_PLAINTEXT = 'better-vault-probe'
+
+/**
+ * Vérification de bout en bout : chiffre puis déchiffre une valeur jetable.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. `keychainStatus()` est délibérément bon
+ * marché, et sur Linux il ne fait plus que lire le NOM du backend —
+ * `getSelectedStorageBackend()`, dont la campagne du 2026-07-29 a mesuré qu'il
+ * ne touche jamais le trousseau (0,00 s, aucun trafic D-Bus, verrou inchangé).
+ * C'est ce qu'on veut sur le chemin de `resolve()`, où le vrai test est le
+ * `decrypt()` qui suit.
+ *
+ * Mais c'était ruineux là où l'utilisateur DEMANDE une vérification. Le bouton
+ * « Lever la suspension et vérifier » appelait `keychainStatus()` : sur un
+ * trousseau verrouillé il annonçait « disponible », effaçait le témoin, et le
+ * démarrage suivant regelait à l'identique. Mesuré par la deuxième campagne
+ * (défaut D1, sévérité haute) : la garantie « le premier gel est le dernier »
+ * était annulée par le seul chemin de sortie offert à l'utilisateur — qui lui
+ * affirmait au passage que tout allait bien.
+ *
+ * CE QUE ÇA COÛTE, ET POURQUOI C'EST ACCEPTABLE ICI. Cet aller-retour peut
+ * bloquer : c'est même tout l'intérêt, un test qui ne peut pas échouer ne teste
+ * rien. Mais la même campagne a mesuré que le blocage n'est pas silencieux —
+ * GNOME affiche une invite d'authentification, et l'appel rend la main en 4 à
+ * 7 secondes dès qu'on y répond. L'utilisateur qui vient de cliquer
+ * « vérifier » est devant son écran : pour lui, c'est une invite, pas un gel.
+ * S'il s'en va, le témoin est armé et le démarrage suivant est protégé. À ne
+ * jamais appeler hors d'une action explicite de l'utilisateur.
+ */
+export function keychainRoundTrip (): KeychainStatus {
+    const status = keychainStatus()
+    if (!status.available) {
+        return status
+    }
+    try {
+        return withSafeStorage('vérification du trousseau', safeStorage => {
+            const blob = safeStorage.encryptString(PROBE_PLAINTEXT)
+            if (safeStorage.decryptString(blob) !== PROBE_PLAINTEXT) {
+                return {
+                    available: false,
+                    reason: "le trousseau a répondu, mais l'aller-retour de chiffrement ne redonne pas la valeur d'origine",
+                }
+            }
+            return { ...status, verified: true }
+        })
+    } catch (e) {
+        if (isSuspendedError(e)) {
+            return { available: false, suspended: true, reason: String((e as Error).message) }
+        }
+        return { available: false, reason: `le trousseau n'a pas honoré l'aller-retour — ${String(e)}` }
     }
 }
 
