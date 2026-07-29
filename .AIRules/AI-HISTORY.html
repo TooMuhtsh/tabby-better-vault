@@ -24,6 +24,47 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Barre de titre Windows sous config chiffrée (2026-07-29)</h2>
+<p>Chantier de diagnostic pur : aucune ligne de code du plugin n'a changé. Point de départ, un
+symptôme signalé la veille — « la barre tout en haut chevauche l'application » — avec deux suspects
+désignés, ce plugin et <code>tabby-better-sidebar</code>. Aucun des deux n'était en cause.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-29</td><td><code>cf201ca</code></td>
+<td><strong>Piège #V14 et issue amont sur le désaccord processus principal / renderer.</strong>
+Les boutons natifs Windows étaient peints par-dessus la tab-bar, et la fenêtre ne pouvait plus être
+déplacée par le haut. Cause : le processus principal lit <code>config.yaml</code> avant tout
+déchiffrement, ne trouve donc pas <code>appearance.frame: native</code> et active
+<code>titleBarOverlay</code> ; le renderer, lui, tourne après déverrouillage du coffre, lit la vraie
+valeur et ne rend aucun <code>window-controls-spacer</code>. Correctif appliqué côté utilisateur :
+<code>appearance.frame: thin</code>, seule valeur sur laquelle les deux processus s'accordent quand
+la config est chiffrée. Signalé en amont : <a href="https://github.com/Eugeny/tabby/issues/11539">Eugeny/tabby#11539</a>.</td></tr>
+</table>
+<div class="callout">
+<span class="callout-title">Ce que la méthode a coûté, et ce qui l'a fait gagner</span>
+<p>Le diagnostic est passé par le CDP (piège hérité #8) plutôt que par une bissection en désactivant
+les plugins un à un — cinq redémarrages de Tabby au lieu d'un par suspect, et surtout des
+<em>mesures</em> plutôt que des impressions. Deux d'entre elles ont tranché seules :
+<code>navigator.windowControlsOverlay.getTitlebarAreaRect()</code>, qui a donné la zone exacte
+occupée par les boutons natifs (<code>x=1911..2048</code>), et l'énumération des enfants de
+<code>.tab-bar</code>, qui a montré le <code>.btn-group</code> droit à <code>x=2002..2048</code> —
+donc dedans — et l'absence pure et simple du spacer.</p>
+<p>L'exonération des plugins n'a pas reposé sur une bissection mais sur la géométrie : le bord droit
+de la tab-bar est collé à la fenêtre, que la sidebar consomme 304 px à gauche ou non. Un argument
+qui tient sans avoir à désactiver quoi que ce soit — donc sans détruire la jonction NTFS de dev
+(piège hérité #1).</p>
+<p>Vérification faite dans les deux régimes : config déchiffrée, l'overlay disparaît
+(<code>visible=false</code>) et <code>app-root</code> perd 22 px au profit du vrai cadre OS ;
+config rechiffrée avec <code>frame: thin</code>, l'overlay est toujours actif mais le spacer de
+138 px est là et le <code>.btn-group</code> s'arrête à <code>x=1910</code>. C'est la seconde
+mesure qui compte : c'est le régime réel de l'utilisateur.</p>
+</div>
+<p class="muted">Écueil rencontré au passage, consigné dans #V14 : sur l'application installée,
+l'introspection Angular est fermée (<code>el.__ngContext__</code> est un index numérique, pas le
+LView, et <code>window.ng</code> n'existe pas). Lire <code>config.store</code> depuis le CDP est
+impossible — il a fallu déchiffrer temporairement <code>config.yaml</code>, ce que l'utilisateur a
+fait le temps des tests.</p>
+
 <h2>Journal d'audit et notifications (2026-07-28)</h2>
 <p>Chantier mené sur la branche <code>feat/audit-log</code>, fusionnée dans <code>master</code> après
 validation de l'utilisateur — conformément à la règle « <code>.AIRules/</code> reflète
