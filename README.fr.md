@@ -37,7 +37,7 @@ confie une fois au trousseau du système, puis répond à votre place.
 - [x] **Repli sûr** — en cas d'anomalie, retour silencieux à la fenêtre native
       de Tabby ; le plugin ne bloque jamais l'accès au coffre-fort
 - [ ] Publication sur npm, installable depuis le gestionnaire de plugins
-- [ ] Vérification sous Linux, dont le refus du backend `basic_text`
+- [x] Vérification sous Linux, dont le refus du backend `basic_text`
 - [ ] Panneau de réglages commun aux autres plugins `tabby-better-*`
 
 ## Installation
@@ -141,12 +141,15 @@ Quelques conséquences à connaître :
 | **Qui peut le lire** | Sous Windows, votre seul compte utilisateur sur cette machine (DPAPI est lié à l'utilisateur) ; sous macOS, quiconque peut déverrouiller votre trousseau de session |
 | **Comment révoquer** | *Oublier maintenant* dans les réglages, ou supprimer le fichier |
 
-Sous Linux, le `safeStorage` d'Electron bascule silencieusement sur un backend
-`basic_text` lorsqu'aucun trousseau reconnu n'est détecté — ce qui inclut des
-gestionnaires de fenêtres courants comme Sway, i3 ou Hyprland. Dans ce mode, la
-clé est dérivée d'un mot de passe **codé en dur** : le jeton serait lisible par
-n'importe qui. Le plugin **refuse alors de fonctionner** plutôt que d'offrir une
-fausse impression de sécurité.
+Sous Linux, le `safeStorage` d'Electron bascule sur un backend `basic_text`
+lorsqu'aucun service Secret n'est joignable sur le bus de session. Dans ce mode,
+la clé est dérivée d'un mot de passe **codé en dur** : le jeton serait lisible
+par n'importe qui. Le plugin **refuse alors de fonctionner** plutôt que d'offrir
+une fausse impression de sécurité.
+
+Ce qui décide, c'est la disponibilité du trousseau, pas le bureau utilisé : une
+session i3 ou Sway sur laquelle `gnome-keyring` tourne obtient le vrai backend,
+et le plugin fonctionne normalement.
 
 Ce plugin ne peut pas être plus sûr que le trousseau auquel il délègue. Si
 votre modèle de menace inclut un attaquant ayant accès à votre session
@@ -155,7 +158,7 @@ peser.
 
 ## Feuille de route
 
-À court terme : publication sur npm, vérification sous Linux, et un panneau de
+À court terme : publication sur npm et un panneau de
 réglages commun regroupant sous un seul onglet tous les plugins
 `tabby-better-*` installés.
 
