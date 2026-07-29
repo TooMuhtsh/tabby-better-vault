@@ -6,13 +6,23 @@
     strong Trousseau du système indisponible.
     |  {{keychain.reason}}
     .mt-1 Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.
+    .mt-1 Les réglages qui en dépendent sont masqués tant que c'est le cas. Le journal et le mode observation restent accessibles, ainsi que la révocation si un mot de passe avait été enregistré.
 
-  .form-line
-    .header
-      .title Activer sur cette machine
-      .description Le mot de passe maître est confié au trousseau du système d'exploitation, jamais stocké en clair.
-    toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
+  //- Masqués plutôt que grisés. Le composant `toggle` de Tabby expose bien un
+      `@Input() disabled`, mais son `@HostListener('click')` ne suffit pas à
+      neutraliser la case à cocher interne : mesuré sur Tabby 1.0.235, le
+      contrôle restait actionnable alors qu'il paraissait inactif — pire qu'un
+      contrôle franchement absent. Un `*ngIf` ne dépend d'aucun comportement
+      tiers.
+  ng-container(*ngIf='keychain.available')
+    .form-line
+      .header
+        .title Activer sur cette machine
+        .description Le mot de passe maître est confié au trousseau du système d'exploitation, jamais stocké en clair.
+      toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
 
+  //- Conservé en toutes circonstances : ce nom étiquette les entrées du
+      journal, qui reste consultable même sans trousseau.
   .form-line
     .header
       .title Nom de cette machine
@@ -24,70 +34,84 @@
       placeholder='poste maison',
     )
 
-  h4.mt-4.mb-2 Expiration
+  ng-container(*ngIf='keychain.available')
+    h4.mt-4.mb-2 Expiration
 
-  .form-line
-    .header
-      .title Redemander le mot de passe
-      .description Prochaine échéance : {{expiryLabel}}
-    select.form-control(
-      [(ngModel)]='settings.expiry.mode',
-      (ngModelChange)='onExpiryChanged()',
-    )
-      option(value='schedule') À jour et heure fixes
-      option(value='sliding') Après un délai
-      option(value='never') Jamais
-
-  .form-line(*ngIf="settings.expiry.mode === 'schedule'")
-    .header
-      .title Chaque
-      .description Choisir un créneau creux évite que la ressaisie tombe en pleine session de travail.
-    div
-      select.form-control.mr-2(
-        [(ngModel)]='settings.expiry.weekday',
-        (ngModelChange)='onExpiryChanged()',
-      )
-        option(*ngFor='let d of weekdays', [ngValue]='d.value') {{d.label}}
+    .form-line
+      .header
+        .title Redemander le mot de passe
+        .description Prochaine échéance : {{expiryLabel}}
       select.form-control(
-        [(ngModel)]='settings.expiry.hour',
+        [(ngModel)]='settings.expiry.mode',
         (ngModelChange)='onExpiryChanged()',
       )
-        option(*ngFor='let h of hours', [ngValue]='h') {{h}} h
+        option(value='schedule') À jour et heure fixes
+        option(value='sliding') Après un délai
+        option(value='never') Jamais
 
-  .form-line(*ngIf="settings.expiry.mode === 'sliding'")
-    .header
-      .title Durée de validité
-      .description En jours, à compter de la dernière saisie.
-    input.form-control(
-      type='number',
-      min='1',
-      max='365',
-      [(ngModel)]='settings.expiry.days',
-      (ngModelChange)='onExpiryChanged()',
-    )
+    .form-line(*ngIf="settings.expiry.mode === 'schedule'")
+      .header
+        .title Chaque
+        .description Choisir un créneau creux évite que la ressaisie tombe en pleine session de travail.
+      div
+        select.form-control.mr-2(
+          [(ngModel)]='settings.expiry.weekday',
+          (ngModelChange)='onExpiryChanged()',
+        )
+          option(*ngFor='let d of weekdays', [ngValue]='d.value') {{d.label}}
+        select.form-control(
+          [(ngModel)]='settings.expiry.hour',
+          (ngModelChange)='onExpiryChanged()',
+        )
+          option(*ngFor='let h of hours', [ngValue]='h') {{h}} h
 
-  h4.mt-4.mb-2 Mot de passe enregistré
+    .form-line(*ngIf="settings.expiry.mode === 'sliding'")
+      .header
+        .title Durée de validité
+        .description En jours, à compter de la dernière saisie.
+      input.form-control(
+        type='number',
+        min='1',
+        max='365',
+        [(ngModel)]='settings.expiry.days',
+        (ngModelChange)='onExpiryChanged()',
+      )
 
-  .form-line
-    .header
-      .title(*ngIf='hasToken') Un mot de passe est enregistré sur cette machine
-      .title(*ngIf='!hasToken') Aucun mot de passe enregistré
-      .description(*ngIf='hasToken') Il sera oublié le {{expiryLabel}}, ou immédiatement si vous le demandez.
-      .description(*ngIf='!hasToken') Il sera enregistré à la prochaine saisie manuelle, si le plugin est activé.
-    button.btn.btn-danger(
-      *ngIf='hasToken',
-      (click)='forgetNow()',
-    )
-      i.fas.fa-trash.mr-2
-      | Oublier maintenant
+  //- Visible aussi sans trousseau DÈS LORS qu'un jeton existe : `deleteToken()`
+      ne fait que réécrire notre fichier, il ne sollicite pas le trousseau. Un
+      mot de passe enregistré avant que le trousseau ne devienne inutilisable
+      doit rester révocable — c'est le moment où ça compte le plus. En revanche
+      le cas « aucun jeton » est masqué : il annoncerait un enregistrement futur
+      qui ne se produira pas.
+  ng-container(*ngIf='keychain.available || hasToken')
+    h4.mt-4.mb-2 Mot de passe enregistré
 
+    .form-line
+      .header
+        .title(*ngIf='hasToken') Un mot de passe est enregistré sur cette machine
+        .title(*ngIf='!hasToken') Aucun mot de passe enregistré
+        .description(*ngIf='hasToken') Il sera oublié le {{expiryLabel}}, ou immédiatement si vous le demandez.
+        .description(*ngIf='!hasToken') Il sera enregistré à la prochaine saisie manuelle, si le plugin est activé.
+      button.btn.btn-danger(
+        *ngIf='hasToken',
+        (click)='forgetNow()',
+      )
+        i.fas.fa-trash.mr-2
+        | Oublier maintenant
+
+  h4.mt-4.mb-2 Journal
+
+  //- Le mode observation vit ici, et non sous « Mot de passe enregistré » comme
+      auparavant : c'est un mode de journalisation, et il reste opérant sans
+      trousseau. `VaultBridgeService.resolve()` teste `debug` AVANT `enabled` et
+      avant l'état du trousseau — c'est donc le seul moyen d'observer ce que fait
+      le plugin dans une session dégradée. Le masquer priverait l'utilisateur de
+      l'outil de diagnostic au moment précis où il en a besoin.
   .form-line
     .header
       .title Mode observation
       .description Journalise le déroulement sans jamais servir ni enregistrer de mot de passe. Pour diagnostiquer sans risque.
     toggle([(ngModel)]='settings.debug', (ngModelChange)='save()')
-
-  h4.mt-4.mb-2 Journal
 
   .form-line
     .header

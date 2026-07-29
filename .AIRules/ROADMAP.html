@@ -336,16 +336,36 @@ quelconque mécanisme d'export — même discipline que pour les workspaces de
 l'export ne porte jamais sur les données sensibles).</p>
 
 <h3 id="linux">Garde-fou Linux — <code>basic_text</code> refusé</h3>
-<p>Sur Linux, <code>safeStorage</code> retombe silencieusement sur un backend <code>basic_text</code>
-quand <code>XDG_CURRENT_DESKTOP</code> ne figure pas dans la liste codée en dur d'Electron — ce qui
-inclut des gestionnaires de fenêtres répandus (Sway, i3, Hyprland, bspwm, awesome). Dans ce mode, la
-clé est dérivée d'un mot de passe <strong>codé en dur</strong>, avec le sel fixe
-<code>"saltysalt"</code> et <strong>une seule</strong> itération de PBKDF2 : le chiffrement est
-décoratif et le jeton lisible par quiconque.</p>
+<p>Sur Linux, <code>safeStorage</code> retombe sur un backend <code>basic_text</code> quand aucun
+service Secret n'est joignable sur le bus de session. Dans ce mode, la clé est dérivée d'un mot de
+passe <strong>codé en dur</strong>, avec le sel fixe <code>"saltysalt"</code> et <strong>une
+seule</strong> itération de PBKDF2 : le chiffrement est décoratif et le jeton lisible par quiconque.</p>
+<div class="callout warning">
+<span class="callout-title">Correction du 2026-07-29 — le bureau n'est pas le déclencheur</span>
+<p>Cette section affirmait que le repli se produisait quand <code>XDG_CURRENT_DESKTOP</code> ne
+figurait pas dans la liste d'Electron, et citait Sway, i3, Hyprland, bspwm et awesome. <strong>C'est
+faux</strong> : mesuré en session i3 sur Ubuntu Desktop, le backend retenu reste
+<code>gnome_libsecret</code> dès lors que <code>gnome-keyring-daemon</code> revendique
+<code>org.freedesktop.secrets</code>. Ce qui compte est la <em>disponibilité du service Secret</em>,
+pas la détection du bureau — un utilisateur i3 disposant d'un trousseau obtient donc le chemin
+nominal, pas un refus abusif. Détail et mesures : <a href="AI-CONTEXT.html#piege-v15">#V15</a>.</p>
+</div>
 <p>Le plugin <strong>refuse donc de s'activer</strong> si
 <code>getSelectedStorageBackend()</code> renvoie <code>basic_text</code>, plutôt que d'offrir une
 fausse impression de sécurité. C'est le seul cas où l'argument « le jeton est inexploitable
 ailleurs » tombe.</p>
+<div class="callout">
+<span class="callout-title">Exercé en vrai le 2026-07-29 — dans les deux sens</span>
+<p>Sur Ubuntu Desktop, Tabby 1.0.235 / Electron 38.8.6. Refus confirmé avec
+<code>tabby --password-store=basic</code> ; acceptation confirmée en session GNOME normale,
+trousseau déverrouillé. La campagne a révélé <strong>deux défauts, corrigés depuis</strong> : le
+motif expliquant <code>basic_text</code> était inatteignable
+(<a href="AI-CONTEXT.html#piege-v15">#V15</a>), et les réglages restaient actionnables alors que
+rien ne pouvait fonctionner (<a href="AI-CONTEXT.html#piege-v16">#V16</a>).</p>
+<p><strong>Reste non exercé</strong> : le trousseau présent mais <em>verrouillé</em>. Les deux
+méthodes de diagnostic répondent favorablement, et seul le repli natif rattrape le cas. À couvrir
+lors d'une prochaine campagne.</p>
+</div>
 
 <h2 id="reglages">Panneau de réglages et politique d'expiration</h2>
 <p>Onglet « Coffre-fort auto » dans les paramètres de Tabby
@@ -483,9 +503,11 @@ présent dans le <code>package.json</code>. À vérifier avant de publier :</p>
 <span class="callout-title">À trancher avant publication</span>
 <p>Le plugin repose sur un patch d'une API interne de Tabby (<a href="AI-CONTEXT.html#piege-v2">#V2</a>)
 et manipule le secret le plus sensible de l'utilisateur. Publier, c'est engager cette responsabilité
-auprès d'inconnus, sur des configurations jamais testées — <strong>notamment Linux, où le refus du
-backend <code>basic_text</code> n'a encore jamais été exercé en vrai</strong>. Le README l'annonce
-clairement, mais la décision de publier reste à prendre en connaissance de cause.</p>
+auprès d'inconnus, sur des configurations que nous ne maîtrisons pas. Le garde-fou Linux, lui,
+<strong>n'est plus un pari</strong> : il a été exercé dans les deux sens le 2026-07-29 (voir
+<a href="#linux">ci-dessus</a>), et les deux défauts que cette vérification a mis au jour sont
+corrigés. Reste le cas du trousseau verrouillé, non couvert. La décision de publier reste à prendre
+en connaissance de cause.</p>
 </div>
 
 <h2 id="i18n">Internationalisation — interface et journal</h2>

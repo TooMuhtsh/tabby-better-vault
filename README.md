@@ -34,7 +34,7 @@ OS keychain once, then answers on your behalf.
 - [x] **Safe fallback** — any failure quietly returns you to Tabby's own
       prompt; the plugin never blocks access to your vault
 - [ ] Published on npm, installable from Tabby's plugin manager
-- [ ] Verified on Linux, including refusing the insecure `basic_text` backend
+- [x] Verified on Linux, including refusing the insecure `basic_text` backend
 - [ ] Shared settings panel with other `tabby-better-*` plugins
 
 ## Installation
@@ -135,11 +135,15 @@ A few consequences worth knowing about:
 | **Who can read it** | On Windows, only your user account on this machine (DPAPI is user-scoped); on macOS, whoever can unlock your login keychain |
 | **How to revoke** | *Forget now* in the settings tab, or delete the file |
 
-On Linux, Electron's `safeStorage` silently falls back to a `basic_text`
-backend when no recognised keyring is detected — which includes common window
-managers such as Sway, i3 and Hyprland. In that mode the key is derived from a
-**hardcoded** password, so the stored token would be readable by anyone. The
-plugin **refuses to operate** in that case rather than offering false security.
+On Linux, Electron's `safeStorage` falls back to a `basic_text` backend when
+no Secret Service is reachable on the session bus. In that mode the key is
+derived from a **hardcoded** password, so the stored token would be readable by
+anyone. The plugin **refuses to operate** in that case rather than offering
+false security.
+
+What decides this is whether the keyring is reachable, not which desktop you
+run: an i3 or Sway session with `gnome-keyring` running still gets the real
+backend, and the plugin works normally.
 
 This plugin cannot be more secure than the keychain it delegates to. If your
 threat model includes an attacker with access to your unlocked user session,
@@ -147,7 +151,7 @@ storing the passphrase at all is a trade-off you should weigh.
 
 ## Roadmap
 
-Short term: npm publication, Linux verification, and a shared settings panel
+Short term: npm publication and a shared settings panel
 grouping every installed `tabby-better-*` plugin under a single tab.
 
 The full roadmap, along with the project's technical notes and the pitfalls

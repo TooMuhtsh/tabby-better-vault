@@ -127,7 +127,20 @@ export class BetterVaultSettingsTabComponent {
      */
     private persist (recomputeExpiry: boolean): void {
         const current = readSettings()
-        const { enabled, debug, machineName, expiry, logRetentionDays } = this.settings
+        const { debug, machineName, expiry, logRetentionDays } = this.settings
+
+        // Second verrou, derrière le `*ngIf` du gabarit : sans trousseau
+        // utilisable, ce panneau ne doit pas pouvoir activer le plugin — écrire
+        // `enabled: true` promettrait un comportement inatteignable. L'interrupteur
+        // est masqué dans ce cas, mais on ne fait pas reposer une garantie de
+        // sécurité sur la seule absence d'un élément d'interface.
+        //
+        // Mais il ne doit pas non plus l'ÉTEINDRE. Le fichier est propre à la
+        // machine, pas à la session : un utilisateur ayant activé le plugin
+        // depuis une session où le trousseau fonctionne, puis ouvrant ce panneau
+        // depuis une session dégradée, perdrait son réglage sans l'avoir
+        // demandé. On laisse donc la valeur du fichier intacte.
+        const enabled = this.keychain.available ? this.settings.enabled : current.enabled
         const tokenExpiresAt = recomputeExpiry && current.token
             ? computeExpiry(expiry)
             : current.tokenExpiresAt

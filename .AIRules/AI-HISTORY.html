@@ -24,6 +24,56 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Garde-fou Linux — première vérification en conditions réelles (2026-07-29)</h2>
+<p>Chantier mené sur la branche <code>fix/linux-keychain-guard</code>, fusionnée dans
+<code>master</code> après validation de l'utilisateur. Objectif initial : préparer une VM Ubuntu pour
+confier au test une instance externe. La préparation elle-même a suffi à mettre au jour deux défauts
+— <strong>aucune ligne de ce chantier n'était planifiée</strong>.</p>
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-07-29</td><td><code>c9f434d</code></td>
+<td><strong>Masquer les réglages inopérants plutôt que les griser.</strong> Le premier correctif les
+grisait via <code>[disabled]</code> — ils sont apparus atténués mais <em>restés actionnables</em>
+(<a href="AI-CONTEXT.html#piege-v16">#V16</a>). Un réglage qui paraît inerte sans l'être invite
+précisément à la fausse confiance que ce garde-fou existe pour empêcher. Remplacé par des
+<code>*ngIf</code>, qui ne dépendent d'aucun comportement tiers. Restent visibles sans trousseau :
+la révocation dès qu'un jeton existe, le mode observation — déplacé sous « Journal », sa vraie
+famille — le journal et le nom de machine. Chacun pour une raison que le code étaye, pas par
+prudence.</td></tr>
+<tr><td>2026-07-29</td><td><code>a5d23d5</code></td>
+<td><strong>Ordre des tests dans <code>keychainStatus()</code>, et contrôles neutralisés.</strong>
+<code>isEncryptionAvailable()</code> renvoie déjà <code>false</code> quand le backend est
+<code>basic_text</code> sur Electron 38.8.6 — le contraire de ce qu'affirmait le commentaire du
+code. Le test générique sortait donc en premier et le motif expliquant <em>pourquoi</em>
+<code>basic_text</code> n'est pas fiable n'était jamais lu
+(<a href="AI-CONTEXT.html#piege-v15">#V15</a>). Backend interrogé en premier ; le test de
+disponibilité reste derrière pour Windows, macOS et les Electron antérieurs.</td></tr>
+</table>
+<div class="callout important">
+<span class="callout-title">Ce que la préparation a appris, et qui vaut plus que les correctifs</span>
+<p><strong>Deux hypothèses de départ étaient fausses, et une seule mesure a suffi à les renverser
+chacune.</strong> La première : qu'un bureau non reconnu ferait retomber Electron sur
+<code>basic_text</code>. Une session i3 a montré <code>gnome_libsecret</code> — le service Secret
+reste joignable quel que soit le bureau. La seconde : qu'<code>isEncryptionAvailable()</code> restait
+<code>true</code> en mode dégradé, croyance écrite noir sur blanc dans le commentaire du code depuis
+sa rédaction.</p>
+<p>Aucune des deux n'aurait été détectée par relecture : le code était cohérent avec ce qu'on croyait
+savoir. <strong>C'est l'exécution sur une vraie machine qui les a levées</strong>, et il aura fallu
+descendre jusqu'à la console des DevTools de Tabby pour obtenir la valeur qui tranche.</p>
+</div>
+<ul>
+<li><strong>Le protocole de VM était bâti sur la première hypothèse fausse</strong> : i3 et seahorse
+  installés pour rien. Le vrai levier est <code>--password-store=basic</code>, ou l'absence de
+  service Secret. Aucune préparation particulière n'est nécessaire — ce que l'instance de test peut
+  découvrir seule.</li>
+<li>Validé dans les deux sens sur Ubuntu Desktop, Tabby 1.0.235 / Electron 38.8.6 : refus en
+  <code>--password-store=basic</code>, acceptation en session GNOME avec trousseau déverrouillé,
+  panneau des réglages conforme dans les deux cas.</li>
+<li><strong>Non exercé</strong> : trousseau présent mais verrouillé, et le cas « jeton enregistré
+  puis trousseau devenu indisponible », où la révocation doit rester atteignable. Laissés à la
+  campagne de test, avec le stockage interne — seul périmètre encore totalement vierge.</li>
+</ul>
+
 <h2>Barre de titre Windows sous config chiffrée (2026-07-29)</h2>
 <p>Chantier de diagnostic pur : aucune ligne de code du plugin n'a changé. Point de départ, un
 symptôme signalé la veille — « la barre tout en haut chevauche l'application » — avec deux suspects
