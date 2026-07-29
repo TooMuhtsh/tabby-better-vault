@@ -35,6 +35,8 @@
     <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
+<tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
+    <td><span class="pill progress">🚧 Gel du démarrage (sévérité haute), permissions, doc — à corriger</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
     <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -362,9 +364,9 @@ trousseau déverrouillé. La campagne a révélé <strong>deux défauts, corrig�
 motif expliquant <code>basic_text</code> était inatteignable
 (<a href="AI-CONTEXT.html#piege-v15">#V15</a>), et les réglages restaient actionnables alors que
 rien ne pouvait fonctionner (<a href="AI-CONTEXT.html#piege-v16">#V16</a>).</p>
-<p><strong>Reste non exercé</strong> : le trousseau présent mais <em>verrouillé</em>. Les deux
-méthodes de diagnostic répondent favorablement, et seul le repli natif rattrape le cas. À couvrir
-lors d'une prochaine campagne.</p>
+<p>Le cas du trousseau <em>verrouillé</em>, alors annoncé comme « non exercé, rattrapé par le repli
+natif », a depuis été couvert par une campagne indépendante — et l'annonce était fausse. Voir
+<a href="#campagne-linux">Campagne de vérification indépendante</a> ci-dessous.</p>
 </div>
 
 <h2 id="reglages">Panneau de réglages et politique d'expiration</h2>
@@ -509,6 +511,106 @@ auprès d'inconnus, sur des configurations que nous ne maîtrisons pas. Le garde
 corrigés. Reste le cas du trousseau verrouillé, non couvert. La décision de publier reste à prendre
 en connaissance de cause.</p>
 </div>
+
+<h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
+<p>Une instance externe, sans accès à <code>.AIRules/</code>, à <code>CLAUDE.md</code> ni à
+l'historique Git, a mené une vérification adversariale sur Ubuntu 24.04 / GNOME / X11, Tabby 1.0.235,
+Electron 38.8.6. Périmètre imposé : stockage interne et garde-fou du trousseau. Rapport intégral :
+<code>.tempfiles/RAPPORT-TEST-LINUX.md</code>, versionné avec le dépôt.</p>
+<p>Sa méthode mérite d'être notée pour être rejouée : plutôt que de raisonner sur le code, elle a
+<strong>compilé et exécuté</strong> les vrais <code>store.ts</code> et <code>osKeychain.ts</code>
+dans un banc Electron 38.8.6, en interceptant <code>@electron/remote</code> et en redirigeant
+<code>configDir()</code> vers un dossier jetable — puis a validé la causalité par une
+<strong>expérience de contrôle</strong> (plugin retiré, condition maintenue).</p>
+
+<div class="callout important">
+<span class="callout-title">Défaut #1 — gel du démarrage de Tabby, trousseau verrouillé (sévérité haute)</span>
+<p><strong>Le plugin fige Tabby au démarrage lorsque le trousseau est présent mais verrouillé — et
+il le fait même désactivé.</strong> Tabby n'atteint jamais sa propre pop-up de mot de passe ;
+l'écran de démarrage reste affiché indéfiniment. Vérifié par contrôle : plugin retiré, trousseau
+toujours verrouillé, Tabby atteint normalement sa pop-up.</p>
+<p>Chaîne causale, confirmée à la source :</p>
+<ul>
+<li><code>src/index.ts</code> appelle <code>install()</code> depuis le <strong>constructeur du
+  NgModule</strong> ;</li>
+<li><code>install()</code> appelle <code>keychainStatus()</code> <strong>inconditionnellement</strong>,
+  à seule fin de journaliser — le test de <code>enabled</code> vit dans <code>resolve()</code>,
+  bien plus tard ;</li>
+<li><code>keychainStatus()</code> est synchrone et passe par <code>@electron/remote</code>, dont
+  l'IPC est <strong>bloquant</strong> ;</li>
+<li>sur trousseau verrouillé, <code>isEncryptionAvailable()</code> <strong>ne revient jamais</strong>
+  (il tente de lire l'entrée témoin, ce qui demande un déverrouillage qui n'aboutit pas) — et
+  n'affiche aucun dialogue.</li>
+</ul>
+<p>Le <code>try/catch</code> de <code>keychainStatus()</code> n'attrape rien : <strong>un appel
+bloquant n'est pas une exception.</strong> Le « repli sur la méthode native » n'est jamais atteint,
+puisque le gel survient avant que <code>getPassphrase</code> ne soit invoqué.</p>
+<p><strong>Ce défaut contredit le principe fondateur du plugin</strong> — « ce plugin est un
+confort : il ne doit jamais empêcher d'ouvrir son coffre ni bloquer Tabby » — et la promesse
+publique du README (« the plugin never blocks access to your vault »).</p>
+<p><strong>Correctif à concevoir</strong> : sortir <code>keychainStatus()</code> du constructeur, ne
+pas l'appeler quand <code>enabled</code> est faux, et le rendre non bloquant (appel hors du chemin
+de démarrage, ou sonde sous délai). Les trois, pas l'un des trois.</p>
+</div>
+
+<div class="callout warning">
+<span class="callout-title">Défaut #2 — <code>0600</code> n'est pas un invariant, et l'écriture n'est pas atomique</span>
+<p><code>fs.writeFileSync(path, data, { mode: 0o600 })</code> n'applique le mode qu'à la
+<strong>création</strong>. Mesuré sur le vrai <code>writeSettings</code> : création fraîche → 600 ;
+fichier préexistant en 644 ou 666 → <strong>mode inchangé</strong>, jamais re-serré. Le cas nominal
+est donc correct, mais l'invariant « lisible par le seul propriétaire » tombe dès qu'un fichier
+préexiste plus large — restauration de sauvegarde, copie manuelle, umask différent.</p>
+<p>Au même endroit, l'écriture est directe, sans fichier temporaire ni <code>rename</code> : une
+coupure en cours d'écriture tronque le fichier. Conséquence atténuée (la lecture défensive retombe
+sur les défauts, le jeton est perdu, l'utilisateur ressaisit), mais l'atomicité n'existe pas.</p>
+<p><strong>Correctif</strong> : écriture temporaire + <code>chmod</code> explicite +
+<code>rename</code>. Un seul geste règle les deux.</p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">Défaut #3 — la documentation affirme deux choses fausses</span>
+<p>Le commentaire d'<code>osKeychain.ts</code> et le piège
+<a href="AI-CONTEXT.html#piege-v15">#V15</a> affirmaient tous deux que le repli natif rattrapait le
+trousseau verrouillé. C'est réfuté (défaut #1). Corrigé le 2026-07-29 dans les deux fichiers.</p>
+<p>Reste à corriger : le README, dont la ligne « <em>Safe fallback — any failure quietly returns you
+to Tabby's own prompt; the plugin never blocks access to your vault</em> » est fausse dans le cas
+verrouillé. À reprendre <strong>en même temps que le correctif #1</strong>, pas avant : la promesse
+redeviendra vraie une fois le gel réglé.</p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">À reformuler dans le README — l'exposition au repos</span>
+<p>La campagne a extrait la clé <code>safeStorage</code> depuis le trousseau <strong>par simple appel
+D-Bus</strong>, sans Electron ni Chromium, puis reconstitué le mot de passe maître hors ligne à
+partir de <code>better-vault.json</code>. Ce n'est <em>pas</em> un défaut du plugin : GNOME Keyring
+n'applique aucun contrôle d'accès par application, donc tout processus tournant sous le compte de
+l'utilisateur lit l'entrée. Le rapport l'attribue à un « KDF décoratif » (PBKDF2-SHA1, sel fixe, une
+itération) — l'analyse est inexacte sur ce point : avec <code>gnome_libsecret</code> l'entrée du KDF
+est un secret aléatoire de 24 octets, durcir le KDF n'apporterait rien.</p>
+<p>Le delta honnête, à écrire tel quel : <strong>sans le plugin, le mot de passe maître ne touche
+jamais le disque ; avec lui, il devient récupérable au repos, en l'absence de l'utilisateur, par
+n'importe quel processus de sa session.</strong> C'est un accroissement réel de l'exposition,
+structurel à <code>safeStorage</code> sous Linux. Le README l'admet en creux (« cannot be more secure
+than the keychain it delegates to ») ; il mérite d'être dit franchement.</p>
+</div>
+
+<h3>Ce que la campagne n'a pas pu exercer</h3>
+<p>À reprendre dans une campagne ultérieure — ce sont des <em>non testés</em>, pas des conformes :</p>
+<ul>
+<li><strong>La capture du mot de passe depuis la pop-up native</strong> (<code>learnFromUser</code>),
+  de bout en bout. L'injection clavier XTEST n'atteint pas le moteur de rendu Chromium de Tabby (les
+  clics passent, les touches non) ; la campagne a contourné en fabriquant les jetons. Les briques
+  (<code>encrypt</code>, <code>writeToken</code>) sont vérifiées, l'enchaînement par l'interface ne
+  l'est pas.</li>
+<li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
+<li><strong>Windows (DPAPI) et macOS</strong> — hors plateforme ; c'est là que le chemin
+  <code>isEncryptionAvailable</code> seul est emprunté, <code>getSelectedStorageBackend</code>
+  n'existant pas.</li>
+<li><strong>La notification in-app</strong> — attestée par le journal, jamais observée à l'écran.</li>
+</ul>
+<p class="muted">Faux positif à ne pas reprendre : le rapport signale des renvois morts vers
+<code>.AIRules/</code> dans le code livré. C'est un artefact du dispositif de test — le dossier avait
+été retiré du clone pour préserver l'aveuglement. Dans le dépôt réel, ces renvois résolvent.</p>
 
 <h2 id="i18n">Internationalisation — interface et journal</h2>
 <p><strong>Priorisé le 2026-07-29 : c'est le prochain chantier</strong>, devant la granularité par profil — motif donné par l'utilisateur : « à l'usage c'est ce qui est le plus important maintenant, le reste c'est du bonus ».</p>

@@ -524,11 +524,16 @@ Electron antérieurs à ce changement de comportement.</p>
 <li><strong>Pour reproduire l'état dégradé</strong>, deux voies : le commutateur Chromium
   <code>--password-store=basic</code> (déterministe, immédiat), ou l'absence réelle de service
   Secret sur le bus de session. Aucune préparation particulière de la machine n'est nécessaire.</li>
-<li><strong>Ce que <code>keychainStatus()</code> ne couvre pas</strong>, et qui reste ouvert : un
-  trousseau présent mais <em>verrouillé</em>. <code>getSelectedStorageBackend()</code> répond
-  <code>gnome_libsecret</code> et <code>isEncryptionAvailable()</code> répond <code>true</code>,
-  alors que <code>encryptString</code> échouera à l'usage. C'est le repli sur la méthode native qui
-  rattrape ce cas — la fonction de diagnostic, elle, ne le voit pas.</li>
+<li><strong>Trousseau présent mais verrouillé — correction du 2026-07-29.</strong> Cette entrée
+  affirmait que le diagnostic laissait passer le cas mais que « le repli sur la méthode native
+  rattrape ce cas ». <strong>C'est faux</strong>, et c'était une déduction, pas une mesure : une
+  campagne indépendante a montré que <code>isEncryptionAvailable()</code> <em>ne revient jamais</em>
+  sur un trousseau verrouillé. Comme <code>keychainStatus()</code> est synchrone, passe par l'IPC
+  bloquant d'<code>@electron/remote</code>, et est appelé depuis le constructeur du NgModule, Tabby
+  <strong>gèle au démarrage</strong> et n'atteint jamais sa pop-up native. Le repli n'est pas
+  « tardif », il est <strong>inatteignable</strong>. Le <code>try/catch</code> n'y change rien : un
+  appel bloquant n'est pas une exception. Détail, chaîne causale et correctif à concevoir :
+  <a href="ROADMAP.html#campagne-linux">Campagne de vérification indépendante</a>.</li>
 <li>Sonde réutilisable, à coller dans la console des DevTools de Tabby (Réglages → Application →
   Debugging → <em>Open DevTools</em> ; aucun raccourci clavier n'est lié) :
   <code>(() =&gt; { const ss = require('@electron/remote').safeStorage; return { isEncryptionAvailable: ss.isEncryptionAvailable(), hasMethod: typeof ss.getSelectedStorageBackend, backend: ss.getSelectedStorageBackend ? String(ss.getSelectedStorageBackend()) : 'METHODE ABSENTE' } })()</code></li>

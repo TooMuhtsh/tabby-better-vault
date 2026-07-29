@@ -55,11 +55,29 @@ function getSafeStorage (): any | null {
  * derrière, pour les plateformes où `getSelectedStorageBackend` n'existe pas
  * (Windows, macOS) et pour les Electron antérieurs à ce changement.
  *
- * Ce que ce diagnostic ne couvre PAS : un trousseau présent mais *verrouillé*.
- * `getSelectedStorageBackend()` répond `gnome_libsecret` et
- * `isEncryptionAvailable()` répond `true`, alors que `encryptString` échouera à
- * l'usage. C'est le repli sur la méthode native de Tabby qui rattrape ce cas,
- * pas cette fonction.
+ * TROUSSEAU VERROUILLÉ — DÉFAUT CONNU, NON CORRIGÉ À CE JOUR.
+ *
+ * Ce commentaire affirmait que le cas « trousseau présent mais verrouillé »
+ * n'était pas couvert par le diagnostic, mais que le repli sur la méthode
+ * native de Tabby le rattrapait. C'était une déduction, pas une mesure, et elle
+ * est fausse : une campagne de vérification indépendante (2026-07-29) a montré
+ * qu'`isEncryptionAvailable()` NE REVIENT JAMAIS sur un trousseau verrouillé —
+ * il déclenche une demande de déverrouillage qui n'aboutit pas, sans afficher
+ * de dialogue.
+ *
+ * Cette fonction étant synchrone et passant par l'IPC bloquant
+ * d'`@electron/remote`, et `install()` étant appelée depuis le constructeur du
+ * NgModule, **Tabby gèle à son écran de démarrage** et n'atteint jamais sa
+ * propre pop-up. Le repli n'est pas tardif : il est inatteignable. Le
+ * `try/catch` ci-dessous n'y change rien — un appel bloquant n'est pas une
+ * exception.
+ *
+ * Aggravant : `install()` appelle cette fonction même quand le plugin est
+ * désactivé (à seule fin de journaliser), donc la simple présence du plugin
+ * suffit à figer Tabby.
+ *
+ * Correctif à concevoir avant toute autre modification de ce fichier — voir
+ * .AIRules/ROADMAP.html#campagne-linux.
  */
 export function keychainStatus (): KeychainStatus {
     const safeStorage = getSafeStorage()
