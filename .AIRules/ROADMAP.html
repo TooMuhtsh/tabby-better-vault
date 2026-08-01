@@ -1066,12 +1066,14 @@ dans le même geste : deux emplacements pour le même fait divergent (A-2, A-7).
 
 <h3>Ce qui reste ouvert</h3>
 <ul>
-<li><strong>Nettoyage des trailers <code>Claude-Session</code> de l'historique public</strong> — 32
-  commits sur 46 en portent un, publiant une URL de session. La décision du 2026-08-01 ne vaut que
-  pour les commits à venir ; nettoyer l'existant impose une réécriture d'historique, donc un
-  <em>force-push</em> et des hashes tous changés — ce qui invaliderait ceux que
-  <a href="AI-HISTORY.html">AI-HISTORY</a> cite, sans qu'A-4 permette de les corriger. À mesurer
-  avant de lancer.</li>
+<li><strong>Trailers <code>Claude-Session</code> de l'historique public — <em>fait</em> le
+  2026-08-01.</strong> Les 32 commits concernés ont été réécrits et republiés ; la table de
+  correspondance des hashes est en tête d'<a href="AI-HISTORY.html">AI-HISTORY</a>.
+  <strong>Réserve à connaître</strong> : une réécriture ne détruit pas les anciens objets côté
+  GitHub, qui restent atteignables par leur SHA complet tant qu'ils n'ont pas été ramassés — seule
+  une demande au support les purge vraiment. Le contenu retiré n'étant qu'une URL de session, la
+  demande n'a pas été faite ; à reconsidérer si une donnée réellement sensible devait un jour être
+  retirée de la même façon.</li>
 <li><strong><code>RAPPORT-TEST-LINUX.md</code> est versionné depuis <code>.tempfiles/</code></strong>,
   qui est par définition un espace jetable hors Git (option <code>tempfiles</code>). C'est un relevé
   de mesures, donc une <strong>annexe</strong> au sens d'A-8 : sa place est
