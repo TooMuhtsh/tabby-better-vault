@@ -1,5 +1,22 @@
 # Vérification adversariale de `tabby-better-vault` — Linux
 
+← Retour : [ROADMAP.html, § Campagne de vérification indépendante](../ROADMAP.html#campagne-linux)
+· [Index de la gouvernance](../README.html)
+
+> **Statut de cette pièce.** Annexe au sens d'A-8 : elle porte le **détail des mesures**, pas les
+> conclusions. Celles-ci vivent dans la roadmap, qui **corrige** ce rapport sur un point — l'analyse
+> « KDF décoratif » du §7.2 est inexacte : avec `gnome_libsecret`, l'entrée du KDF est un secret
+> aléatoire de 24 octets, et durcir le KDF n'apporterait rien. Le constat d'exposition, lui, tient.
+>
+> Le rapport a vécu jusqu'au 2026-08-01 dans `.tempfiles/`, dossier déclaré jetable par
+> construction — il y était à un geste de la suppression.
+>
+> **Une seule modification a été faite à son contenu** : la phrase de test du coffre jetable,
+> écrite en clair trois fois, est remplacée par `{{phrase-de-test-jetable}}`. Le dépôt est public et
+> la liste de l'option `visibilité` exclut les mots de passe « sous toute forme, y compris dans un
+> exemple ». Ce qui compte est que le mot de passe maître ait été **reconstitué hors ligne**, pas sa
+> valeur.
+
 **Date :** 2026-07-29
 **Testeur :** campagne indépendante, sans accès aux notes des auteurs
 **Objet :** réfuter les affirmations du plugin sur (1) son stockage interne et
@@ -104,7 +121,7 @@ suffit ; Tabby l'a chargé et exécuté (voir la 1re ligne de journal ci-dessous
 **Configuration de test créée** (§ scripts `mkvault-enc.js`) :
 `~/.config/tabby/config.yaml` avec **chiffrement de configuration activé**
 (`encrypted: true`), un coffre `vault:` v1, et un **mot de passe maître jetable**
-`MotDePasseJetable-Test-2026!` (jamais un vrai secret). En mode `encrypted:
+`{{phrase-de-test-jetable}}` (jamais un vrai secret). En mode `encrypted:
 true`, la pop-up de mot de passe apparaît à **chaque** démarrage : c'est le cas
 d'usage principal du plugin.
 
@@ -445,7 +462,7 @@ déclenchement conditionnel.**
      PBKDF2-HMAC-**SHA1**, sel fixe `saltysalt`, **1 seule** itération, IV = 16
      espaces) :
      ```
-     MOT DE PASSE MAÎTRE RÉCUPÉRÉ HORS LIGNE : 'MotDePasseJetable-Test-2026!'
+     MOT DE PASSE MAÎTRE RÉCUPÉRÉ HORS LIGNE : '{{phrase-de-test-jetable}}'
      ```
    Autrement dit, face à un attaquant **déjà dans la session déverrouillée**, le
    stockage n'apporte quasiment aucune protection (KDF décoratif). C'est inhérent
@@ -511,7 +528,7 @@ env -u DBUS_SESSION_BUS_ADDRESS electron … .  # → available:false, isEncrypt
 # Extraction hors ligne de la clé et du mot de passe
 python3 readkey.py        # → clé safeStorage 24 o, via D-Bus, sans Electron
 python3 decrypt_token.py 'nzwduX+gEdvnbeYdgA90Bw=='
-# → MOT DE PASSE MAÎTRE RÉCUPÉRÉ HORS LIGNE : 'MotDePasseJetable-Test-2026!'
+# → MOT DE PASSE MAÎTRE RÉCUPÉRÉ HORS LIGNE : '{{phrase-de-test-jetable}}'
 
 # Jeton forgé par une app tierce nommée "tabby" → accepté par le plugin (coffre déverrouillé)
 ```

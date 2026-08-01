@@ -24,6 +24,42 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Le rapport de campagne Linux devient une annexe (2026-08-01)</h2>
+
+<div class="callout warning">
+<span class="callout-title">Un chemin cité plus bas n'est plus valable</span>
+<p>L'entrée du 2026-07-29 qui acte la campagne indépendante situe le rapport dans
+<code>.tempfiles/RAPPORT-TEST-LINUX.md</code>. Il est depuis le 2026-08-01 dans
+<a href="annexes/RAPPORT-TEST-LINUX.md"><code>annexes/RAPPORT-TEST-LINUX.md</code></a>. La mention
+d'origine n'est pas corrigée — le journal est en ajout seul (A-4) — et c'est cet encadré qui la
+rattrape.</p>
+</div>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-01</td><td><code>(commit en cours)</code></td>
+<td><strong>Le rapport sortait d'un dossier dont la règle est de le supprimer.</strong>
+<code>.tempfiles/</code> est déclaré <em>jetable par construction</em> par l'option
+<code>tempfiles</code>, et ses fichiers exploités « se suppriment directement, sans demander
+confirmation ». Or ce rapport <em>est</em> exploité : ses conclusions sont dans la roadmap et dans
+le <code>README</code> public. Une session appliquant la règle l'aurait supprimé — et elle aurait eu
+raison. Seul le hasard de son versionnement le protégeait. Il porte 516 lignes de mesures qu'aucun
+autre document ne contient : extraction D-Bus de la clé <code>safeStorage</code>, jeton forgé par une
+application tierce se déclarant <code>tabby</code> et accepté par le plugin, mot de passe maître
+reconstitué hors ligne, permissions partiellement réfutées, écriture non atomique.
+<br><br>
+Constat annexe : il n'était atteignable par <strong>aucun lien</strong> — deux mentions textuelles en
+<code>&lt;code&gt;</code>, jamais un <code>&lt;a&gt;</code>. Donc orphelin au sens d'A-8 avant même
+la question du dossier. Il porte maintenant son lien de retour, et la
+<a href="ROADMAP.html#campagne-linux">campagne</a> le cite.
+<br><br>
+<strong>Une modification faite à son contenu</strong>, la seule : la phrase de test du coffre
+jetable, écrite en clair trois fois, devient <code>{{phrase-de-test-jetable}}</code>. Le dépôt est
+public et l'option <code>visibilité</code> exclut les mots de passe « sous toute forme, y compris
+dans un exemple ». La phrase était jetable et son coffre n'existe plus : le risque était nul, la
+règle est catégorique — et c'est au deux-centième commit qu'une règle catégorique sert.</td></tr>
+</table>
+
 <h2>Réécriture de l'historique — retrait des liens de session (2026-08-01)</h2>
 <p>L'option <code>attribution</code> ayant été tranchée le jour même à « co-auteur seul, sans
 <code>Claude-Session</code> », les <strong>32 commits</strong> qui portaient déjà un lien de session

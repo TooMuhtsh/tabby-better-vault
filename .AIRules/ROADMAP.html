@@ -530,8 +530,11 @@ mais une revue de conception — et la publication attend d'autant plus.</p>
 <h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
 <p>Une instance externe, sans accès à <code>.AIRules/</code>, à <code>CLAUDE.md</code> ni à
 l'historique Git, a mené une vérification adversariale sur Ubuntu 24.04 / GNOME / X11, Tabby 1.0.235,
-Electron 38.8.6. Périmètre imposé : stockage interne et garde-fou du trousseau. Rapport intégral :
-<code>.tempfiles/RAPPORT-TEST-LINUX.md</code>, versionné avec le dépôt.</p>
+Electron 38.8.6. Périmètre imposé : stockage interne et garde-fou du trousseau.
+<strong>Rapport intégral, 516 lignes de mesures</strong> :
+<a href="annexes/RAPPORT-TEST-LINUX.md">annexes/RAPPORT-TEST-LINUX.md</a> — commandes reproduites,
+tableaux de résultats, et les six pistes de son § 8. Les conclusions sont ci-dessous ; l'annexe ne
+porte que le détail qui les étaye (A-8).</p>
 <p>Sa méthode mérite d'être notée pour être rejouée : plutôt que de raisonner sur le code, elle a
 <strong>compilé et exécuté</strong> les vrais <code>store.ts</code> et <code>osKeychain.ts</code>
 dans un banc Electron 38.8.6, en interceptant <code>@electron/remote</code> et en redirigeant
@@ -1074,11 +1077,18 @@ dans le même geste : deux emplacements pour le même fait divergent (A-2, A-7).
   une demande au support les purge vraiment. Le contenu retiré n'étant qu'une URL de session, la
   demande n'a pas été faite ; à reconsidérer si une donnée réellement sensible devait un jour être
   retirée de la même façon.</li>
-<li><strong><code>RAPPORT-TEST-LINUX.md</code> est versionné depuis <code>.tempfiles/</code></strong>,
-  qui est par définition un espace jetable hors Git (option <code>tempfiles</code>). C'est un relevé
-  de mesures, donc une <strong>annexe</strong> au sens d'A-8 : sa place est
-  <code>annexes/</code>. Déplacement non fait — il casse les liens qui le citent, à recalculer dans
-  le même geste.</li>
+<li><strong><code>RAPPORT-TEST-LINUX.md</code> déplacé vers <code>annexes/</code> — <em>fait</em> le
+  2026-08-01.</strong> Il vivait dans <code>.tempfiles/</code>, dossier que l'option
+  <code>tempfiles</code> déclare <em>jetable par construction</em> et dont les fichiers exploités
+  « se suppriment sans demander confirmation » : ses conclusions étant absorbées ici et dans le
+  <code>README</code> public, il était à un geste d'être supprimé à juste titre. Il n'était par
+  ailleurs atteignable par <strong>aucun lien</strong> — deux mentions textuelles seulement, donc
+  orphelin au sens d'A-8. Il porte désormais son lien de retour et est cité depuis la
+  <a href="#campagne-linux">campagne</a>.</li>
+<li><strong>Le protocole de la 3ᵉ campagne, lui, reste dans <code>.tempfiles/</code></strong> et
+  c'est délibéré : il porte les valeurs que l'opérateur doit saisir, qui n'ont pas leur place sur un
+  dépôt public. Conséquence assumée : il n'existe que sur le poste de l'auteur, et une perte
+  imposerait de le réécrire.</li>
 </ul>
 
 <h3>Entretien récurrent</h3>
