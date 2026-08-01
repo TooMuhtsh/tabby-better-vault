@@ -18,6 +18,7 @@
   "scripts": {
     "build": "webpack --progress --color",
     "watch": "webpack --progress --color --watch",
+    "lint:airules": "html-validate \".AIRules/**/*.html\"",
     "prepublishOnly": "npm run build"
   },
   "files": [
@@ -36,6 +37,7 @@
     "@types/webpack-env": "^1.16.0",
     "apply-loader": "^2.0.0",
     "css-loader": "^6.11.0",
+    "html-validate": "^11.6.0",
     "js-yaml": "^5.2.2",
     "ngx-toastr": "^16.2.0",
     "pug": "^2.0.4",
