@@ -777,12 +777,19 @@ le lancer.</p>
 </div>
 <div class="callout warning">
 <span class="callout-title">Révisé le 2026-08-01 — le chantier i18n l'avait partiellement invalidé</span>
-<p>Le plus coûteux des cinq points corrigés : <strong>la branche à cloner</strong>. Le protocole
-faisait cloner le dépôt par défaut, donc <code>master</code>, alors que
-<a href="#i18n">l'i18n</a> vit sur <code>feat/i18n-ui</code> et touche
-<code>keychainGuard.ts</code> et <code>osKeychain.ts</code> — précisément les deux fichiers que
-cette campagne doit vérifier. La campagne aurait porté sur le code d'avant, et aurait été bonne à
-refaire sans que rien ne le signale.</p>
+<p><strong>Qui prépare le clone n'était écrit nulle part.</strong> Le protocole donnait les commandes
+sans dire à qui elles s'adressaient — omission du même genre que celle qu'il corrige pour les valeurs
+à saisir. Elle mettait l'instance auditrice en position de cloner elle-même, donc de lire
+<code>.AIRules/</code> et les messages de commit <em>avant</em> de les supprimer : l'aveuglement, qui
+faisait toute la valeur de la première campagne, aurait été perdu sans qu'aucun rapport puisse le
+signaler. La suppression ne rattrape pas la lecture. C'est désormais explicite : l'opérateur, ou une
+instance de préparation qui ne participe pas à l'audit, jamais l'auditrice.</p>
+<p><strong>La branche à cloner</strong>, ensuite. Le protocole faisait cloner le dépôt par défaut
+alors que <a href="#i18n">l'i18n</a> vivait sur <code>feat/i18n-ui</code> et touche
+<code>keychainGuard.ts</code> et <code>osKeychain.ts</code> — précisément les deux fichiers que cette
+campagne doit vérifier. La campagne aurait porté sur le code d'avant, et aurait été bonne à refaire
+sans que rien ne le signale. Depuis la fusion du même jour, le clone simple suffit ; la vérification
+reste au protocole, assortie d'un contrôle qui la rend factuelle plutôt que déclarative.</p>
 <p>Les quatre autres : la <strong>langue de l'interface est désormais fixée</strong> pour les points
 1 à 5 (citer un bouton sans fixer la locale fait chercher un texte absent de l'écran) ; les
 <strong>observables du journal passent en anglais</strong> — même contenu, autre langue, mais qui
