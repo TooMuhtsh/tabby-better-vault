@@ -40,7 +40,7 @@
 <tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
     <td><span class="pill progress">🚧 Écrits et poussés le 2026-07-29 — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs ; leur validation attend la 3ᵉ campagne</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
-    <td><span class="pill planned">⏸️ En attente — protocole prêt, rien à préparer pour la lancer. <strong>Il vit dans <code>.tempfiles/</code>, donc hors dépôt</strong> : il porte des phrases à saisir, qui n'ont pas leur place sur un dépôt public</span></td><td>Sur décision</td></tr>
+    <td><span class="pill planned">⏸️ En attente — protocole prêt, révisé le 2026-08-01 pour le chantier i18n (dont la branche à cloner). <strong>Il vit dans <code>.tempfiles/</code>, donc hors dépôt</strong> : il porte des phrases à saisir, qui n'ont pas leur place sur un dépôt public</span></td><td>Sur décision</td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
     <td><span class="pill progress">🚧 Faite et validée sur Windows le 2026-08-01 — quatre langues, journal figé en anglais. Sur <code>feat/i18n-ui</code>, à fusionner ; jamais exercée sur Linux ni macOS</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -767,13 +767,31 @@ pas au rattrapage.</p>
 
 <h3 id="campagne-3">Troisième campagne — prête, en attente</h3>
 <div class="callout note">
-<span class="callout-title">État au 2026-07-29 : rien à préparer, seulement à lancer</span>
+<span class="callout-title">État au 2026-08-01 : rien à préparer, seulement à lancer</span>
 <p>Protocole opérateur complet dans
 <code>.tempfiles/PROTOCOLE-TEST-LINUX-CAMPAGNE-3.md</code> — préparation du clone aveugle, valeurs
 déclarées, prompt à donner tel quel à l'instance, points de dépouillement. <strong>Mise en attente
 sur décision de l'utilisateur</strong>, pas sur un obstacle technique.</p>
 <p>Ce qui suit est le raisonnement derrière ce protocole : à lire avant de le modifier, pas avant de
 le lancer.</p>
+</div>
+<div class="callout warning">
+<span class="callout-title">Révisé le 2026-08-01 — le chantier i18n l'avait partiellement invalidé</span>
+<p>Le plus coûteux des cinq points corrigés : <strong>la branche à cloner</strong>. Le protocole
+faisait cloner le dépôt par défaut, donc <code>master</code>, alors que
+<a href="#i18n">l'i18n</a> vit sur <code>feat/i18n-ui</code> et touche
+<code>keychainGuard.ts</code> et <code>osKeychain.ts</code> — précisément les deux fichiers que
+cette campagne doit vérifier. La campagne aurait porté sur le code d'avant, et aurait été bonne à
+refaire sans que rien ne le signale.</p>
+<p>Les quatre autres : la <strong>langue de l'interface est désormais fixée</strong> pour les points
+1 à 5 (citer un bouton sans fixer la locale fait chercher un texte absent de l'écran) ; les
+<strong>observables du journal passent en anglais</strong> — même contenu, autre langue, mais qui
+cherche « accès au trousseau suspendu » ne trouve plus rien ; le <strong>format du témoin</strong> a
+changé (<a href="AI-CONTEXT.html#piege-v22">#V22</a>), ce que le point qui l'inspecte doit savoir ;
+et un <strong>sixième point</strong> couvre la traduction elle-même, jamais exercée hors de Windows.</p>
+<p>Le recours à plusieurs agents y est explicitement autorisé, avec ses garde-fous : un seul
+interlocuteur pour l'opérateur humain, diffusion des phrases de test limitée au nécessaire, synthèse
+non déléguée, et purge des transcripts de tous les agents et pas seulement du principal.</p>
 </div>
 <div class="callout important">
 <span class="callout-title">Pourquoi elle est nécessaire, et pas seulement souhaitable</span>
