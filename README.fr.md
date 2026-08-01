@@ -34,6 +34,8 @@ confie une fois au trousseau du système, puis répond à votre place.
       jamais le mot de passe
 - [x] **Mode observation** — voir ce que ferait le plugin sans le laisser rien
       enregistrer
+- [x] **Suit la langue de Tabby** — anglais, français, espagnol et allemand ;
+      toute autre locale bascule en anglais (voir [Langues](#langues))
 - [x] **Repli sûr** — en cas d'anomalie, retour silencieux à la fenêtre native
       de Tabby. Désactivé, il ne touche pas du tout au trousseau ; activé, un
       trousseau qui cesse de répondre coûte au pire un démarrage figé (voir
@@ -85,13 +87,21 @@ a refusé d'opérer. Il s'ouvre et se vide depuis l'onglet de réglages. La dur�
 conservation est configurable — 30 jours, 90 (par défaut), un an, ou illimitée.
 
 ```
-[2026-07-28 23:19:20] INFO ──── session ouverte — machine « poste maison » — plugin actif — rétention 90 j
-[2026-07-28 23:19:21] INFO  coffre déverrouillé depuis le trousseau du système
-[2026-07-28 23:20:39] INFO  révocation manuelle depuis les réglages — jeton supprimé
+[2026-08-01 11:24:00] INFO ──── session opened — machine “poste maison” — plugin enabled — retention 90 d
+[2026-08-01 11:24:01] INFO bridge installed — the keychain will only be queried at the first unlock
+[2026-08-01 11:24:26] INFO vault unlocked from the system keychain
+[2026-08-01 11:31:02] INFO manual revocation from the settings — token deleted
 ```
 
 **Il ne contient jamais votre mot de passe, ni sa longueur** — uniquement des
 événements anonymes.
+
+**Le journal est toujours en anglais, quelle que soit la langue de
+l'interface.** C'est un fichier qu'on relit plus tard, parfois longtemps après
+et parfois pour l'envoyer à quelqu'un d'autre : une ligne dont la langue
+dépendrait de la locale active au moment de l'écriture ferait changer un même
+fichier de langue en cours de route, et le rendrait impossible à parcourir de
+façon fiable.
 
 Deux limites méritent d'être dites franchement :
 
@@ -102,6 +112,22 @@ Deux limites méritent d'être dites franchement :
   session, modifiable par quiconque y a accès — c'est-à-dire précisément
   l'attaquant contre lequel un journal d'audit servirait. À considérer comme un
   outil de diagnostic et de détection après coup, pas comme une preuve.
+
+## Langues
+
+Le plugin suit la langue configurée dans Tabby — il n'y a rien à régler. Il est
+livré en **anglais, français, espagnol et allemand** ; sous toute autre locale,
+l'interface bascule en anglais.
+
+Ajouter une langue tient en un fichier dans `src/i18n/`, dont les clés sont les
+chaînes sources anglaises, plus une ligne dans la table en tête de
+`src/i18n/index.ts`. Lancer ensuite `npm run lint:i18n` : il refuse une table
+incomplète, et attrape les erreurs que ce mécanisme commet autrement en silence
+— une clé qui ne correspond plus à sa source, ou un `{paramètre}` perdu en
+traduction.
+
+Les contributions sont bienvenues, y compris pour les langues déjà présentes :
+ces traductions n'ont pas été faites par des locuteurs natifs.
 
 ## Fonctionnement
 

@@ -2,10 +2,12 @@ import { Injectable, Injector } from '@angular/core'
 import { ToastrService } from 'ngx-toastr'
 import { AppService, VaultService } from 'tabby-core'
 
+import { I18nService } from './i18n'
 import { showInlineToast } from './inlineToast'
 import { guardState, describeState } from './keychainGuard'
 import { log, warn, crit } from './logger'
-import { keychainStatus, keychainLabel, encrypt, decrypt } from './osKeychain'
+import { english } from './messages'
+import { keychainStatus, keychainName, encrypt, decrypt } from './osKeychain'
 import {
     readSettings, writeSettings, readToken, writeToken, deleteToken,
     cleanUpLegacyToken, tokenHasExpired, computeExpiry, Settings,
@@ -27,7 +29,7 @@ import { passphraseOpensVault } from './vaultCrypto'
  * elle. Aucun champ de cette classe ne le contient, il n'est jamais journalisé,
  * jamais écrit ailleurs que chiffré par l'OS.
  */
-const UNLOCK_MESSAGE = 'Coffre-fort déverrouillé automatiquement'
+const UNLOCK_MESSAGE = 'Vault unlocked automatically'
 
 @Injectable({ providedIn: 'root' })
 export class VaultBridgeService {
@@ -46,7 +48,11 @@ export class VaultBridgeService {
      */
     private unlockAnnounced = false
 
-    constructor (private injector: Injector, private toastr: ToastrService) { }
+    constructor (
+        private injector: Injector,
+        private toastr: ToastrService,
+        private i18n: I18nService,
+    ) { }
 
     install (): void {
         if (this.installed) {
@@ -57,7 +63,7 @@ export class VaultBridgeService {
         try {
             vault = this.injector.get(VaultService)
         } catch (e) {
-            crit(`installation impossible : VaultService introuvable — ${String(e)}`)
+            crit(`cannot install: VaultService not found — ${String(e)}`)
             return
         }
 
@@ -93,9 +99,9 @@ export class VaultBridgeService {
             // Le garde-fou s'est déclenché : sans cette trace, l'utilisateur ne
             // pourrait pas comprendre pourquoi le déverrouillage automatique a
             // cessé de fonctionner du jour au lendemain.
-            crit(`pont installé, mais accès au trousseau suspendu — ${describeState(guard)} ; à lever dans Paramètres → Better Vault`)
+            crit(`bridge installed, but keychain access is suspended — ${english(describeState(guard))}; lift it in Settings → Better Vault`)
         } else {
-            log('pont installé — le trousseau ne sera interrogé qu\'au premier déverrouillage')
+            log('bridge installed — the keychain will only be queried at the first unlock')
         }
     }
 
@@ -116,7 +122,7 @@ export class VaultBridgeService {
      */
     private callOriginal (): Promise<string> {
         if (!this.original) {
-            throw new Error('méthode native perdue')
+            throw new Error('the native method has been lost')
         }
         return this.original()
     }
@@ -125,7 +131,7 @@ export class VaultBridgeService {
         const { enabled, debug } = this.settings
 
         if (debug) {
-            log('mode observation : délégation à la pop-up native, aucune capture')
+            log('observation mode: delegating to the native prompt, capturing nothing')
             return this.previewOnly()
         }
         if (!enabled) {
@@ -140,11 +146,11 @@ export class VaultBridgeService {
             // Distinct d'une indisponibilité ordinaire : l'état persiste d'un
             // démarrage à l'autre et ne se lèvera pas tout seul. Le message doit
             // donc dire quoi faire, pas seulement ce qui ne va pas.
-            crit(`${status.reason} — saisie manuelle ; à lever dans Paramètres → Better Vault une fois le trousseau déverrouillé`)
+            crit(`${status.reason ? english(status.reason) : 'keychain access suspended'} — manual entry; lift it in Settings → Better Vault once the keychain is unlocked`)
             return this.callOriginal()
         }
         if (!status.available) {
-            warn(`trousseau indisponible (${status.reason}) — saisie manuelle`)
+            warn(`keychain unavailable (${status.reason ? english(status.reason) : 'no reason given'}) — manual entry`)
             return this.callOriginal()
         }
 
@@ -159,7 +165,7 @@ export class VaultBridgeService {
     private async serveFromToken (): Promise<string | null> {
         const settings = this.settings
         if (settings.token && tokenHasExpired(settings)) {
-            warn('jeton expiré selon la politique configurée — purge et saisie manuelle')
+            warn('token expired under the configured policy — purged, manual entry')
             deleteToken()
             this.tokenVerified = false
             return null
@@ -172,7 +178,7 @@ export class VaultBridgeService {
         if (settings.token && settings.tokenExpiresAt === null && settings.expiry.mode !== 'never') {
             const expiresAt = computeExpiry(settings.expiry)
             writeSettings({ ...settings, tokenExpiresAt: expiresAt })
-            log(`échéance appliquée au jeton existant : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
+            log(`expiry applied to the existing token: ${expiresAt ? new Date(expiresAt).toLocaleString() : 'none'}`)
         }
 
         const blob = readToken()
@@ -184,7 +190,7 @@ export class VaultBridgeService {
         try {
             passphrase = decrypt(blob)
         } catch (e) {
-            warn(`jeton illisible (${String(e)}) — purge et saisie manuelle`)
+            warn(`token unreadable (${String(e)}) — purged, manual entry`)
             deleteToken()
             this.tokenVerified = false
             return null
@@ -198,20 +204,20 @@ export class VaultBridgeService {
                 // Pas de coffre lisible dans config.yaml : rien à vérifier
                 // contre. On préfère ne rien servir plutôt que de servir un
                 // mot de passe non validé.
-                warn('coffre introuvable dans config.yaml — saisie manuelle')
+                warn('no vault found in config.yaml — manual entry')
                 return null
             }
             if (!await passphraseOpensVault(store, passphrase)) {
-                warn('jeton périmé (le mot de passe maître a changé ?) — purge et saisie manuelle')
+                warn('stale token (has the master password changed?) — purged, manual entry')
                 deleteToken()
                 this.tokenVerified = false
                 return null
             }
             this.tokenVerified = true
-            log('jeton vérifié')
+            log('token verified')
         }
 
-        log('coffre déverrouillé depuis le trousseau du système')
+        log('vault unlocked from the system keychain')
         this.announceUnlock()
         return passphrase
     }
@@ -227,7 +233,7 @@ export class VaultBridgeService {
         }
         this.unlockAnnounced = true
 
-        if (showInlineToast(UNLOCK_MESSAGE)) {
+        if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE))) {
             return
         }
 
@@ -253,7 +259,7 @@ export class VaultBridgeService {
             // Laisse le corps de l'onglet se rendre avant d'y insérer quoi que
             // ce soit : `activeTabChange$` précède l'apparition du DOM.
             setTimeout(() => {
-                if (showInlineToast(UNLOCK_MESSAGE)) {
+                if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE))) {
                     subscription.unsubscribe()
                 }
             }, 150)
@@ -308,23 +314,23 @@ export class VaultBridgeService {
         // pas ensemble.
         const store = readStoredVault()
         if (!store) {
-            warn('coffre introuvable dans config.yaml — mot de passe non enregistré, rien à vérifier contre')
+            warn('no vault found in config.yaml — password not saved, nothing to verify it against')
             return passphrase
         }
         if (!await passphraseOpensVault(store, passphrase)) {
-            warn("le mot de passe saisi n'ouvre pas le coffre — non enregistré")
+            warn('the password entered does not open the vault — not saved')
             return passphrase
         }
 
         try {
             const expiresAt = writeToken(encrypt(passphrase))
             this.tokenVerified = true
-            log(`mot de passe enregistré dans le trousseau du système — échéance : ${expiresAt ? new Date(expiresAt).toLocaleString() : 'aucune'}`)
+            log(`password saved in the system keychain — expires: ${expiresAt ? new Date(expiresAt).toLocaleString() : 'never'}`)
             this.announceStorage(expiresAt)
         } catch (e) {
             // Échec d'enregistrement : sans conséquence pour l'utilisateur, il
             // ressaisira au prochain démarrage.
-            warn(`enregistrement dans le trousseau impossible — ${String(e)}`)
+            warn(`could not save to the keychain — ${String(e)}`)
         }
         return passphrase
     }
@@ -338,15 +344,30 @@ export class VaultBridgeService {
      * pas enfoui dans un panneau de réglages qu'il n'ouvrira peut-être jamais.
      */
     private announceStorage (expiresAt: number | null, preview = false): void {
-        const until = expiresAt
-            ? `Valable jusqu'au ${new Date(expiresAt).toLocaleString()}.`
-            : 'Valable jusqu\'à révocation.'
+        // PHRASES ENTIÈRES, JAMAIS ASSEMBLÉES. Ce corps de notification était
+        // composé d'un fragment « valable jusqu'au … » suivi d'un autre : une
+        // fois traduits, ces morceaux ne se recollent pas — l'ordre des mots et
+        // les accords diffèrent d'une langue à l'autre, et un traducteur qui ne
+        // voit qu'un fragment ne peut pas le rendre correctement. Les quatre
+        // combinaisons sont donc écrites en toutes lettres.
+        const keychain = this.i18n.t(keychainName())
+        const date = expiresAt ? new Date(expiresAt).toLocaleString() : null
+
         const title = preview
-            ? 'Mode observation — rien n\'a été enregistré'
-            : `Mot de passe enregistré dans ${keychainLabel()}`
-        const body = preview
-            ? `Hors mode observation, le mot de passe serait confié à ${keychainLabel()}. ${until}`
-            : `${until} Révocable à tout moment dans Paramètres → Better Vault.`
+            ? this.i18n.t('Observation mode — nothing was saved')
+            : this.i18n.t('Password saved in {keychain}', { keychain })
+
+        let body: string
+        if (preview) {
+            body = date
+                ? this.i18n.t('Outside observation mode, the password would be entrusted to {keychain}. Valid until {date}.', { keychain, date })
+                : this.i18n.t('Outside observation mode, the password would be entrusted to {keychain}. Valid until revoked.', { keychain })
+        } else {
+            body = date
+                ? this.i18n.t('Valid until {date}. Can be revoked at any time in Settings → Better Vault.', { date })
+                : this.i18n.t('Valid until you revoke it, at any time in Settings → Better Vault.')
+        }
+
         try {
             this.toastr.info(
                 body,
@@ -363,7 +384,7 @@ export class VaultBridgeService {
         } catch (e) {
             // Une notification qui échoue ne doit pas compromettre le
             // déverrouillage lui-même.
-            warn(`notification impossible — ${String(e)}`)
+            warn(`could not display the notification — ${String(e)}`)
         }
     }
 }

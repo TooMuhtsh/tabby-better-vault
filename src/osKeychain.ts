@@ -12,7 +12,8 @@
  * ailleurs : le garde-fou ne protège que ce qu'il enveloppe.
  */
 
-import { runGuarded, isSuspendedError } from './keychainGuard'
+import { runGuarded, isSuspendedError, suspendedMessage } from './keychainGuard'
+import { GUARD, Message, OperationId, REASON } from './messages'
 
 /**
  * Champs optionnels plutôt qu'union discriminée : le tsconfig de ce projet
@@ -24,8 +25,14 @@ export interface KeychainStatus {
     available: boolean
     /** Renseigné si `available` — nom du backend de stockage retenu. */
     backend?: string
-    /** Renseigné si `!available` — cause, destinée au journal. */
-    reason?: string
+    /**
+     * Renseigné si `!available` — cause, non rendue.
+     *
+     * Ce champ part à la fois au journal (en anglais) et à l'écran (traduit) :
+     * il transporte donc sa chaîne source et ses paramètres plutôt qu'un texte.
+     * Voir `messages.ts`.
+     */
+    reason?: Message
     /**
      * Le refus vient du garde-fou, pas du trousseau lui-même : l'utilisateur
      * peut le lever depuis les réglages. Une panne ordinaire, non.
@@ -42,17 +49,18 @@ export interface KeychainStatus {
 /**
  * Point de passage unique vers `safeStorage`.
  *
- * `label` étiquette l'opération dans le témoin du garde-fou : c'est ce que
+ * `operation` étiquette l'appel dans le témoin du garde-fou : c'est ce que
  * l'utilisateur lira si un gel survient, et le seul indice de l'endroit exact
- * où le trousseau a cessé de répondre.
+ * où le trousseau a cessé de répondre. Identifiant et non phrase — le témoin est
+ * relu au démarrage suivant, éventuellement sous une autre locale.
  */
-function withSafeStorage<T> (label: string, fn: (safeStorage: any) => T): T {
-    return runGuarded(label, () => {
+function withSafeStorage<T> (operation: OperationId, fn: (safeStorage: any) => T): T {
+    return runGuarded(operation, () => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const remote = require('@electron/remote')
         const safeStorage = remote?.safeStorage
         if (!safeStorage) {
-            throw new Error('@electron/remote ou safeStorage inaccessible')
+            throw new Error('@electron/remote or safeStorage is unreachable')
         }
         return fn(safeStorage)
     })
@@ -97,27 +105,31 @@ function withSafeStorage<T> (label: string, fn: (safeStorage: any) => T): T {
  */
 export function keychainStatus (): KeychainStatus {
     try {
-        return withSafeStorage('diagnostic du trousseau', safeStorage => {
+        return withSafeStorage('diagnose', safeStorage => {
             if (process.platform === 'linux' && safeStorage.getSelectedStorageBackend) {
                 const backend = String(safeStorage.getSelectedStorageBackend())
                 if (backend === 'basic_text') {
                     return {
                         available: false,
-                        reason: 'trousseau Linux indisponible (backend basic_text : clé codée en dur, chiffrement non fiable)',
+                        reason: { source: REASON.backendBasicText },
                     }
                 }
                 return { available: true, backend }
             }
             if (!safeStorage.isEncryptionAvailable()) {
-                return { available: false, reason: "le système n'offre pas de chiffrement (isEncryptionAvailable=false)" }
+                return { available: false, reason: { source: REASON.noEncryption } }
             }
-            return { available: true, backend: 'natif' }
+            return { available: true, backend: 'native' }
         })
     } catch (e) {
         if (isSuspendedError(e)) {
-            return { available: false, suspended: true, reason: String((e as Error).message) }
+            return {
+                available: false,
+                suspended: true,
+                reason: suspendedMessage(e) ?? { source: GUARD.anonymous },
+            }
         }
-        return { available: false, reason: `safeStorage inutilisable — ${String(e)}` }
+        return { available: false, reason: { source: REASON.safeStorageUnusable, params: { error: String(e) } } }
     }
 }
 
@@ -157,39 +169,50 @@ export function keychainRoundTrip (): KeychainStatus {
         return status
     }
     try {
-        return withSafeStorage('vérification du trousseau', safeStorage => {
+        return withSafeStorage('verify', safeStorage => {
             const blob = safeStorage.encryptString(PROBE_PLAINTEXT)
             if (safeStorage.decryptString(blob) !== PROBE_PLAINTEXT) {
                 return {
                     available: false,
-                    reason: "le trousseau a répondu, mais l'aller-retour de chiffrement ne redonne pas la valeur d'origine",
+                    reason: { source: REASON.roundTripMismatch },
                 }
             }
             return { ...status, verified: true }
         })
     } catch (e) {
         if (isSuspendedError(e)) {
-            return { available: false, suspended: true, reason: String((e as Error).message) }
+            return {
+                available: false,
+                suspended: true,
+                reason: suspendedMessage(e) ?? { source: GUARD.anonymous },
+            }
         }
-        return { available: false, reason: `le trousseau n'a pas honoré l'aller-retour — ${String(e)}` }
+        return { available: false, reason: { source: REASON.roundTripFailed, params: { error: String(e) } } }
     }
 }
 
-/** Nom du coffre de l'OS, tel qu'il est connu de l'utilisateur. */
-export function keychainLabel (): string {
+/**
+ * Nom du coffre de l'OS, tel qu'il est connu de l'utilisateur.
+ *
+ * Chaîne source anglaise, destinée aux notifications : c'est l'appelant qui la
+ * traduit. Ces noms sont ceux que l'éditeur du système emploie lui-même, et une
+ * traduction doit reprendre le terme officiel de la locale visée plutôt que de
+ * traduire mot à mot.
+ */
+export function keychainName (): string {
     if (process.platform === 'win32') {
-        return "le gestionnaire d'identifiants de Windows"
+        return 'the Windows Credential Manager'
     }
     if (process.platform === 'darwin') {
-        return 'le trousseau de macOS'
+        return 'the macOS Keychain'
     }
-    return 'le trousseau du système'
+    return 'the system keychain'
 }
 
 export function encrypt (plaintext: string): Buffer {
-    return withSafeStorage('enregistrement du mot de passe', s => s.encryptString(plaintext))
+    return withSafeStorage('store', s => s.encryptString(plaintext))
 }
 
 export function decrypt (blob: Buffer): string {
-    return withSafeStorage('relecture du mot de passe', s => s.decryptString(blob))
+    return withSafeStorage('read', s => s.decryptString(blob))
 }

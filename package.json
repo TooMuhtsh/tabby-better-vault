@@ -19,6 +19,7 @@
     "build": "webpack --progress --color",
     "watch": "webpack --progress --color --watch",
     "lint:airules": "html-validate \".AIRules/**/*.html\"",
+    "lint:i18n": "node tools/lint-i18n.js",
     "prepublishOnly": "npm run build"
   },
   "files": [

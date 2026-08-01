@@ -12,6 +12,18 @@ import { readSettings } from './store'
  * l'horodatage absolu de chaque ligne — un délai relatif au lancement répond au
  * premier besoin, jamais au second.
  *
+ * CE FICHIER EST EN ANGLAIS, ET N'EST PAS TRADUIT. Décidé le 2026-08-01, en même
+ * temps que l'internationalisation de l'interface. Le journal est persistant et
+ * relu après coup : une ligne écrite dans la langue active à l'instant de
+ * l'écriture rendrait le fichier incohérent dès que l'utilisateur change de
+ * locale, et incherchable pour qui l'analyse — nous en support les premiers. Une
+ * seule langue, stable, choisie pour être celle du plus grand nombre de lecteurs
+ * possibles.
+ *
+ * Les messages qui doivent aussi s'AFFICHER passent par `messages.ts`, qui les
+ * transporte sous forme de chaîne source + paramètres : anglais ici, traduits à
+ * l'écran.
+ *
  * INVARIANT : ce journal ne reçoit JAMAIS le mot de passe maître, ni aucune
  * valeur permettant de le reconstituer — sa longueur comprise. Seuls des
  * événements de cycle de vie y figurent.
@@ -126,10 +138,10 @@ export function applyRetention (): void {
     try {
         fs.writeFileSync(LOG_PATH, out, 'utf8')
         if (purged) {
-            log(`rétention : ${purged} ligne(s) de plus de ${days} jours supprimée(s)`)
+            log(`retention: removed ${purged} line(s) older than ${days} days`)
         }
         if (truncated) {
-            warn(`journal tronqué : plafond de ${Math.round(HARD_SIZE_LIMIT / 1024 / 1024)} Mo atteint`)
+            warn(`log truncated: reached the ${Math.round(HARD_SIZE_LIMIT / 1024 / 1024)} MB ceiling`)
         }
     } catch {
         // Journal non réinscriptible : on le laisse tel quel.
@@ -148,13 +160,13 @@ export function purge (): void {
     } catch {
         return
     }
-    log('journal purgé manuellement depuis les réglages')
+    log('log purged manually from the settings')
 }
 
 /** Ouvre une session. Le nom de la machine figure ici, et pas sur chaque ligne. */
 export function startSession (): void {
     const { machineName, enabled, logRetentionDays } = readSettings()
-    const retention = logRetentionDays > 0 ? `${logRetentionDays} j` : 'illimitée'
+    const retention = logRetentionDays > 0 ? `${logRetentionDays} d` : 'unlimited'
     append('')
-    write('INFO', `──── session ouverte — machine « ${machineName} » — plugin ${enabled ? 'actif' : 'inactif'} — rétention ${retention}`)
+    write('INFO', `──── session opened — machine “${machineName}” — plugin ${enabled ? 'enabled' : 'disabled'} — retention ${retention}`)
 }

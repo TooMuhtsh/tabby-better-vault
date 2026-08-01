@@ -15,7 +15,7 @@
 </nav>
 
 <h1>Roadmap</h1>
-<p class="muted">Dernière revue : 2026-07-29</p>
+<p class="muted">Dernière revue : 2026-08-01</p>
 
 <h2>Vue d'ensemble</h2>
 <table>
@@ -40,11 +40,11 @@
 <tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
     <td><span class="pill progress">🚧 Écrits et poussés le 2026-07-29 — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs ; leur validation attend la 3ᵉ campagne</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
-    <td><span class="pill planned">⏸️ En attente — protocole prêt, rien à préparer pour la lancer. <strong>Il vit dans <code>.tempfiles/</code>, donc hors dépôt</strong> : il porte des phrases à saisir, qui n'ont pas leur place sur un dépôt public</span></td><td>Sur décision</td></tr>
-<tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
-    <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
+    <td><span class="pill planned">⏸️ En attente — protocole prêt, révisé le 2026-08-01 pour le chantier i18n (dont la branche à cloner). <strong>Il vit dans <code>.tempfiles/</code>, donc hors dépôt</strong> : il porte des phrases à saisir, qui n'ont pas leur place sur un dépôt public</span></td><td>Sur décision</td></tr>
+<tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
+    <td><span class="pill progress">🚧 Faite et validée sur Windows le 2026-08-01 — quatre langues, journal figé en anglais. Sur <code>feat/i18n-ui</code>, à fusionner ; jamais exercée sur Linux ni macOS</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
-    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>Bonus, après l'i18n</td></tr>
+    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>Prochain chantier</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
     <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
@@ -767,13 +767,31 @@ pas au rattrapage.</p>
 
 <h3 id="campagne-3">Troisième campagne — prête, en attente</h3>
 <div class="callout note">
-<span class="callout-title">État au 2026-07-29 : rien à préparer, seulement à lancer</span>
+<span class="callout-title">État au 2026-08-01 : rien à préparer, seulement à lancer</span>
 <p>Protocole opérateur complet dans
 <code>.tempfiles/PROTOCOLE-TEST-LINUX-CAMPAGNE-3.md</code> — préparation du clone aveugle, valeurs
 déclarées, prompt à donner tel quel à l'instance, points de dépouillement. <strong>Mise en attente
 sur décision de l'utilisateur</strong>, pas sur un obstacle technique.</p>
 <p>Ce qui suit est le raisonnement derrière ce protocole : à lire avant de le modifier, pas avant de
 le lancer.</p>
+</div>
+<div class="callout warning">
+<span class="callout-title">Révisé le 2026-08-01 — le chantier i18n l'avait partiellement invalidé</span>
+<p>Le plus coûteux des cinq points corrigés : <strong>la branche à cloner</strong>. Le protocole
+faisait cloner le dépôt par défaut, donc <code>master</code>, alors que
+<a href="#i18n">l'i18n</a> vit sur <code>feat/i18n-ui</code> et touche
+<code>keychainGuard.ts</code> et <code>osKeychain.ts</code> — précisément les deux fichiers que
+cette campagne doit vérifier. La campagne aurait porté sur le code d'avant, et aurait été bonne à
+refaire sans que rien ne le signale.</p>
+<p>Les quatre autres : la <strong>langue de l'interface est désormais fixée</strong> pour les points
+1 à 5 (citer un bouton sans fixer la locale fait chercher un texte absent de l'écran) ; les
+<strong>observables du journal passent en anglais</strong> — même contenu, autre langue, mais qui
+cherche « accès au trousseau suspendu » ne trouve plus rien ; le <strong>format du témoin</strong> a
+changé (<a href="AI-CONTEXT.html#piege-v22">#V22</a>), ce que le point qui l'inspecte doit savoir ;
+et un <strong>sixième point</strong> couvre la traduction elle-même, jamais exercée hors de Windows.</p>
+<p>Le recours à plusieurs agents y est explicitement autorisé, avec ses garde-fous : un seul
+interlocuteur pour l'opérateur humain, diffusion des phrases de test limitée au nécessaire, synthèse
+non déléguée, et purge des transcripts de tous les agents et pas seulement du principal.</p>
 </div>
 <div class="callout important">
 <span class="callout-title">Pourquoi elle est nécessaire, et pas seulement souhaitable</span>
@@ -862,49 +880,93 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 <li><strong>L'i18n</strong> — pas encore écrite. Ne rien auditer qui n'existe pas.</li>
 </ul>
 
-<h2 id="i18n">Internationalisation — interface et journal</h2>
-<p><strong>Priorisé le 2026-07-29 : c'est le prochain chantier</strong>, devant la granularité par profil — motif donné par l'utilisateur : « à l'usage c'est ce qui est le plus important maintenant, le reste c'est du bonus ».</p>
-<p>Demandé par l'utilisateur le 2026-07-29 : les cinq langues les plus utilisées sur Tabby,
-<strong>journal d'audit compris</strong>.</p>
+<h2 id="i18n">Internationalisation — interface traduite, journal en anglais</h2>
+<p><strong>Fait le 2026-08-01</strong>, sur la branche <code>feat/i18n-ui</code> — priorisé le
+2026-07-29 devant la granularité par profil, motif donné par l'utilisateur : « à l'usage c'est ce
+qui est le plus important maintenant, le reste c'est du bonus ». <strong>Validé en conditions
+réelles sur Windows 11</strong> le jour même ; jamais exercé sur Linux ni macOS.</p>
 
-<h3>État de départ</h3>
-<p>Aucune infrastructure i18n aujourd'hui. Tout est en français, en dur :
-<code>src/components/settingsTab.component.pug</code> (114 lignes), les libellés des notifications
-(<code>src/inlineToast.ts</code>, le toast d'enregistrement) et les messages du journal
-(<code>src/logger.ts</code>, qui ne transporte qu'une <code>string</code> libre).</p>
-
-<div class="callout warning">
-<span class="callout-title">Contrainte structurante — l'UI doit d'abord repasser en anglais</span>
-<p>Vérifié dans <code>tabby-core/src/services/locale.service.ts</code> : Tabby charge des fichiers
-<strong><code>.po</code> gettext dont le <code>msgid</code> est la chaîne source anglaise</strong>
-(<code>translation[k] = po[k].msgstr[0] || k</code>), et son
-<code>CustomMissingTranslationHandler</code> <strong>compile la clé elle-même</strong> lorsqu'aucune
-traduction n'existe. Autrement dit, la chaîne source sert de repli universel.</p>
-<p>Conséquence non négociable : tant que les chaînes sources restent en français, tout utilisateur
-d'une locale non couverte verrait l'interface en français. <strong>Réécrire l'UI en anglais est donc
-la première étape du chantier, pas une option.</strong> Le compilateur est
-<code>ngx-translate-messageformat-compiler</code> : pluriels et interpolations en syntaxe ICU
-MessageFormat, pas en concaténation.</p>
-</div>
-
-<h3>Choix des langues — non tranché</h3>
-<p>L'utilisateur a nommé le français, l'anglais, l'espagnol et l'allemand. <strong>La cinquième
-reste à décider</strong> : nous n'avons aucune donnée d'usage réelle de Tabby, et la liste des
-24 locales déclarées dans <code>LocaleService.allLanguages</code> ne dit rien de leur popularité.
-Piège de comptage : Tabby distingue <code>en-US</code> de <code>en-GB</code> et <code>pt-PT</code>
-de <code>pt-BR</code> — « cinq langues » ne fait pas cinq codes.</p>
+<h3>Ce qui a été décidé, et qui n'était pas décidé au départ</h3>
+<p>La demande du 2026-07-29 portait sur « les cinq langues les plus utilisées, journal d'audit
+compris ». Les deux termes ont bougé le 2026-08-01, sur décision de l'utilisateur :</p>
+<ul>
+<li><strong>Quatre langues, pas cinq</strong> : <code>fr-FR</code>, <code>en-US</code>,
+  <code>es-ES</code>, <code>de-DE</code>. La cinquième n'a pas été choisie faute de pouvoir la
+  justifier. La mesure faite ce jour-là — taux de complétion des 24 <code>.po</code> livrés par
+  Tabby — <strong>ne discrimine pas</strong> : dix-huit locales sont à 100 %, et elle n'écarte que
+  <code>en-GB</code> (3 %), <code>pt-PT</code> (71 %) et <code>da-DK</code> (78 %). Elle ne dit rien
+  de l'usage réel. Ajouter une langue plus tard ne coûte qu'une table.</li>
+<li><strong>Le journal n'est pas traduit</strong> : il passe en anglais fixe. La réserve posée en
+  amont — un fichier persistant dont la langue suivrait la locale devient incohérent et
+  incherchable — a été tranchée dans ce sens plutôt que par des codes d'événement. Pas de changement
+  de format du journal, donc.</li>
+</ul>
 
 <div class="callout note">
-<span class="callout-title">Réserve sur le journal d'audit — à trancher avant d'implémenter</span>
-<p>La demande inclut explicitement le journal. Or <code>better-vault.log</code> est un fichier
-<strong>persistant</strong>, dont la raison d'être est d'être relu après coup. Le traduire au moment
-de l'écriture fige chaque ligne dans la langue active à cet instant : un même fichier change de
-langue en cours de route si l'utilisateur change de locale, et devient opaque à qui l'analyse — y
-compris nous, en support.</p>
-<p>Proposition prudente, à valider : écrire dans le fichier des <strong>codes d'événement stables</strong>
-accompagnés de leurs paramètres, et ne localiser qu'à l'affichage. Cela satisfait la demande côté
-interface sans sacrifier l'auditabilité — mais c'est un <strong>changement de format du journal</strong>,
-donc une décision de l'utilisateur, pas un détail d'implémentation.</p>
+<span class="callout-title">La contrainte structurante s'est confirmée, et elle a coûté ce qu'elle annonçait</span>
+<p>Tabby cherche ses traductions par la <strong>chaîne source anglaise</strong> (msgid gettext) et
+son <code>CustomMissingTranslationHandler</code> compile la clé elle-même faute de traduction.
+Réécrire l'interface en anglais n'était donc pas une option : une source française afficherait du
+français à un utilisateur turc. Les 85 chaînes sources du plugin sont désormais anglaises, et les
+traductions vivent dans <code>src/i18n/</code>.</p>
+<p>Conséquence non anticipée : ce mécanisme ne signale <strong>jamais</strong> une traduction morte —
+la phrase retombe simplement en anglais. D'où <code>npm run lint:i18n</code>. Détail en
+<a href="AI-CONTEXT.html#piege-v21">#V21</a>.</p>
+</div>
+
+<h3>Ce que la réalisation a appris — quatre pièges consignés</h3>
+<p>Aucun n'avait été anticipé par la préparation de ce chantier, et deux d'entre eux sont
+silencieux par construction. Voir <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> :</p>
+<ul>
+<li><a href="AI-CONTEXT.html#piege-v19">#V19</a> — enregistrer une traduction avant Tabby fait
+  sauter le chargement de ses propres <code>.po</code> : <strong>toute l'interface de Tabby</strong>
+  serait restée en anglais, pas seulement celle du plugin. Le défaut ne se voit qu'en regardant
+  Tabby ; c'est ce qui rend le point 2 du protocole de test indispensable.</li>
+<li><a href="AI-CONTEXT.html#piege-v20">#V20</a> — <code>TranslateService</code> est typé
+  <code>any</code>, contrairement au reste de <code>tabby-core</code>, et c'est justement le membre
+  le plus dangereux qui n'était pas vérifié.</li>
+<li><a href="AI-CONTEXT.html#piege-v21">#V21</a> — la chaîne source est la clé, et le piège ICU de
+  l'apostrophe collée à une accolade, que le français déclenche naturellement.</li>
+<li><a href="AI-CONTEXT.html#piege-v22">#V22</a> — ce qui est écrit sur disque ne se traduit pas :
+  le témoin du garde-fou portait une phrase française, il porte désormais un identifiant.</li>
+</ul>
+
+<div class="callout warning">
+<span class="callout-title">Le point qui reste ouvert — la contradiction entre écran et journal</span>
+<p>Cinq messages servaient les deux usages : le motif d'indisponibilité du trousseau
+(<code>KeychainStatus.reason</code>, affiché par le panneau ET journalisé) et la phrase du garde-fou.
+<code>src/messages.ts</code> les transporte désormais sous forme de chaîne source + paramètres, sans
+les rendre : le journal les écrit en anglais, l'interface les traduit avec la même chaîne comme clé.
+Une seule table de vérité, deux rendus.</p>
+<p><strong>Ce fichier est le point de contact entre les deux exigences.</strong> Toute nouvelle
+chaîne qui doit à la fois s'afficher et se journaliser passe par là — l'écrire en dur d'un côté ou
+de l'autre rouvre exactement le défaut que ce chantier a fermé.</p>
+</div>
+
+<h3>Reste à faire</h3>
+<ul>
+<li><strong>Fusionner <code>feat/i18n-ui</code> dans <code>master</code></strong>, sa documentation
+  l'accompagnant (option <code>branches</code>). Réserve à peser d'abord : le chantier touche
+  <code>keychainGuard.ts</code> et <code>osKeychain.ts</code>, c'est-à-dire le code même que la
+  <a href="#campagne-3">troisième campagne</a> doit valider. Fusionner signifie que la campagne
+  portera sur ce code-ci — ce qui est souhaitable, mais doit être un choix et non une conséquence.</li>
+<li><strong>Exercer sur Linux et macOS.</strong> Rien n'y a été vérifié. Le risque n'est pas la
+  traduction elle-même mais <a href="AI-CONTEXT.html#piege-v22">#V22</a> : le format du témoin du
+  garde-fou a changé, et c'est sur Linux qu'il se déclenche réellement.</li>
+<li><strong>Une cinquième langue</strong>, si une donnée d'usage finit par exister. Le validateur
+  refuse une table incomplète, donc l'ajout est mécanique.</li>
+</ul>
+
+<div class="callout note">
+<span class="callout-title">Défaut mineur relevé au passage, non corrigé</span>
+<p>La ligne <code>vault unlocked from the system keychain</code> apparaît <strong>deux fois</strong>
+par démarrage (mesuré le 2026-08-01). <strong>Préexistant, sans rapport avec l'i18n</strong> : la
+traduction l'a seulement rendu visible. <code>serveFromToken()</code> journalise à chaque résolution,
+alors que la notification, elle, est dédupliquée par <code>unlockAnnounced</code> — le commentaire de
+ce champ note que le coffre est déverrouillé « trois fois en une seconde en usage réel ».</p>
+<p>C'est du bruit, pas une perte d'information. À corriger en même temps qu'un autre passage sur le
+pont plutôt que seul : toucher au chemin de <code>resolve()</code> pour du confort de lecture n'est
+pas un bon échange tant que la troisième campagne n'a pas eu lieu.</p>
 </div>
 
 <h2 id="granularite">Granularité par profil / groupe</h2>

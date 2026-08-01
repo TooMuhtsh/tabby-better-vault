@@ -1,37 +1,43 @@
+//- LES CHAÎNES DE CE GABARIT SONT EN ANGLAIS, ET C'EST STRUCTUREL. Tabby
+    cherche ses traductions par la chaîne source (msgid gettext) et retombe sur
+    la clé elle-même quand aucune traduction n'existe : une source française
+    afficherait du français à un utilisateur turc. Les traductions vivent dans
+    `src/i18n/`. Toucher une chaîne ici sans y toucher là-bas fait retomber la
+    locale sur l'anglais, sans erreur ni avertissement.
 .better-vault-settings
-  h3.mb-1 Déverrouillage automatique du coffre-fort
-  .machine-badge.mb-3 Réglages propres à cette machine — jamais synchronisés.
+  h3.mb-1 {{ 'Automatic vault unlocking' | translate }}
+  .machine-badge.mb-3 {{ 'Settings specific to this machine — never synchronised.' | translate }}
 
   //- Garde-fou déclenché : un accès au trousseau n'est jamais revenu lors d'une
       session précédente, et le plugin s'est mis en retrait pour que Tabby
       redémarre. C'est le seul état que l'utilisateur peut lever lui-même — d'où
       un encadré distinct de l'indisponibilité ordinaire, avec l'action à faire.
   .alert.alert-danger(*ngIf='suspended')
-    strong Accès au trousseau suspendu.
-    |  {{suspendedDetail}}.
-    .mt-1 Le plugin ne le sollicite plus, pour ne pas figer le démarrage de Tabby. Le mot de passe reste demandé normalement à chaque fois.
-    .mt-1 Déverrouillez votre trousseau, puis relancez la vérification ci-dessous.
-    .mt-1.muted Cette vérification chiffre et déchiffre réellement une valeur jetable — c'est le seul moyen de savoir si le trousseau répond. Si le vôtre est encore verrouillé, votre système vous demandera de vous authentifier.
+    strong {{ 'Keychain access suspended.' | translate }}
+    |  {{ suspendedDetail }}.
+    .mt-1 {{ 'The plugin no longer queries it, so that Tabby startup cannot freeze. Your master password is requested normally every time.' | translate }}
+    .mt-1 {{ 'Unlock your keychain, then run the check below.' | translate }}
+    .mt-1.muted {{ 'This check really encrypts and decrypts a throwaway value — that is the only way to know whether the keychain responds. If yours is still locked, your system will ask you to authenticate.' | translate }}
     button.btn.btn-warning.mt-2((click)='rearmKeychain()')
       i.fas.fa-unlock.mr-2
-      | Lever la suspension et vérifier
+      | {{ 'Lift the suspension and check' | translate }}
 
   //- Sonde non encore faite : l'interroger peut bloquer sur un trousseau
       verrouillé, ce doit donc rester un geste de l'utilisateur tant que le
       plugin n'est pas activé.
   .alert.alert-info(*ngIf='!suspended && !keychain')
-    strong Trousseau du système non vérifié.
-    .mt-1 Le plugin n'interroge pas le trousseau tant qu'il n'est pas activé — c'est ce qui garantit que sa seule présence ne peut pas retarder le démarrage de Tabby.
-    .mt-1.muted La vérification chiffre et déchiffre une valeur jetable. Si votre trousseau est verrouillé, votre système vous demandera de vous authentifier.
+    strong {{ 'System keychain not checked.' | translate }}
+    .mt-1 {{ 'The plugin does not query the keychain until it is enabled — that is what guarantees its mere presence cannot delay Tabby startup.' | translate }}
+    .mt-1.muted {{ 'The check encrypts and decrypts a throwaway value. If your keychain is locked, your system will ask you to authenticate.' | translate }}
     button.btn.btn-primary.mt-2((click)='verifyKeychain()')
       i.fas.fa-key.mr-2
-      | Vérifier le trousseau
+      | {{ 'Check the keychain' | translate }}
 
   .alert.alert-warning(*ngIf='keychain && !keychain.available && !keychain.suspended')
-    strong Trousseau du système indisponible.
-    |  {{keychain.reason}}
-    .mt-1 Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.
-    .mt-1 Les réglages qui en dépendent sont masqués tant que c'est le cas. Le journal et le mode observation restent accessibles, ainsi que la révocation si un mot de passe avait été enregistré.
+    strong {{ 'System keychain unavailable.' | translate }}
+    |  {{ keychainReason }}
+    .mt-1 {{ 'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.' | translate }}
+    .mt-1 {{ 'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.' | translate }}
 
   //- Masqués plutôt que grisés. Le composant `toggle` de Tabby expose bien un
       `@Input() disabled`, mais son `@HostListener('click')` ne suffit pas à
@@ -42,58 +48,58 @@
   ng-container(*ngIf='keychain?.available')
     .form-line
       .header
-        .title Activer sur cette machine
-        .description Le mot de passe maître est confié au trousseau du système d'exploitation, jamais stocké en clair.
+        .title {{ 'Enable on this machine' | translate }}
+        .description {{ 'The master password is entrusted to the operating system keychain, never stored in clear text.' | translate }}
       toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
 
   //- Conservé en toutes circonstances : ce nom étiquette les entrées du
       journal, qui reste consultable même sans trousseau.
   .form-line
     .header
-      .title Nom de cette machine
-      .description Purement indicatif — sert à s'y retrouver dans les réglages et le journal.
+      .title {{ 'Name of this machine' | translate }}
+      .description {{ 'Purely indicative — helps you find your way around the settings and the log.' | translate }}
     input.form-control(
       type='text',
       [(ngModel)]='settings.machineName',
       (change)='save()',
-      placeholder='poste maison',
+      [placeholder]="'home machine' | translate",
     )
 
   ng-container(*ngIf='keychain?.available')
-    h4.mt-4.mb-2 Expiration
+    h4.mt-4.mb-2 {{ 'Expiry' | translate }}
 
     .form-line
       .header
-        .title Redemander le mot de passe
-        .description Prochaine échéance : {{expiryLabel}}
+        .title {{ 'Ask for the password again' | translate }}
+        .description {{ 'Next due: {value}' | translate:{ value: expiryLabel } }}
       select.form-control(
         [(ngModel)]='settings.expiry.mode',
         (ngModelChange)='onExpiryChanged()',
       )
-        option(value='schedule') À jour et heure fixes
-        option(value='sliding') Après un délai
-        option(value='never') Jamais
+        option(value='schedule') {{ 'At a fixed day and time' | translate }}
+        option(value='sliding') {{ 'After a delay' | translate }}
+        option(value='never') {{ 'Never' | translate }}
 
     .form-line(*ngIf="settings.expiry.mode === 'schedule'")
       .header
-        .title Chaque
-        .description Choisir un créneau creux évite que la ressaisie tombe en pleine session de travail.
+        .title {{ 'Every' | translate }}
+        .description {{ 'Choosing a quiet slot avoids the re-entry falling in the middle of a work session.' | translate }}
       div
         select.form-control.mr-2(
           [(ngModel)]='settings.expiry.weekday',
           (ngModelChange)='onExpiryChanged()',
         )
-          option(*ngFor='let d of weekdays', [ngValue]='d.value') {{d.label}}
+          option(*ngFor='let d of weekdays', [ngValue]='d.value') {{ d.source | translate }}
         select.form-control(
           [(ngModel)]='settings.expiry.hour',
           (ngModelChange)='onExpiryChanged()',
         )
-          option(*ngFor='let h of hours', [ngValue]='h') {{h}} h
+          option(*ngFor='let h of hours', [ngValue]='h') {{ '{hour}:00' | translate:{ hour: h } }}
 
     .form-line(*ngIf="settings.expiry.mode === 'sliding'")
       .header
-        .title Durée de validité
-        .description En jours, à compter de la dernière saisie.
+        .title {{ 'Validity period' | translate }}
+        .description {{ 'In days, counted from the last entry.' | translate }}
       input.form-control(
         type='number',
         min='1',
@@ -109,22 +115,22 @@
       le cas « aucun jeton » est masqué : il annoncerait un enregistrement futur
       qui ne se produira pas.
   ng-container(*ngIf='keychain?.available || hasToken')
-    h4.mt-4.mb-2 Mot de passe enregistré
+    h4.mt-4.mb-2 {{ 'Saved password' | translate }}
 
     .form-line
       .header
-        .title(*ngIf='hasToken') Un mot de passe est enregistré sur cette machine
-        .title(*ngIf='!hasToken') Aucun mot de passe enregistré
-        .description(*ngIf='hasToken') Il sera oublié le {{expiryLabel}}, ou immédiatement si vous le demandez.
-        .description(*ngIf='!hasToken') Il sera enregistré à la prochaine saisie manuelle, si le plugin est activé.
+        .title(*ngIf='hasToken') {{ 'A password is saved on this machine' | translate }}
+        .title(*ngIf='!hasToken') {{ 'No password saved' | translate }}
+        .description(*ngIf='hasToken') {{ 'It will be forgotten on {date}, or immediately if you ask.' | translate:{ date: expiryLabel } }}
+        .description(*ngIf='!hasToken') {{ 'It will be saved at the next manual entry, if the plugin is enabled.' | translate }}
       button.btn.btn-danger(
         *ngIf='hasToken',
         (click)='forgetNow()',
       )
         i.fas.fa-trash.mr-2
-        | Oublier maintenant
+        | {{ 'Forget now' | translate }}
 
-  h4.mt-4.mb-2 Journal
+  h4.mt-4.mb-2 {{ 'Log' | translate }}
 
   //- Le mode observation vit ici, et non sous « Mot de passe enregistré » comme
       auparavant : c'est un mode de journalisation, et il reste opérant sans
@@ -134,30 +140,30 @@
       l'outil de diagnostic au moment précis où il en a besoin.
   .form-line
     .header
-      .title Mode observation
-      .description Journalise le déroulement sans jamais servir ni enregistrer de mot de passe. Pour diagnostiquer sans risque.
+      .title {{ 'Observation mode' | translate }}
+      .description {{ 'Logs what happens without ever serving or saving a password. To diagnose safely.' | translate }}
     toggle([(ngModel)]='settings.debug', (ngModelChange)='save()')
 
   .form-line
     .header
-      .title Conservation des entrées
-      .description Le journal retrace les ouvertures du coffre, les expirations et les révocations. Il ne contient jamais votre mot de passe.
+      .title {{ 'Entry retention' | translate }}
+      .description {{ 'The log records vault openings, expiries and revocations. It never contains your password.' | translate }}
     select.form-control(
       [(ngModel)]='settings.logRetentionDays',
       (ngModelChange)='save()',
     )
-      option(*ngFor='let r of retentions', [ngValue]='r.value') {{r.label}}
+      option(*ngFor='let r of retentions', [ngValue]='r.value') {{ r.source | translate }}
 
   .form-line
     .header
-      .title Fichier
+      .title {{ 'File' | translate }}
       .description
-        code {{logPath}}
-      .description.mt-1 Local à cette machine, jamais synchronisé. Ne contient jamais votre mot de passe.
+        code {{ logPath }}
+      .description.mt-1 {{ 'Local to this machine, never synchronised. Never contains your password.' | translate }}
     div
       button.btn.btn-secondary.mr-2((click)='openLog()')
         i.fas.fa-external-link-alt.mr-2
-        | Ouvrir
+        | {{ 'Open' | translate }}
       button.btn.btn-danger((click)='purgeLog()')
         i.fas.fa-eraser.mr-2
-        | Purger
+        | {{ 'Purge' | translate }}

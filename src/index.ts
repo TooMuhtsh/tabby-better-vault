@@ -11,6 +11,7 @@ import './toast.scss'
 
 import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
 import { BetterVaultSettingsTabProvider } from './settings'
+import { I18nService } from './i18n'
 import { VaultBridgeService } from './vaultBridge.service'
 import { crit, startSession, applyRetention } from './logger'
 
@@ -46,7 +47,18 @@ export default class BetterVaultModule {
      * `install()` s'y tient ; c'est une contrainte de l'endroit, pas une
      * préférence de style. Voir le commentaire d'`install()`.
      */
-    constructor (bridge: VaultBridgeService) {
+    constructor (bridge: VaultBridgeService, i18n: I18nService) {
+        // Avant le pont : `install()` du pont journalise, et une notification
+        // servie entre-temps doit déjà pouvoir être traduite. Cet appel ne fait
+        // que poser un abonnement — aucun disque, aucun trousseau, rien qui
+        // puisse bloquer ce chemin de démarrage.
+        try {
+            i18n.install()
+        } catch (e) {
+            // L'interface reste en anglais : dégradé, jamais bloquant.
+            crit(`could not set up translations — ${String(e)}`)
+        }
+
         try {
             bridge.install()
         } catch (e) {
@@ -56,7 +68,7 @@ export default class BetterVaultModule {
             // Ce filet ne couvre QUE les exceptions. Un appel bloquant n'en est
             // pas une : rien ici ne rattraperait un gel, d'où la règle ci-dessus
             // et le garde-fou de `keychainGuard.ts`.
-            crit(`installation échouée — ${String(e)}`)
+            crit(`installation failed — ${String(e)}`)
         }
     }
 }

@@ -25,7 +25,7 @@ Angular 15, Electron, TypeScript, webpack) — à confirmer plutôt qu'à redéc
 
 <div class="callout note">
 <span class="callout-title">Compteur de numérotation</span>
-<p><strong>Prochain numéro libre : <code>#V19</code></strong> — <code>#V1</code> à <code>#V18</code>
+<p><strong>Prochain numéro libre : <code>#V23</code></strong> — <code>#V1</code> à <code>#V22</code>
 sont attribués, sans trou. Celui qui ajoute un piège incrémente ce compteur dans le même geste
 (A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune lecture partielle ne donne
 cette information.</p>
@@ -687,6 +687,104 @@ et l'enregistrement est le geste le plus engageant des deux.</p>
   <code>serveFromToken()</code>. Le journal le dit (« rien à vérifier contre »), plutôt que
   d'enregistrer en silence une valeur non validée.</li>
 </ul>
+
+<h3 id="piege-v19">#V19 — Enregistrer une traduction avant Tabby met <em>toute son interface</em> en anglais</h3>
+<p>Vérifié dans le bundle compilé de <code>tabby-core</code> (2026-08-01).
+<code>LocaleService.setLocale()</code> ne charge le <code>.po</code> d'une langue que
+<code>if (!translate.langs.includes(lang))</code>. Or <code>setTranslation()</code> appelle
+<code>updateLangs()</code>, qui inscrit la langue dans cette même liste. <strong>Un plugin qui
+enregistre ses chaînes en premier fait donc sauter le chargement des traductions de Tabby</strong> —
+pas seulement les siennes : toute l'application reste en anglais pour la session.</p>
+<div class="callout warning">
+<span class="callout-title">Deux façons de tomber dedans, une seule façon d'en sortir</span>
+<p>Le second piège est dans la signature : <code>setTranslation(lang, table)</code>
+<strong>remplace</strong> la table de la langue. Sans le troisième argument <code>shouldMerge</code>
+à <code>true</code>, le plugin efface les traductions de Tabby au lieu de s'y ajouter. La valeur par
+défaut est <code>false</code> — l'oubli est silencieux et total.</p>
+<p>La fusion n'a donc lieu que depuis <code>localeChanged$</code>, que <code>setLocale()</code> émet
+<em>après</em> son chargement, ou sous test explicite de <code>translate.langs</code>.
+<code>localeChanged$</code> étant un <code>Subject</code> et non un <code>BehaviorSubject</code>, il
+ne rejoue pas sa dernière valeur : le rattrapage au démarrage est nécessaire, et c'est le test de
+<code>langs</code> qui le rend sûr.</p>
+</div>
+<ul>
+<li><strong>Ce défaut ne se voit qu'en regardant Tabby, pas le plugin.</strong> Le panneau du plugin
+  s'affiche correctement dans sa langue ; c'est le reste de l'interface qui bascule. Un test qui ne
+  regarde que ce qu'on vient d'écrire le manque entièrement.</li>
+<li><code>en-US</code> n'est volontairement enregistré par aucune table : les chaînes sources
+  <em>sont</em> l'anglais, et faire exister la locale dans <code>translate.langs</code> sans raison
+  rouvrirait précisément ce piège.</li>
+</ul>
+
+<h3 id="piege-v20">#V20 — <code>TranslateService</code> est typé <code>any</code>, contrairement au reste de <code>tabby-core</code></h3>
+<p>Mesuré le 2026-08-01, pas déduit : compiler <code>t.methodThatDoesNotExist()</code> sur un
+<code>TranslateService</code> passe <strong>sans aucune erreur</strong>, là où le même appel sur un
+<code>LocaleService</code> est refusé (<code>TS2339</code>). La cause est que
+<code>tabby-core</code> réexporte <code>TranslateService</code> depuis
+<code>@ngx-translate/core</code>, absent de ce projet, et que <code>skipLibCheck: true</code> fait
+taire l'import non résolu au lieu de le signaler.</p>
+<div class="callout important">
+<span class="callout-title">Le membre le plus dangereux est justement celui qui n'était pas vérifié</span>
+<p>Sans types, rien ne rattrape l'oubli du troisième argument de <code>setTranslation()</code> — dont
+#V19 explique qu'il efface toutes les traductions de Tabby. D'où l'interface locale
+<code>TranslateApi</code> dans <code>src/i18n/index.ts</code>, qui redéclare les trois seuls membres
+employés, au prix d'un <code>@Inject()</code> explicite (une interface s'efface à la compilation,
+donc <code>emitDecoratorMetadata</code> ne peut plus en déduire le jeton).</p>
+</div>
+<ul>
+<li><strong>Ne pas « régler » cela en installant <code>@ngx-translate/core</code>.</strong> Il est
+  bundlé <em>à l'intérieur</em> de <code>tabby-core</code> et n'existe nulle part comme module
+  résolvable à l'exécution : un import direct produirait un <code>require</code> mort, symétrique de
+  #V8. Son absence est aussi ce qui protège — un tel import ne compile pas, alors que l'auto-import
+  d'un IDE le proposerait spontanément.</li>
+<li>Le pipe <code>| translate</code>, lui, ne demande rien : <code>TranslateModule</code> figure dans
+  les <code>exports</code> du module racine de <code>tabby-core</code>, qu'un plugin importe déjà.
+  C'est ce que font les plugins internes de Tabby (vérifié sur <code>tabby-ssh</code>, dont le bundle
+  ne <code>require</code> pas <code>@ngx-translate/core</code>).</li>
+</ul>
+
+<h3 id="piege-v21">#V21 — La chaîne source est la clé : rien ne signale qu'une traduction est morte</h3>
+<p>Tabby cherche ses traductions par le <strong>msgid gettext</strong>, c'est-à-dire la chaîne source
+anglaise, et son <code>CustomMissingTranslationHandler</code> compile la clé elle-même quand aucune
+traduction ne correspond. Conséquences en chaîne, toutes silencieuses :</p>
+<ul>
+<li><strong>Les chaînes sources doivent être en anglais.</strong> Une source française afficherait du
+  français à un utilisateur dont la locale n'est pas couverte — le repli n'est pas l'anglais, c'est
+  la source.</li>
+<li><strong>Corriger une virgule dans un gabarit suffit à faire retomber la phrase en anglais.</strong>
+  Aucune erreur de compilation, aucun avertissement à l'exécution. D'où
+  <code>npm run lint:i18n</code>, qui compare les deux sens — chaîne du code sans traduction, clé de
+  table sans chaîne — et refuse les paramètres perdus en route.</li>
+</ul>
+<div class="callout warning">
+<span class="callout-title">Piège ICU que le français déclenche naturellement</span>
+<p>Ces chaînes traversent <code>TranslateMessageFormatCompiler</code>, pour lequel l'apostrophe droite
+est un caractère d'échappement lorsqu'elle précède une accolade.
+<code>jusqu'{date}</code> est muet ; <code>jusqu'au {date}</code> ne l'est pas. Tabby lui-même écrit
+des apostrophes non échappées dans des chaînes à paramètres (<code>« est toujours en cours
+d'exécution »</code> avec <code>{command}</code>), ce qui confirme que seul le contact direct avec
+l'accolade pose problème. Le validateur le vérifie.</p>
+</div>
+
+<h3 id="piege-v22">#V22 — Ce qui est écrit sur disque ne se traduit pas : identifiants, jamais phrases</h3>
+<p>Le témoin du garde-fou (<code>better-vault-keychain.lock</code>) est écrit <em>avant</em> l'appel
+qui gèle et relu au <strong>démarrage suivant</strong> — éventuellement sous une autre locale. Il y
+stockait la phrase française de l'opération gelée : un témoin écrit en français aurait été relu en
+anglais, et l'unique indice dont dispose l'utilisateur pour savoir où le trousseau a cessé de
+répondre serait devenu incohérent au premier changement de langue. Il porte désormais un
+<code>OperationId</code>, rendu à l'affichage.</p>
+<div class="callout note">
+<span class="callout-title">La même règle vaut pour le journal, pour une raison voisine</span>
+<p><code>better-vault.log</code> est persistant et relu après coup. Le traduire à l'écriture rendrait
+un même fichier multilingue dès que l'utilisateur change de locale, et incherchable pour qui
+l'analyse. Il reste donc <strong>en anglais, non traduit</strong> (décidé le 2026-08-01).</p>
+<p>Les cinq messages qui doivent servir les deux — motif d'indisponibilité du trousseau, phrase du
+garde-fou — passent par <code>src/messages.ts</code> : un <code>Message</code> transporte sa chaîne
+source et ses paramètres <em>sans être rendu</em>. Le journal l'écrit en anglais, l'interface le
+traduit avec la même chaîne comme clé. Une seule table de vérité, deux rendus — et un
+<code>sourceParams</code> distinct pour les paramètres qui sont eux-mêmes des chaînes à traduire,
+sans quoi une phrase française afficherait un nom d'opération resté en anglais.</p>
+</div>
 
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
 <div class="callout important">

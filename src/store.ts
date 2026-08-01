@@ -185,7 +185,7 @@ export function writeSettings (settings: Settings): void {
             // reste enveloppé, la résolution du cycle dépendant de l'empaqueteur.
             //
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            require('./logger').warn(`écriture atomique impossible (${String(e)}) — repli sur une écriture directe`)
+            require('./logger').warn(`atomic write failed (${String(e)}) — falling back to a direct write`)
         } catch {
             // Journal indisponible : l'écriture, elle, a déjà eu lieu.
         }
