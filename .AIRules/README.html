@@ -30,8 +30,12 @@ réglages, expiration du jeton, notification. Le dépôt est
 <a href="https://github.com/TooMuhtsh/tabby-better-vault">public</a> ; la publication npm reste à
 faire (<a href="ROADMAP.html#publication">§ Publication</a>). Plus aucune inconnue technique —
 <a href="AI-CONTEXT.html#piege-v4">#V4</a> et <a href="AI-CONTEXT.html#piege-v7">#V7</a> sont levés.</p>
-<p>Reste non vérifié : le comportement sous <strong>Linux</strong>, où le refus du backend
-<code>basic_text</code> n'a jamais été exercé en vrai, faute de machine.</p>
+<p>Sous <strong>Linux</strong>, deux campagnes de vérification ont été menées sur une VM dédiée les
+2026-07-29 : la seconde a validé les cinq revendications du plugin, mais a trouvé deux défauts nés
+des correctifs du matin. <strong>Les correctifs de ces deux défauts sont poussés et n'ont jamais été
+exercés</strong> — dont un qui n'est pas exerçable ailleurs que sous un trousseau réel. C'est ce que
+la <a href="ROADMAP.html#campagne-3">troisième campagne</a> doit lever, et c'est ce qui bloque la
+publication.</p>
 </div>
 
 <p>Plugin Tabby indépendant : déverrouillage automatique du coffre-fort (mot de passe maître) via
@@ -41,8 +45,7 @@ c'est le point le plus sensible (manipulation d'un secret utilisateur) envisagé
 plugins de l'utilisateur.</p>
 
 <ul>
-<li>Dossier de travail : <code>C:\Users\Alex Ramirez\Documents\Développement\tabby-better-vault</code>
-  — dépôt Git en place et projet scaffoldé (<code>package.json</code>, <code>src/</code>,
+<li>Dépôt Git en place et projet complet (<code>package.json</code>, <code>src/</code>,
   <code>webpack.config.js</code>), plugin fonctionnel. Dépôt distant :
   <a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>
   (public).</li>
@@ -57,19 +60,37 @@ plugins de l'utilisateur.</p>
 <tr><th>Fichier</th><th>Contenu</th></tr>
 <tr><td><a href="AI-CONTEXT.html">AI-CONTEXT.html</a></td>
     <td>Invariants : l'<a href="AI-CONTEXT.html#cat-vault">anatomie réelle du Vault de Tabby</a>
-    (pièges propres <code>#V1</code>–<code>#V5</code>, établis par lecture des sources le 2026-07-28)
-    et les pièges <strong>hérités</strong> du projet frère, à anticiper une fois le scaffold commencé
-    (même stack Tabby/Angular/Electron).</td></tr>
+    (pièges propres <code>#V1</code>–<code>#V18</code>, le prochain numéro libre est indiqué en tête
+    du fichier) et les pièges <strong>hérités</strong> du projet frère, qui partage la même stack
+    Tabby/Angular/Electron.</td></tr>
 <tr><td><a href="AI-HISTORY.html">AI-HISTORY.html</a></td>
-    <td>Journal chronologique par chantier, le plus récent en tête.</td></tr>
+    <td>Journal chronologique par chantier, le plus récent en tête. <strong>En ajout seul</strong> :
+    une entrée écrite ne se réécrit jamais, une correction s'ajoute (A-4).</td></tr>
 <tr><td><a href="ROADMAP.html">ROADMAP.html</a></td>
-    <td>Design complet déjà validé pour la fonctionnalité de déverrouillage automatique, et
-    prochaines étapes concrètes pour démarrer le projet.</td></tr>
+    <td>Statut et design des chantiers restants — au premier rang, la
+    <a href="ROADMAP.html#campagne-3">troisième campagne de vérification Linux</a>, qui conditionne
+    la publication.</td></tr>
+<tr><td><a href="PROFIL.md">PROFIL.md</a></td>
+    <td><strong>Réponses de cadrage propres à ce projet</strong> — les vingt-deux options de la
+    partie B de la charte. S'y reporter plutôt que de redécider une convention au coup par coup.</td></tr>
 <tr><td><a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a></td>
-    <td>Copie conforme de la charte de gouvernance appliquée par ce projet (original à la racine du
-    workspace). Ne pas l'adapter au projet : elle doit rester comparable à l'original par un
-    <code>diff</code>.</td></tr>
+    <td>Copie conforme de la charte de gouvernance appliquée par ce projet (original dans le dépôt
+    canonique <code>Claude-Governance</code>). Ne pas l'adapter au projet : elle doit rester
+    comparable à l'original.</td></tr>
+<tr><td><a href="GABARITS.md">GABARITS.md</a></td>
+    <td>Copie conforme des gabarits de documents. Ne s'ouvre qu'au moment de <strong>créer ou
+    restructurer</strong> un document, jamais en début de session.</td></tr>
 </table>
+
+<div class="callout important">
+<span class="callout-title">Ce qui ne doit jamais être touché en test</span>
+<p>Le <strong>coffre-fort réel</strong> de l'utilisateur et son
+<code>better-vault.json</code> réel. Tout test passe par un coffre jetable sur la VM Linux
+crash-test, et <strong>toute valeur qu'un opérateur humain devra saisir est déclarée dans le
+protocole avant la campagne</strong>, jamais improvisée devant une pop-up. Détail dans
+<a href="PROFIL.md">PROFIL.md</a>, options <code>jetables</code> et
+<code>discipline-test</code>.</p>
+</div>
 
 <h2>Protocole</h2>
 
@@ -94,13 +115,16 @@ réexports en cascade (<a href="AI-CONTEXT.html#piege-v1">#V1</a>).</p>
 
 <h3>En début de session sur ce projet</h3>
 <ol>
-<li>Lire <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les pièges hérités à anticiper.</li>
-<li>Lire <a href="ROADMAP.html">ROADMAP.html</a> pour le design déjà validé.</li>
+<li>Lire <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les invariants et les pièges déjà
+  rencontrés.</li>
+<li>Lire <a href="ROADMAP.html">ROADMAP.html</a> pour l'état des chantiers restants.</li>
 <li>Lire le haut d'<a href="AI-HISTORY.html">AI-HISTORY.html</a> pour l'état d'avancement réel.</li>
-<li>Comparer la date de conformité du pied de page à celle du pied de page de
-  <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a> : si elle est antérieure, <strong>signaler
-  l'écart et proposer</strong> une remise à niveau (charte, Règle 7, Cas B) — ne jamais l'appliquer
-  d'office.</li>
+<li>Ouvrir <a href="PROFIL.md">PROFIL.md</a> plutôt que de redécider une convention : il porte les
+  vingt-deux réponses de cadrage de ce projet.</li>
+<li>Comparer l'identifiant de conformité du pied de page à celui du pied de page de
+  <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a> — deux chaînes <code>AAAAMMJJ-HHMMSS</code>, donc
+  une simple comparaison. S'il est antérieur, <strong>signaler l'écart et proposer</strong> une
+  remise à niveau (A-15, cas B) — ne jamais l'appliquer d'office.</li>
 </ol>
 
 <div class="callout important">
@@ -133,20 +157,25 @@ validation. Ici le test réel est double par nature : le plugin doit être exerc
   changement de statut ni décision de design n'y est écrit avant confirmation, pas même une mention
   intermédiaire « implémenté, en attente de test ». <em>Exception</em> — session qui s'éternise :
   proposer un point de gouvernance et n'écrire que ce que l'utilisateur valide à ce moment-là.</li>
-<li><strong>Toute modification de ce dossier se commite et se pousse dans la foulée</strong> (charte,
-  Règle 1). Le feu vert porte sur l'écriture, pas sur le push.</li>
+<li><strong>Toute modification de ce dossier se commite et se pousse dans la foulée</strong> (A-10).
+  Le feu vert porte sur l'écriture, pas sur le push. Le mot <code>MAJ</code> porte la chaîne
+  complète en un geste : feu vert, documents, vérification de <code>CLAUDE.md</code>, commit,
+  push.</li>
+<li><strong>Un chantier non abouti vit sur une branche</strong> (option <code>branches</code>) : sa
+  documentation l'accompagne et arrive sur <code>master</code> avec lui, dans le même merge.</li>
 </ul>
 
 <div class="callout note">
 <span class="callout-title">Emplacement de ce dossier — déjà conforme</span>
 <p><code>.AIRules/</code> vit bien <strong>dans le dépôt Git</strong> du plugin (pas au niveau parent
 <code>Développement/</code>) — leçon tirée du projet frère, où ce dossier avait été positionné au
-mauvais niveau puis déplacé pour rester versionné avec le code. À préserver lors du scaffold.</p>
+mauvais niveau puis déplacé pour rester versionné avec le code (A-1).</p>
 </div>
 
 <footer>tabby-better-vault · dossier de gouvernance créé le 2026-07-26, avant tout code ·
-dernière revue 2026-07-29 (mise en conformité : cadences d'écriture, copie de la charte, état du
-scaffold corrigé) · <strong>Conforme à la charte de gouvernance du 2026-07-30</strong></footer>
+dernière revue 2026-08-01 (cadrage complet, migration vers les identifiants <code>A-x</code>, audit
+des statuts) · <strong>Conforme à la charte de gouvernance, version
+<code>20260731-204511</code></strong></footer>
 
 </body>
 </html>

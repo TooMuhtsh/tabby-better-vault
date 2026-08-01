@@ -36,11 +36,11 @@
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
 <tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
-    <td><span class="pill done">✅ Les trois validés sur Linux le 2026-07-29 — deux défauts nés de ces correctifs (D1, D2) corrigés depuis, non revalidés</span></td><td>—</td></tr>
+    <td><span class="pill progress">🚧 Les trois validés sur Linux le 2026-07-29 au matin, mais <strong>sur un code qui a changé le soir même</strong> (D1, D2) : la mesure ne porte plus sur ce que <code>master</code> contient — déclassé à l'audit du 2026-08-01</span></td><td>—</td></tr>
 <tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
     <td><span class="pill progress">🚧 Écrits et poussés le 2026-07-29 — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs ; leur validation attend la 3ᵉ campagne</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
-    <td><span class="pill planned">⏸️ En attente — protocole prêt et versionné, rien à préparer pour la lancer</span></td><td>Sur décision</td></tr>
+    <td><span class="pill planned">⏸️ En attente — protocole prêt, rien à préparer pour la lancer. <strong>Il vit dans <code>.tempfiles/</code>, donc hors dépôt</strong> : il porte des phrases à saisir, qui n'ont pas leur place sur un dépôt public</span></td><td>Sur décision</td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI + journal)</a></td>
     <td><span class="pill planned">📋 Priorisée par l'utilisateur le 2026-07-29 — 5ᵉ langue et format du journal à trancher</span></td><td><strong>Prochain chantier</strong></td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -49,7 +49,7 @@
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
     <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
-    <td><span class="pill done">✅ Revue faite (2026-07-29)</span></td><td>Entretien récurrent</td></tr>
+    <td><span class="pill done">✅ Revue faite (2026-08-01) — cadrage complet, deux items ouverts</span></td><td>Entretien récurrent</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -1022,21 +1022,79 @@ fonctionner normalement si ce plugin n'est pas installé.</p>
 </ul>
 
 <h2 id="gouvernance">Conformité de la gouvernance à la charte</h2>
-<p>Revue faite le 2026-07-29 (Règle 7, Cas B) — écarts constatés et corrigés détaillés dans
-<a href="AI-HISTORY.html">AI-HISTORY</a>, commits <code>a1243ba</code> et <code>76e950f</code>. Ce
-n'est pas un état acquis : la <a href="GOUVERNANCE-IA.md">charte</a> évolue, ce projet doit suivre.
-Ce qui reste à faire de façon récurrente :</p>
+<p>Deux revues successives (A-15, cas B) : celle du 2026-07-29, détaillée dans
+<a href="AI-HISTORY.html">AI-HISTORY</a> (commits <code>a1243ba</code> et <code>76e950f</code>), puis
+celle du <strong>2026-08-01</strong>, qui a mis le projet en conformité avec la charte refondue en
+noyau / options / entretien de cadrage. Ce n'est pas un état acquis : la
+<a href="GOUVERNANCE-IA.md">charte</a> évolue, ce projet doit suivre.</p>
+
+<h3>Revue du 2026-08-01 — ce qu'elle a traité</h3>
+<p>Elle rapatrie le <code>REMISE-A-NIVEAU.md</code> porté par la branche de propagation, supprimé
+dans le même geste : deux emplacements pour le même fait divergent (A-2, A-7).</p>
 <ul>
-<li><strong>Comparer les deux dates en début de session</strong> : celle du pied de page de
-  <a href="README.html">README.html</a> (« Conforme à la charte du … ») et celle du pied de page de
-  <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a>. Si la première est antérieure,
-  <strong>signaler l'écart et proposer</strong> une remise à niveau — jamais l'appliquer d'office.</li>
-<li><strong>Repropager la copie de la charte à chaque révision de l'original</strong> (qui vit à la
-  racine du workspace, hors dépôt Git). La copie de ce dossier doit rester <em>conforme</em> : jamais
-  adaptée au projet, comparable à l'original par un simple <code>diff</code>.</li>
-<li><strong>Corriger la dérive dès qu'elle est constatée</strong>, sans attendre une revue générale.
-  C'est ce qui a manqué ici : le README a décrit un projet « pas encore scaffoldé » pendant que le
-  plugin tournait, en se contredisant à l'intérieur d'une même page.</li>
+<li><strong>Cadrage complet</strong> — <a href="PROFIL.md">PROFIL.md</a> créé, profil de départ
+  <code>complet</code>, <strong>vingt-deux options tranchées</strong>, aucune ligne « défaut
+  appliqué, non tranché ». Trois réponses <em>changent une pratique</em> plutôt que d'enregistrer
+  l'existant : <code>branches</code> = <code>branche</code> (le projet travaillait en direct sur
+  <code>master</code>), <code>dépendances</code> = <code>minimales</code>, et
+  <code>attribution</code> = <em>co-auteur seul, sans lien de session</em>.</li>
+<li><strong>Références migrées</strong> vers les identifiants <code>A-x</code> — dans ce document,
+  dans <a href="README.html">README.html</a> et dans <code>CLAUDE.md</code>. <strong>Pas dans
+  <a href="AI-HISTORY.html">AI-HISTORY</a></strong> : le journal est en ajout seul (A-4), et c'est
+  exactement ce que la table de correspondance en fin de charte absorbe.</li>
+<li><strong>Compteur de numérotation posé</strong> en tête d'<a href="AI-CONTEXT.html">AI-CONTEXT</a>
+  (A-6) : prochain numéro libre <code>#V19</code>.</li>
+<li><strong>Validateur installé</strong> — <code>html-validate</code> en devDependency,
+  <code>npm run lint:airules</code> (A-14, option <code>validateur</code>).</li>
+<li><strong>Trois dérives corrigées</strong>, voir le callout ci-dessous.</li>
+</ul>
+
+<div class="callout warning">
+<span class="callout-title">Dérives constatées le 2026-08-01</span>
+<ul>
+<li><strong>Le contexte affirmait « ce projet n'a pas encore de code »</strong> et décrivait un dépôt
+  ne contenant que <code>.AIRules/</code>, <code>LICENSE</code> et <code>README.md</code> — quatre
+  jours après l'écriture du plugin complet. La revue du 2026-07-29 avait corrigé la même erreur dans
+  le <code>README</code> sans la voir dans <code>AI-CONTEXT</code> : <strong>corriger la page où la
+  dérive est constatée ne dit rien des autres pages</strong>.</li>
+<li><strong>L'index annonçait Linux « jamais exercé, faute de machine »</strong> alors que deux
+  campagnes y ont été menées.</li>
+<li><strong>Un chemin de machine complet figurait dans l'index</strong> d'un dépôt public, ce que la
+  liste de l'option <code>visibilité</code> range explicitement dehors.</li>
+</ul>
+</div>
+
+<h3>Ce qui reste ouvert</h3>
+<ul>
+<li><strong>Nettoyage des trailers <code>Claude-Session</code> de l'historique public</strong> — 32
+  commits sur 46 en portent un, publiant une URL de session. La décision du 2026-08-01 ne vaut que
+  pour les commits à venir ; nettoyer l'existant impose une réécriture d'historique, donc un
+  <em>force-push</em> et des hashes tous changés — ce qui invaliderait ceux que
+  <a href="AI-HISTORY.html">AI-HISTORY</a> cite, sans qu'A-4 permette de les corriger. À mesurer
+  avant de lancer.</li>
+<li><strong><code>RAPPORT-TEST-LINUX.md</code> est versionné depuis <code>.tempfiles/</code></strong>,
+  qui est par définition un espace jetable hors Git (option <code>tempfiles</code>). C'est un relevé
+  de mesures, donc une <strong>annexe</strong> au sens d'A-8 : sa place est
+  <code>annexes/</code>. Déplacement non fait — il casse les liens qui le citent, à recalculer dans
+  le même geste.</li>
+</ul>
+
+<h3>Entretien récurrent</h3>
+<ul>
+<li><strong>Comparer les deux identifiants en début de session</strong> : celui du pied de page de
+  <a href="README.html">README.html</a> (« Conforme à la charte de gouvernance, version … ») et celui
+  du pied de page de <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a>. Ce sont deux chaînes
+  <code>AAAAMMJJ-HHMMSS</code>, monotones : une comparaison de chaînes suffit. Si la première est
+  antérieure, <strong>signaler l'écart et proposer</strong> une remise à niveau — jamais l'appliquer
+  d'office.</li>
+<li><strong>Repropager la copie de la charte à chaque révision</strong> de l'original, qui vit dans le
+  dépôt canonique
+  <a href="https://github.com/TooMuhtsh/Claude-Governance">Claude-Governance</a>. La copie doit
+  rester <em>conforme</em> : jamais adaptée au projet. La <strong>comparer par empreinte Git</strong>
+  (<code>git hash-object</code>) et non par <code>diff</code> nu — <code>core.autocrlf</code> fait
+  apparaître une divergence totale sur un contenu identique.</li>
+<li><strong>Corriger la dérive dès qu'elle est constatée</strong> (A-5), sans attendre une revue
+  générale — et vérifier les autres documents dans la foulée.</li>
 </ul>
 <div class="callout warning"><span class="callout-title">Une mention de conformité vaut promesse</span>
 <p>Le marqueur « Conforme à la charte du … » a d'abord été posé sur un <code>README.html</code>

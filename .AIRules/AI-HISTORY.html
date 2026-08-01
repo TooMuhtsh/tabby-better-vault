@@ -24,6 +24,55 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Revue de gouvernance — cadrage complet et charte refondue (2026-08-01)</h2>
+<p>Revue au sens d'<strong>A-15, cas B</strong>, déclenchée par une révision de la charte touchant le
+noyau (A-7) : la refonte en noyau / options / entretien de cadrage, propagée par la veille
+automatisée sur une branche dédiée et restée non fusionnée depuis le 2026-07-31 — le périmètre avait
+alors été volontairement restreint au projet frère. Cette entrée acte la revue et les écarts
+constatés.</p>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+
+<tr><td>2026-08-01</td><td><code>0328740</code></td>
+<td><strong>Cadrage complet du projet et remise à niveau.</strong> <code>PROFIL.md</code> créé —
+profil de départ <code>complet</code>, <strong>vingt-deux options tranchées</strong>, aucune ligne
+« défaut appliqué, non tranché ». Trois réponses changent une pratique au lieu d'enregistrer
+l'existant : <code>branches</code> = <code>branche</code> (le projet travaillait en direct sur
+<code>master</code> — cette entrée arrive elle-même par une branche),
+<code>dépendances</code> = <code>minimales</code> (aucune dépendance d'exécution dans le
+<code>package.json</code>, <code>ngx-toastr</code> external, déchiffrement réimplémenté maison), et
+<code>attribution</code> = <em>co-auteur seul, sans <code>Claude-Session</code></em> — le lien de
+session publiait une URL <code>claude.ai</code> sur un dépôt public. Le
+<code>REMISE-A-NIVEAU.md</code> de la branche de propagation a été rapatrié dans le chantier
+<a href="ROADMAP.html#gouvernance">Conformité de la gouvernance</a> puis supprimé, comme A-7 le
+prescrit. Références « Règle N » migrées vers les identifiants <code>A-x</code> partout <em>sauf
+ici</em> (A-4 — la table de correspondance en fin de charte est là pour ça). Compteur de
+numérotation posé en tête d'<code>AI-CONTEXT</code> (prochain libre : <code>#V19</code>).
+Validateur <code>html-validate</code> installé, <code>npm run lint:airules</code>.</td></tr>
+
+<tr><td>2026-08-01</td><td><code>0328740</code></td>
+<td><strong>Trois dérives constatées, dont une déjà corrigée ailleurs sans être vue ici.</strong>
+<code>AI-CONTEXT.html</code> affirmait « ce projet n'a pas encore de code » et décrivait un dépôt ne
+contenant que <code>.AIRules/</code>, <code>LICENSE</code> et <code>README.md</code> — quatre jours
+après l'écriture du plugin. C'est <em>exactement</em> l'erreur corrigée dans <code>README.html</code>
+par <code>a1243ba</code> le 2026-07-29 : la revue d'alors a corrigé la page où la dérive était
+constatée sans vérifier les autres. Ensuite, <code>README.html</code> annonçait Linux « jamais
+exercé en vrai, faute de machine » alors que deux campagnes y ont été menées. Enfin un chemin de
+machine complet figurait dans l'index d'un dépôt public, ce que la liste de l'option
+<code>visibilité</code> range explicitement dehors.</td></tr>
+
+<tr><td>2026-08-01</td><td><code>0328740</code></td>
+<td><strong>Un statut déclassé à l'audit.</strong> Le chantier « Correctifs issus de la campagne
+Linux » était marqué ✅ sur une validation du 2026-07-29 <em>au matin</em> ; or
+<code>osKeychain.ts</code>, <code>vaultBridge.service.ts</code> et le panneau de réglages ont tous
+été touchés le soir même par les correctifs D1 / D2. La mesure ne porte donc plus sur ce que
+<code>master</code> contient : repassé en 🚧, ce que la troisième campagne devra lever en rejouant
+les mesures plutôt qu'en les relisant. Les quatre autres statuts « Livré » ont été confrontés à
+l'état réel du dépôt et tiennent.</td></tr>
+
+</table>
+
 <h2>Revue de gouvernance — mise en conformité à la charte (2026-07-29)</h2>
 <p>Revue au sens de la <a href="GOUVERNANCE-IA.md">charte</a>, Règle 7 Cas B : audit d'un
 <code>.AIRules/</code> déjà au format mais qui a dérivé. Déclenchée depuis le projet frère

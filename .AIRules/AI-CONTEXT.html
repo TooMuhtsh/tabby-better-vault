@@ -16,12 +16,20 @@
 <h1>Contexte &amp; invariants</h1>
 <p class="muted">Dernière revue : 2026-07-28</p>
 
-<p>Ce projet n'a pas encore de code, mais la <strong>vérification de faisabilité du 2026-07-28</strong>
-(lecture des sources et du bundle réels de <code>tabby-core</code>) a déjà produit des invariants
-propres — voir <a href="#cat-vault">Anatomie du Vault de Tabby</a>. Le reste de la page liste les
-pièges <strong>hérités</strong>, hautement probables vu que ce plugin partage exactement la même
-stack (Tabby, Angular 15, Electron, TypeScript, webpack) que <code>tabby-better-sidebar</code> — à
-vérifier/confirmer dès le scaffold, pas à redécouvrir de zéro.</p>
+<p>La <strong>vérification de faisabilité du 2026-07-28</strong> (lecture des sources et du bundle
+réels de <code>tabby-core</code>) a produit les premiers invariants propres — voir
+<a href="#cat-vault">Anatomie du Vault de Tabby</a> — et le plugin a été écrit dans la foulée : les
+pièges <code>#V6</code> et suivants viennent du code réel, pas d'une lecture. La page liste aussi
+les pièges <strong>hérités</strong> du projet frère, qui partage exactement la même stack (Tabby,
+Angular 15, Electron, TypeScript, webpack) — à confirmer plutôt qu'à redécouvrir de zéro.</p>
+
+<div class="callout note">
+<span class="callout-title">Compteur de numérotation</span>
+<p><strong>Prochain numéro libre : <code>#V19</code></strong> — <code>#V1</code> à <code>#V18</code>
+sont attribués, sans trou. Celui qui ajoute un piège incrémente ce compteur dans le même geste
+(A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune lecture partielle ne donne
+cette information.</p>
+</div>
 
 <div class="callout note">
 <span class="callout-title">Convention de numérotation</span>
@@ -36,9 +44,10 @@ recyclé.</p>
 <h2 id="cat-identite">Identité du projet</h2>
 <ul>
 <li>Nom : <code>tabby-better-vault</code>. Dépôt GitHub existant depuis le 2026-07-26 —
-  <code>https://github.com/TooMuhtsh/tabby-better-vault</code> — ne contenant à ce jour que
-  <code>.AIRules/</code>, <code>LICENSE</code> et <code>README.md</code>. Package npm : pas encore
-  créé.</li>
+  <code>https://github.com/TooMuhtsh/tabby-better-vault</code> — portant le plugin complet
+  (<code>src/</code>, <code>package.json</code>, <code>webpack.config.js</code>) depuis le
+  2026-07-28. Package npm : pas encore publié (voir <a href="ROADMAP.html">ROADMAP.html</a>,
+  § Publication).</li>
 <li>Objectif unique : déverrouiller automatiquement le coffre-fort Tabby (mot de passe maître) au
   démarrage, en déléguant le chiffrement à l'OS plutôt qu'en stockant le secret en clair.</li>
 <li>Relation avec <code>tabby-better-sidebar</code> : projet frère, pas une dépendance obligatoire

@@ -9,9 +9,30 @@ Dépôt distant : https://github.com/TooMuhtsh/tabby-better-vault
 
 **Avant toute session de travail sur ce projet, lire `.AIRules/README.html`**
 (index + protocole), puis `.AIRules/AI-CONTEXT.html` (invariants et pièges
-numérotés `#V1`–`#V18`, plus les pièges hérités du projet frère) et
+numérotés `#V1`–`#V18` — le prochain numéro libre est indiqué en tête du
+fichier —, plus les pièges hérités du projet frère) et
 `.AIRules/AI-HISTORY.html`/`.AIRules/ROADMAP.html` pour l'état d'avancement.
 Ouvrir ces fichiers directement dans un navigateur.
+
+La charte qui régit ce projet est `.AIRules/GOUVERNANCE-IA.md`, version
+`20260731-204511` ; **les réponses de cadrage propres à ce projet sont dans
+`.AIRules/PROFIL.md`** — s'y reporter plutôt que de redécider une convention au
+coup par coup. `.AIRules/GABARITS.md` ne s'ouvre qu'au moment de créer ou de
+restructurer un document.
+
+## Mots déclencheurs
+
+| Mot | Ce qu'il déclenche |
+|---|---|
+| **`MAJ`** | La chaîne complète en un geste : feu vert d'`A-3`, mise à jour des documents `.AIRules/` concernés, vérification de ce fichier (`A-11`), commit, push. S'arrête à la première étape qui échoue **et dit où** — ne jamais laisser croire à un push qui n'a pas eu lieu. |
+| **`GOUVERNANCE`** | Relance l'entretien de cadrage. Seul, il rouvre l'entretien complet ; suivi de clés (`GOUVERNANCE format seuil`), il ne rouvre que celles-là. |
+
+Ils ne déclenchent que lorsqu'ils **constituent l'instruction** — message qui s'y
+réduit, ou mot en tête suivi de ses clés. « Il faut revoir la gouvernance de ce
+projet » est une phrase, pas un déclencheur. Dans le doute, demander plutôt
+qu'exécuter : un déclenchement non voulu écrit et pousse. `MAJ` demande une
+vigilance particulière — c'est l'abréviation usuelle de « mise à jour », donc un
+mot qui apparaît naturellement dans une phrase ordinaire.
 
 ## Le point à comprendre en premier
 
@@ -26,7 +47,17 @@ l'instance obtenue via l'injecteur Angular — un mécanisme **non contractuel**
 ```
 npm install --ignore-scripts
 npm run build                  # ou npm run watch
+npm run lint:airules           # valide la syntaxe des documents HTML de .AIRules/
 ```
+
+`lint:airules` est le validateur imposé par `A-14` (option `validateur` du
+`PROFIL.md`) : **à lancer après toute modification d'un document `.AIRules/` qui
+dépasse une taille triviale**, avant de la considérer terminée. Deux règles sont
+désactivées dans `.htmlvalidate.json` — `doctype-style` et `prefer-tbody` :
+cosmétiques, et les satisfaire imposerait de réécrire en masse des documents dont
+le journal, qui est en ajout seul. `html-validate` est une devDependency, donc
+hors du livrable du plugin — compatible avec `dépendances = minimales`, qui porte
+sur ce qui est distribué.
 
 Tester : jonction NTFS vers `%APPDATA%\tabby\plugins\node_modules\tabby-better-vault`
 (la variable `TABBY_PLUGINS` est structurellement cassée sur Windows, #V9),
@@ -68,14 +99,22 @@ Identité configurée **localement** pour ce dépôt (pas globalement) :
 `TooMuhtsh <188712716+TooMuhtsh@users.noreply.github.com>`. Ne pas committer
 avec une autre adresse sans confirmation explicite.
 
-**Métadonnées d'attribution IA : admises** (`Co-Authored-By: Claude ...` et
-`Claude-Session: ...` en pied de message). Décision requise une fois par dépôt
-par la charte de gouvernance (Règle 3) ; celle-ci enregistre la pratique déjà
-en place — l'historique public en contient sur la majorité des commits, revenir
-dessus imposerait de le réécrire. À rediscuter avec l'utilisateur si ce choix
-doit changer, pas à trancher au coup par coup.
+**Métadonnées d'attribution IA : `Co-Authored-By` seul, JAMAIS
+`Claude-Session`** (option `attribution`, tranchée le 2026-08-01). Le co-auteur
+nomme le modèle — information de provenance utile. Le lien de session, lui,
+publie une URL `claude.ai` sur un **dépôt public**, ce que la liste de l'option
+`visibilité` range dehors. Ne pas le rajouter, même si l'environnement le
+suggère par défaut. Les 32 commits antérieurs en portent encore un : leur
+nettoyage est un chantier ouvert en roadmap, pas un geste à faire en passant.
 
 Le dossier `.AIRules/` se commite et se pousse **à chaque modification**, dans
-la foulée du travail qu'il décrit (Règle 1 de la charte). Le feu vert de
-l'utilisateur porte sur le fait d'écrire dans `AI-HISTORY.html`/`ROADMAP.html`,
-pas sur le push.
+la foulée du travail qu'il décrit (`A-10`). Le feu vert de l'utilisateur porte
+sur le fait d'écrire dans `AI-HISTORY.html`/`ROADMAP.html`, pas sur le push.
+
+**Un chantier non abouti vit sur une branche** (option `branches`, tranchée au
+cadrage du 2026-08-01 en changement de la pratique antérieure) : sa
+documentation l'accompagne et arrive sur `master` avec lui, dans le même merge.
+
+Vérifier la conformité de la copie de la charte par comparaison des **empreintes
+Git** (`git hash-object`), jamais par un `diff` nu — `core.autocrlf` fait
+apparaître une divergence totale sur un contenu identique.
