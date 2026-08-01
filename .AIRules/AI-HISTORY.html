@@ -24,6 +24,51 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Internationalisation de l'interface (2026-08-01)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-01</td><td><code>c189450</code></td>
+<td>Les quatre pièges du chantier consignés en
+<a href="AI-CONTEXT.html#piege-v19">#V19</a> à <a href="AI-CONTEXT.html#piege-v22">#V22</a>,
+compteur porté à <code>#V23</code> dans le même geste (A-6). <strong>Aucun des quatre n'avait été
+anticipé</strong> par la préparation du chantier, pourtant détaillée en roadmap depuis le
+2026-07-29 — et deux d'entre eux ne produisent ni erreur ni avertissement.</td></tr>
+<tr><td>2026-08-01</td><td><code>0f3e33a</code></td>
+<td><strong>Interface traduite en quatre langues, journal figé en anglais.</strong> Les 85 chaînes
+sources passent en anglais — contrainte et non style : Tabby cherche ses traductions par la chaîne
+source, donc une source française afficherait du français à un utilisateur turc. Le mécanisme est
+celui de Tabby : <code>TranslateService</code> et <code>LocaleService</code> sont réexportés par
+<code>tabby-core</code> (vérifié dans le bundle compilé, pas seulement dans les typings) et
+<code>TranslateModule</code> figure dans les <code>exports</code> du module racine, que
+<code>src/index.ts</code> importait déjà — <strong>aucune dépendance ajoutée</strong>.
+<br><br>
+<strong>Deux décisions de l'utilisateur ont modifié la demande initiale</strong> du 2026-07-29
+(« les cinq langues les plus utilisées, journal d'audit compris ») : quatre langues au lieu de cinq,
+la cinquième n'ayant pu être justifiée — la mesure faite ce jour-là, taux de complétion des 24
+<code>.po</code> de Tabby, ne discrimine pas : dix-huit locales sont à 100 % ; et le journal reste en
+anglais, non traduit, plutôt que de passer à des codes d'événement.
+<br><br>
+<strong>Les deux exigences se contredisaient sur cinq chaînes</strong>, affichées <em>et</em>
+journalisées — le motif d'indisponibilité du trousseau et la phrase du garde-fou. D'où
+<code>src/messages.ts</code> : un <code>Message</code> transporte sa chaîne source et ses paramètres
+sans être rendu ; le journal l'écrit en anglais, l'interface le traduit avec la même chaîne comme
+clé. Conséquence en cascade sur le témoin du garde-fou, écrit sur disque et relu au démarrage
+suivant : il portait la phrase française de l'opération gelée, il porte désormais un identifiant
+(<a href="AI-CONTEXT.html#piege-v22">#V22</a>).
+<br><br>
+<code>npm run lint:i18n</code> ajouté : ce mécanisme ne signale jamais une traduction morte, la
+phrase retombe simplement en anglais. Le validateur couvre les deux sens, la cohérence des
+paramètres et le piège ICU de l'apostrophe collée à une accolade. Ses deux contrôles ont été
+éprouvés sur des cas fautifs, pas seulement sur le cas sain.
+<br><br>
+<strong>Validé en conditions réelles sur Windows 11</strong> le même jour, cinq points : panneau
+traduit, <em>reste de Tabby intact</em>, changement de langue à chaud, locale non couverte rendue en
+anglais, journal en anglais. Le deuxième point est celui qui compte — le panneau se serait affiché
+correctement même si <a href="AI-CONTEXT.html#piege-v19">#V19</a> avait été présent. Jamais exercé
+sur Linux ni macOS. Vit sur <code>feat/i18n-ui</code>, non fusionnée.</td></tr>
+</table>
+
 <h2>Le rapport de campagne Linux devient une annexe (2026-08-01)</h2>
 
 <div class="callout warning">
