@@ -25,7 +25,7 @@ Angular 15, Electron, TypeScript, webpack) — à confirmer plutôt qu'à redéc
 
 <div class="callout note">
 <span class="callout-title">Compteur de numérotation</span>
-<p><strong>Prochain numéro libre : <code>#V23</code></strong> — <code>#V1</code> à <code>#V22</code>
+<p><strong>Prochain numéro libre : <code>#V28</code></strong> — <code>#V1</code> à <code>#V27</code>
 sont attribués, sans trou. Celui qui ajoute un piège incrémente ce compteur dans le même geste
 (A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune lecture partielle ne donne
 cette information.</p>
@@ -784,6 +784,86 @@ source et ses paramètres <em>sans être rendu</em>. Le journal l'écrit en angl
 traduit avec la même chaîne comme clé. Une seule table de vérité, deux rendus — et un
 <code>sourceParams</code> distinct pour les paramètres qui sont eux-mêmes des chaînes à traduire,
 sans quoi une phrase française afficherait un nom d'opération resté en anglais.</p>
+</div>
+
+<h3 id="piege-v23">#V23 — La clé d'<code>OSCrypt</code> est mise en cache pour la vie du processus principal</h3>
+<p>Chromium acquiert sa clé de chiffrement une fois et la garde. <strong>Deux conséquences opposées,
+toutes deux mesurées</strong> (Ubuntu, gnome-keyring, 2026-08-01) :</p>
+<ul>
+<li><strong>Reverrouiller le trousseau après que Tabby s'en soit servi ne reverrouille rien.</strong>
+  Collection <code>Locked = true</code>, et cinq fenêtres déchiffrent sans invite. La protection
+  « trousseau verrouillé » ne joue qu'au <em>démarrage à froid</em>. Tout scénario de test qui
+  verrouille le trousseau en cours de session ne teste pas ce qu'il croit tester.</li>
+<li><strong>Un échec est mémorisé tout aussi durablement.</strong> Après un refus d'authentification,
+  le clic suivant sur « vérifier » journalise le même échec <em>sans émettre un seul appel Secret
+  Service</em>, et <code>learnFromUser</code> ne peut alors plus rien enregistrer. Seul un
+  redémarrage de Tabby rétablit l'accès.</li>
+</ul>
+<div class="callout warning">
+<span class="callout-title">Ce que ça impose au code</span>
+<p>Aucun bouton de récupération ne peut promettre une nouvelle tentative réelle dans la même session.
+Un message qui ne dit pas que le redémarrage est le seul remède laisse l'utilisateur cliquer
+indéfiniment sur un bouton qui ne touche plus rien.</p>
+</div>
+
+<h3 id="piege-v24">#V24 — Fusionner une table de traduction écrase les <code>msgid</code> de Tabby qui portent le même nom</h3>
+<p>La clé étant la chaîne source anglaise (<a href="#piege-v21">#V21</a>) et l'enregistrement se
+faisant avec <code>shouldMerge = true</code>, toute clé qui coïncide avec un <code>msgid</code> de
+Tabby <strong>remplace la traduction de Tabby pour l'application entière</strong>, pas seulement dans
+notre panneau. Les mots courts sont les plus exposés : <code>'Cancel'</code>, <code>'Save'</code>,
+<code>'Close'</code>, <code>'Enable'</code>.</p>
+<p>Sans effet tant que les valeurs coïncident — c'est le cas aujourd'hui pour <code>'Cancel'</code>
+dans les trois tables — donc <strong>le jour où ça casse, ce n'est pas le jour où la clé est
+ajoutée</strong>. Une divergence introduite bien plus tard, dans une seule langue, suffit. Prolonge
+<a href="#piege-v19">#V19</a> : greffer quelque chose sur un mécanisme de Tabby peut dégrader Tabby,
+et ça ne se voit jamais en regardant le panneau qu'on vient d'écrire.</p>
+
+<h3 id="piege-v25">#V25 — Un fichier témoin ne dit pas si son auteur est encore vivant</h3>
+<p>Un témoin posé avant un appel bloquant et relu au démarrage suivant confond deux faits distincts :
+<strong>« un appel est en vol en ce moment »</strong> et <strong>« un appel n'est jamais
+revenu »</strong>. Deux fenêtres Tabby suffisent à produire l'observable — mesuré en usage
+multi-fenêtres ordinaire, sans provocation.</p>
+<div class="callout warning">
+<span class="callout-title">Le pid seul ne suffit pas à trancher</span>
+<p>Écrire le pid dans le témoin ne résout rien tant qu'on ne le relit pas — et le relire ne suffit pas
+davantage : <strong>un processus gelé a lui aussi un pid vivant</strong>. Ce qui discrimine, c'est
+<em>pid vivant + ancienneté</em> : une opération gardée saine revient en millisecondes, une gelée
+jamais. Un compteur de profondeur en variable de module traite le cas intra-processus et n'a
+<strong>aucun équivalent inter-processus</strong>.</p>
+</div>
+
+<h3 id="piege-v26">#V26 — Un chemin de configuration codé en dur ignore <code>--user-data-dir</code></h3>
+<p>Electron laisse choisir le dossier de profil ; <code>app.getPath('userData')</code> est la seule
+source qui le suive. Un chemin déduit de la plateforme coïncide avec lui sur le profil par défaut —
+donc <strong>ne se distingue de lui qu'en présence d'un second profil</strong>, ce qui n'arrive jamais
+en test ordinaire.</p>
+<p>Mesuré : une instance lancée sur un profil distinct écrit ses fichiers dans le profil par défaut.
+Le plus grave n'est pas l'emplacement mais ce qui en découle — <strong>fichier d'état partagé,
+témoin de garde-fou partagé (ce qui rend <a href="#piege-v25">#V25</a> reproductible à volonté), et
+validation du mot de passe contre le <code>config.yaml</code> d'un autre profil</strong>.</p>
+
+<h3 id="piege-v27">#V27 — « Temporaire puis <code>rename</code> » ne garantit pas un fichier neuf</h3>
+<p>Le motif est correct contre la troncature, mais deux hypothèses tacites tombent dès que le
+temporaire porte un <strong>nom fixe et donc prévisible</strong> :</p>
+<ul>
+<li><strong>S'il préexiste en lien symbolique</strong>, <code>writeFileSync</code> écrit <em>à
+  travers</em> le lien et <code>renameSync</code> déplace <em>le lien lui-même</em> : la cible finale
+  devient un lien, la charge utile atterrit hors du dossier voulu, et un <code>chmod</code> qui suit
+  resserre les droits de la victime. « Le fichier qui atterrit est toujours neuf » est faux.</li>
+<li><strong><code>writeFileSync(path, data, { mode })</code> n'applique le mode qu'à la
+  création.</strong> Sur un fichier préexistant l'argument est ignoré, et un <code>chmod</code>
+  postérieur laisse une fenêtre où le contenu complet est déjà lisible sous les anciens droits —
+  mesuré, pas déduit.</li>
+</ul>
+<div class="callout warning">
+<span class="callout-title">Et ce que le motif ne couvre pas du tout</span>
+<p>Créer en <code>wx</code> après <code>unlink</code> ferme les deux : l'appel échoue si quoi que ce
+soit occupe le nom, lien compris, et le fichier est nécessairement neuf donc créé au bon mode.
+Envelopper le tout, enfin : un dossier en lecture seule fait échapper un <code>EACCES</code> depuis
+l'écriture du temporaire, bien avant le <code>rename</code> que le <code>try</code> surveille.</p>
+<p><strong><code>rename</code> ne donne l'atomicité que face à un lecteur concurrent, pas face à une
+coupure d'alimentation</strong> — ce sont deux garanties différentes, et sans <code>fsync</code> sur
+le temporaire seule la première est acquise.</p>
 </div>
 
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>

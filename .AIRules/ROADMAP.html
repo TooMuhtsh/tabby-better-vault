@@ -34,15 +34,17 @@
 <tr><td><a href="#audit">Journal d'audit et notifications</a></td>
     <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
-    <td><span class="pill progress">🚧 Dépôt public en ligne ; npm à faire</span></td><td>Suite immédiate</td></tr>
+    <td><span class="pill progress">🚧 Dépôt public en ligne ; npm <strong>bloqué par les correctifs de la 3ᵉ campagne</strong></span></td><td>Après les correctifs</td></tr>
 <tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
     <td><span class="pill progress">🚧 Les trois validés sur Linux le 2026-07-29 au matin, mais <strong>sur un code qui a changé le soir même</strong> (D1, D2) : la mesure ne porte plus sur ce que <code>master</code> contient — déclassé à l'audit du 2026-08-01</span></td><td>—</td></tr>
 <tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
-    <td><span class="pill progress">🚧 Écrits et poussés le 2026-07-29 — jamais exercés sur Linux, et D1 n'est pas exerçable ailleurs ; leur validation attend la 3ᵉ campagne</span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill done">✅ <strong>Validés sur Linux le 2026-08-01</strong> par la 3ᵉ campagne — les deux tiennent, et la prémisse de D1 est prouvée par la mesure</span></td><td>—</td></tr>
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
-    <td><span class="pill planned">⏸️ En attente — protocole prêt, révisé le 2026-08-01 pour le chantier i18n (dont la branche à cloner). <strong>Il vit dans <code>.tempfiles/</code>, donc hors dépôt</strong> : il porte des phrases à saisir, qui n'ont pas leur place sur un dépôt public</span></td><td>Sur décision</td></tr>
+    <td><span class="pill done">✅ Menée le 2026-08-01 — D1 et D2 conformes, <strong>dix défauts trouvés hors périmètre</strong>, dont D4 confirmé jusqu'en usage spontané</span></td><td>—</td></tr>
+<tr><td><a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
+    <td><span class="pill progress">🚧 Quatre lots écrits, deux sujets de conception ouverts — rien de corrigé au 2026-08-01</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
-    <td><span class="pill progress">🚧 Faite et validée sur Windows le 2026-08-01 — quatre langues, journal figé en anglais. Sur <code>feat/i18n-ui</code>, à fusionner ; jamais exercée sur Linux ni macOS</span></td><td>—</td></tr>
+    <td><span class="pill done">✅ Fusionnée dans <code>master</code> le 2026-08-01 et <strong>vérifiée sur Linux</strong> le jour même — quatre langues, journal figé en anglais. Deux défauts d'outillage et de format de date en découlent</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
     <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>Prochain chantier</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
@@ -525,6 +527,13 @@ dernière révision n'a jamais été exercée sur la seule plateforme qui sait l
 passée sans défaut nouveau de sévérité haute, D4 mesuré dans un sens ou dans l'autre. Si elle produit
 à nouveau des régressions issues de ses propres correctifs, ce n'est plus un correctif qui manque
 mais une revue de conception — et la publication attend d'autant plus.</p>
+<p><strong>Verdict au 2026-08-01 : la condition n'est pas remplie, mais pas pour le motif prévu.</strong>
+Les correctifs D1 et D2 tiennent, et <em>aucun des dix défauts trouvés n'en est une régression</em> —
+ce sont des zones jamais exercées. La clause « revue de conception » ne se déclenche donc pas au sens
+où elle était écrite. Elle se déclenche pour une autre raison : <a href="#correctifs-c3">D4 est
+confirmé jusqu'en usage spontané</a> et la destruction du jeton sur annulation d'invite touche la
+raison d'être du plugin. La publication attend donc les quatre lots de correctifs et le sort des deux
+sujets de conception.</p>
 </div>
 
 <h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
@@ -765,15 +774,35 @@ et l'instance ne peut pas les purger elle-même après coup. Leur suppression ap
 pas au rattrapage.</p>
 </div>
 
-<h3 id="campagne-3">Troisième campagne — prête, en attente</h3>
+<h3 id="campagne-3">Troisième campagne — menée le 2026-08-01</h3>
 <div class="callout note">
-<span class="callout-title">État au 2026-08-01 : rien à préparer, seulement à lancer</span>
-<p>Protocole opérateur complet dans
-<code>.tempfiles/PROTOCOLE-TEST-LINUX-CAMPAGNE-3.md</code> — préparation du clone aveugle, valeurs
-déclarées, prompt à donner tel quel à l'instance, points de dépouillement. <strong>Mise en attente
-sur décision de l'utilisateur</strong>, pas sur un obstacle technique.</p>
-<p>Ce qui suit est le raisonnement derrière ce protocole : à lire avant de le modifier, pas avant de
-le lancer.</p>
+<span class="callout-title">Résultat : les deux correctifs tiennent, et dix défauts sortent du hors-périmètre</span>
+<p><strong>D1 et D2 sont conformes</strong>, mesurés sur Ubuntu / gnome-keyring / Tabby 1.0.235.
+Mieux que conformes : <strong>la prémisse de D1 est prouvée</strong>. Sur trousseau verrouillé, le
+motif rendu est <code>roundTripFailed</code>, qui n'est atteignable que si <code>keychainStatus()</code>
+a d'abord répondu <code>available: true</code> — l'ancien test se serait donc bien déclaré satisfait.
+C'est la première fois qu'une campagne de ce projet établit qu'un défaut corrigé <em>existait</em>,
+au lieu de constater que le correctif ne casse rien.</p>
+<p><strong>Mais la campagne a trouvé dix défauts qu'elle ne cherchait pas</strong>, dont deux qui
+touchent la raison d'être du plugin. Ils sont traités en <a href="#correctifs-c3">chantier propre</a>.
+Aucun n'est une régression des correctifs D1/D2 : ce sont des zones que les campagnes précédentes
+n'avaient jamais exercées.</p>
+<p>Rapport complet dans <code>.tempfiles/</code> avec le protocole — comme lui, hors dépôt : il cite
+les valeurs saisies et l'environnement de la VM.</p>
+</div>
+<div class="callout warning">
+<span class="callout-title">Ce que ce résultat ne vaut pas — l'aveuglement a été perdu en cours de route</span>
+<p>L'instance a reçu le document de protocole <strong>entier</strong>, § 5 et § 6 compris : hypothèses
+de défaut, identification du point 2 comme correctif de D1, et grille de dépouillement. Elle l'a
+signalé elle-même dans ses réserves de méthode.</p>
+<p>Ça n'entame pas les <strong>défauts</strong> — une mesure reste une mesure, et un défaut trouvé
+n'est pas un défaut suggéré. Ça affaiblit les <strong>verdicts de conformité</strong> : ils valent
+« tient sous l'angle prévu », un cran en dessous de ce que le protocole visait. Un résultat propre
+signifie « ces correctifs tiennent », pas « rien d'autre ne cloche ».</p>
+<p><strong>Correction structurelle pour la campagne 4</strong> : scinder le protocole en un fichier
+<em>prompt</em> et un fichier <em>dépouillement</em>, et ne transmettre que le premier. Aucune
+discipline de lecture ne remplace une séparation des fichiers — c'est la deuxième fois que
+l'aveuglement se perd par une omission de forme et non par une décision.</p>
 </div>
 <div class="callout warning">
 <span class="callout-title">Révisé le 2026-08-01 — le chantier i18n l'avait partiellement invalidé</span>
@@ -806,7 +835,36 @@ chargement effectif du plugin doit être constaté</strong>, faute de quoi la ca
 faux négatifs parfaitement cohérents entre eux.</p>
 <p>Le recours à plusieurs agents y est explicitement autorisé, avec ses garde-fous : un seul
 interlocuteur pour l'opérateur humain, diffusion des phrases de test limitée au nécessaire, synthèse
-non déléguée, et purge des transcripts de tous les agents et pas seulement du principal.</p>
+non déléguée.</p>
+</div>
+<div class="callout warning">
+<span class="callout-title">Révisé une seconde fois le 2026-08-01, après la campagne — deux consignes réfutées par leur propre exécution</span>
+<p><strong>L'effacement des traces ne peut pas être confié à l'instance.</strong> Le protocole lui
+faisait lancer <code>shred -u ~/.claude/history.jsonl ~/.claude/projects/*/*.jsonl</code> en vérifiant
+elle-même la couverture. Elle ne l'a pas fait, et elle a eu raison : la consigne était fausse sur
+trois plans indépendants, dont aucun ne se voyait à la lecture. Le glob ne couvrait pas le scratchpad,
+qui portait des copies de <code>better-vault.json</code> avec jeton et les scripts des agents
+auxiliaires — une énumération écrite d'avance ne peut pas suivre un agent qui choisit où il écrit,
+encore moins un agent qui délègue. <code>shred</code> ne garantit rien sur ext4 + NVMe, où journal du
+système de fichiers et nivellement d'usure conservent des copies hors d'atteinte des passes de
+réécriture : c'est une suppression de bonne foi, et l'écrire dans un protocole fait croire l'inverse.
+Enfin le classifieur de permissions de son environnement lui a <strong>refusé le listage de
+<code>~/.claude</code></strong> : elle ne pouvait pas constater la couverture qu'on lui demandait de
+vérifier.</p>
+<p>D'où le dispositif retenu : <strong>instantané de la VM avant l'exécution, restauration après</strong>.
+Il emporte ce que l'instance ne sait pas avoir écrit, ce qu'elle n'a pas le droit de lister, et ce que
+ses agents ont laissé. Elle ne détruit plus rien ; elle <em>déclare</em> au fil de l'eau les
+emplacements qu'elle utilise hors des deux dossiers attendus. <strong>Ne jamais confier à un acteur la
+certification de son propre effacement</strong>, a fortiori quand il tourne dans un environnement dont
+il ne maîtrise pas les permissions. Pour un secret réel et non une phrase jetable, c'est la
+destruction de la VM qui s'impose, pas la restauration.</p>
+<p><strong>Les phrases de test étaient trop longues</strong>, et c'est un défaut de méthode et non de
+confort. <code>PhraseDeTestJetable-2026!</code> était à retaper des dizaines de fois à la main : une
+phrase pénible à saisir décourage la répétition des scénarios, donc appauvrit la mesure — sur un
+plugin dont l'objet est précisément d'éviter cette saisie. Remplacées par <code>vault1</code> et
+<code>wrong2</code>, six caractères. Elles restent <strong>distinctes du mot de passe du compte</strong>,
+qui déverrouille le trousseau de session : les confondre effacerait la frontière entre invite du
+trousseau et pop-up de coffre, celle-là même que la campagne mesure.</p>
 </div>
 <div class="callout important">
 <span class="callout-title">Pourquoi elle est nécessaire, et pas seulement souhaitable</span>
@@ -823,16 +881,15 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 <ul>
 <li><strong>Toute valeur que l'opérateur devra saisir est écrite dans le protocole AVANT la
   campagne.</strong> Deux ici, et il en faut bien deux : la phrase maîtresse du coffre de test,
-  <code>PhraseDeTestJetable-2026!</code>, avec laquelle la fixture <code>config.yaml</code> est
-  fabriquée ; et la phrase volontairement fausse du scénario D2,
-  <code>PhraseVolontairementFausse-2026!</code>. Déclarer la première sans la seconde reviendrait à
-  faire improviser la seconde.</li>
+  <code>vault1</code>, avec laquelle la fixture <code>config.yaml</code> est fabriquée ; et la phrase
+  volontairement fausse du scénario D2, <code>wrong2</code>. Déclarer la première sans la seconde
+  reviendrait à faire improviser la seconde. <strong>Courtes</strong> — voir la seconde révision
+  ci-dessus pour pourquoi c'est méthodologique.</li>
 <li><strong>L'opérateur ne saisit rien qui ne figure pas dans le protocole.</strong> Si une instance
   lui demande une valeur non prévue, la réponse est de refuser et de le signaler — pas d'improviser.</li>
-<li><strong>Purge des transcripts en fin de campagne</strong>, dans le protocole et non en
-  rattrapage : <code>~/.claude/history.jsonl</code> et <code>~/.claude/projects/*/*.jsonl</code> sur
-  la VM. L'instance est la seule en position de le faire à la fin de sa propre exécution, donc la
-  consigne doit figurer dans SON prompt, pas dans le dépouillement.</li>
+<li><strong>L'effacement des traces se fait par instantané de VM, jamais par une purge que l'instance
+  lancerait elle-même</strong> — consigne inversée après la campagne 3, qui a réfuté la précédente.
+  L'instance se contente de déclarer où elle écrit.</li>
 <li><strong>L'opérateur humain reste dans la boucle pour toute saisie GUI.</strong> C'est ce qui a
   permis d'exercer <code>learnFromUser</code> de bout en bout, resté non testé lors de la première
   campagne. À reconduire tel quel.</li>
@@ -891,15 +948,127 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 <li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
 <li><strong>L'atomicité sous coupure réelle</strong> — déduite de <code>rename(2)</code>. La mesurer
   supposerait de couper l'alimentation de la VM au bon moment ; le rapport coût/information est
-  mauvais tant que rien ne suggère un problème.</li>
-<li><strong>L'i18n</strong> — pas encore écrite. Ne rien auditer qui n'existe pas.</li>
+  mauvais tant que rien ne suggère un problème. <em>La campagne a ajouté un fait à ce sujet</em> :
+  <code>strace</code> compte <strong>zéro</strong> <code>fsync</code>. L'atomicité mesurée est celle
+  du <code>rename</code> face à un lecteur concurrent, pas face à une coupure — ce ne sont pas les
+  mêmes garanties, et le code n'en offre qu'une.</li>
+<li><strong>L'i18n</strong> — pas encore écrite au moment d'écrire ce périmètre. Elle l'a été le
+  2026-08-01 avant le lancement, et un sixième point a donc été ajouté au protocole.</li>
 </ul>
+
+<h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
+<p><strong>Rien n'est corrigé au 2026-08-01</strong> : la campagne a rendu son rapport, le plan
+ci-dessous est arrêté, aucun code n'a bougé. Les dix constats ont été revérifiés un par un contre les
+sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+
+<div class="callout important">
+<span class="callout-title">Deux défauts touchent la raison d'être du plugin, pas ses marges</span>
+<p><strong>Annuler une invite d'authentification détruit le mot de passe enregistré.</strong>
+<code>serveFromToken()</code> ne distingue pas « le trousseau refuse de répondre maintenant » de « le
+jeton est corrompu » : les deux tombent dans le même <code>catch</code> et appellent
+<code>deleteToken()</code>. Contrôle décisif de la campagne : même trousseau verrouillé, même blocage,
+même durée, mais <em>sans</em> annulation → le jeton survit. Un geste anodin — fermer une fenêtre
+d'authentification qui gêne — annule donc la raison d'être du plugin, et rien à l'écran ne le dit.
+Aucun risque de sûreté, la dégradation va vers la saisie manuelle.</p>
+<p><strong>D4 est confirmé jusqu'en usage spontané.</strong> Trois observations : au banc avec contrôle
+apparié, dans le produit provoqué, et <em>dans le produit sans aucune provocation</em> — trois fenêtres
+déverrouillent dans la seconde, une quatrième se refuse le trousseau en affirmant qu'une opération
+démarrée dans la même seconde n'est jamais revenue. Course intermittente mais réelle, et la fenêtre
+refusée reste dégradée pour toute sa session, sans réessai.</p>
+</div>
+
+<h3>Les quatre lots</h3>
+<ol>
+<li><strong>Le jeton détruit</strong> — le <code>catch</code> de déchiffrement de
+  <code>serveFromToken()</code> ne doit plus purger. La purge se justifie là où on a une preuve
+  <em>positive</em> que le jeton est faux — échéance dépassée, échec PBKDF2 — et ces deux chemins
+  existent déjà et purgent correctement. Un blob qu'on ne sait pas déchiffrer est un problème de
+  trousseau, pas de jeton. Pire cas si on ne purge plus : un déchiffrement raté par démarrage sur un
+  jeton réellement corrompu, révocable depuis les réglages. Strictement meilleur que détruire un bon
+  jeton.</li>
+<li><strong>Écriture du fichier</strong> — quatre constats, un seul geste sur
+  <code>writeSettings()</code>. Le temporaire à nom fixe est plantable en lien symbolique :
+  <code>writeFileSync</code> écrit <em>à travers</em> le lien et <code>renameSync</code> déplace le
+  lien lui-même, si bien que <code>better-vault.json</code> devient un lien et que le jeton atterrit
+  hors du dossier de config — le <code>chmod</code> suit lui aussi vers la victime. Un dossier en
+  lecture seule fait échapper un <code>EACCES</code> non rattrapé, le <code>try</code> ne couvrant que
+  <code>rename</code> : la cible préexistante reste en 0666 avec son ancien contenu, sans une ligne de
+  journal. Le resserrage des droits est postérieur à l'écriture du contenu (82 250 observations du
+  temporaire en 0666 <em>avec</em> charge utile). Et <code>strace</code> compte zéro
+  <code>fsync</code>. Correctif : <code>unlink</code> puis création en <code>wx</code> — échoue si le
+  temporaire existe, lien compris, et garantit un fichier neuf donc le mode 0600 appliqué à la
+  création — le tout sous <code>try</code> qui journalise. <strong>Deux commentaires du code
+  deviennent faux et tombent avec</strong> : « le fichier qui atterrit est TOUJOURS un fichier neuf »
+  et « quel que soit l'état antérieur, il ressort en 0600 ».</li>
+<li><strong>Lisibilité</strong> — le motif d'échec déverse <code>String(e)</code> tel quel, soit neuf
+  lignes dont sept de pile Node, à l'écran <em>et</em> au journal, pour un utilisateur qui vient
+  simplement de refuser une authentification. Les dates suivent la locale du système et non celle de
+  Tabby (<code>toLocaleString()</code> sans argument, cinq sites) alors que Tabby fournit
+  <code>TabbyFormatedDatePipe</code>. Après un refus, le bouton de récupération est inopérant pour
+  toute la session — l'<code>OSCrypt</code> de Chromium mémorise son échec pour la vie du processus,
+  et <code>learnFromUser</code> ne peut alors plus rien enregistrer : il faut le dire à l'écran,
+  puisque le redémarrage de Tabby est le seul remède. Et <code>withSafeStorage()</code> ne teste que
+  <code>if (!safeStorage)</code>, jamais l'existence des méthodes.</li>
+<li><strong>Outillage</strong> — <code>lint:i18n</code> ne lit jamais <code>TABLES</code> : sa liste
+  de langues est codée en dur et le script n'ouvre pas <code>src/i18n/index.ts</code>. Une table
+  écrite mais non enregistrée, ou enregistrée sous un code invalide (<code>'fr'</code> au lieu de
+  <code>'fr-FR'</code>), passerait au vert. Collision latente à traiter dans le même geste : la clé
+  <code>'Cancel'</code> est aussi un msgid de Tabby, et la greffe fusionnant, <strong>notre valeur
+  écrase celle de Tabby pour toute l'application</strong>. Sans effet aujourd'hui — les valeurs
+  coïncident dans les trois langues — et non surveillé.</li>
+</ol>
+
+<h3>Deux sujets de conception, pas des correctifs</h3>
+<div class="callout warning">
+<span class="callout-title">À décider, pas à faire en passant</span>
+<p><strong><code>configDir()</code> est codé en dur et ignore <code>--user-data-dir</code>.</strong>
+Mesuré : une instance lancée avec un profil distinct a chargé le plugin et écrit sa ligne de journal
+dans <code>~/.config/tabby</code>, aucun <code>better-vault.log</code> n'apparaissant dans son propre
+profil. Trois conséquences, dont la dernière est la plus grave : mauvais
+<code>better-vault.json</code>, témoin partagé entre profils — c'est ce qui rend D4 reproductible à
+volonté — et <strong>validation de la phrase contre le <code>config.yaml</code> d'un autre
+profil</strong>. Le correctif est court (<code>app.getPath('userData')</code> avec repli sur le chemin
+actuel) mais il déplace des fichiers : sur le profil par défaut les deux chemins coïncident, ailleurs
+non.</p>
+<p><strong>Le garde-fou confond deux faits distincts</strong> : « un appel est en vol en ce moment »
+et « un appel n'est jamais revenu ». Le pid est écrit dans le témoin
+(<code>keychainGuard.ts</code>) mais <strong>jamais relu</strong> : un témoin dont le pid est vivant
+et un témoin dont le pid est mort produisent un objet identique, un message identique, un refus
+identique. Le court-circuit <code>if (depth &gt; 0)</code> traite exactement ce problème en
+intra-processus, et <code>depth</code> étant une variable de module il n'a aucun équivalent
+inter-processus. <strong>Le pid seul ne tranche pas</strong> — un Tabby gelé a lui aussi un pid
+vivant. Ce qui discrimine, c'est <em>pid vivant + ancienneté</em> : une opération gardée saine revient
+en millisecondes, une gelée jamais. C'est une refonte du garde-fou, avec sa propre campagne.</p>
+</div>
 
 <h2 id="i18n">Internationalisation — interface traduite, journal en anglais</h2>
 <p><strong>Fait le 2026-08-01</strong>, sur la branche <code>feat/i18n-ui</code> — priorisé le
 2026-07-29 devant la granularité par profil, motif donné par l'utilisateur : « à l'usage c'est ce
 qui est le plus important maintenant, le reste c'est du bonus ». <strong>Validé en conditions
-réelles sur Windows 11</strong> le jour même ; jamais exercé sur Linux ni macOS.</p>
+réelles sur Windows 11</strong> le jour même, fusionné dans <code>master</code>, puis
+<strong>vérifié sur Linux</strong> par la <a href="#campagne-3">3ᵉ campagne</a>. Jamais exercé sur
+macOS.</p>
+
+<div class="callout note">
+<span class="callout-title">Ce que la campagne a établi sur l'i18n, et les deux défauts qu'elle a trouvés</span>
+<p><strong>Le défaut le plus grave n'existe pas.</strong> Tabby en français puis en italien, plugin
+installé : ses traductions se chargent normalement, contrôle plugin retiré à l'appui. C'est le point
+qui justifiait à lui seul le sixième point du protocole — greffer une table sur le mécanisme de Tabby
+peut dégrader Tabby, et ça ne se voit qu'en regardant l'application entière.</p>
+<p>Conformes également : le repli d'une locale non couverte (sous <code>it-IT</code>, panneau
+intégralement anglais, zéro résidu français sur sept marqueurs), le journal resté anglais (135 lignes
+après passage par cinq langues), et l'absence de clé orpheline (85 sources, trois tables, deux sens,
+sur le gabarit compilé). <strong>Une prédiction de l'analyse statique est falsifiée</strong> : le
+panneau déjà rendu se retraduit à chaud, sans recréation du composant — Tabby affiche pourtant un
+bandeau « redémarrage nécessaire », plus prudent que nécessaire.</p>
+<p>Deux défauts en revanche, traités en <a href="#correctifs-c3">lot 3 et lot 4</a> : les dates
+suivent la locale du système et non celle de Tabby, et <code>lint:i18n</code> ne vérifie pas que les
+tables sont réellement enregistrées.</p>
+<p>Fait d'environnement à retenir : <strong>avec une config chiffrée, la pop-up du coffre est
+toujours en anglais</strong> — le réglage de langue est à l'intérieur du blob chiffré. Ça corrobore
+par la mesure ce qui n'était qu'un raisonnement : toute notification antérieure au déverrouillage ne
+peut pas être traduite.</p>
+</div>
 
 <h3>Ce qui a été décidé, et qui n'était pas décidé au départ</h3>
 <p>La demande du 2026-07-29 portait sur « les cinq langues les plus utilisées, journal d'audit
