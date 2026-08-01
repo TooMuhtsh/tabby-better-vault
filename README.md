@@ -31,6 +31,8 @@ OS keychain once, then answers on your behalf.
       configurable retention — never containing the passphrase
 - [x] **Observation mode** — see what the plugin would do without letting it
       store anything
+- [x] **Follows Tabby's language** — English, French, Spanish and German; any
+      other locale falls back to English (see [Languages](#languages))
 - [x] **Safe fallback** — any failure quietly returns you to Tabby's own
       prompt. Switched off, it never touches the keychain at all; switched on,
       a keychain that stops answering costs you at most one hung start (see
@@ -82,13 +84,20 @@ from the settings tab. Retention is configurable — 30 days, 90 (the default),
 a year, or unlimited.
 
 ```
-[2026-07-28 23:19:20] INFO ──── session opened — machine "desktop" — plugin active — retention 90 d
-[2026-07-28 23:19:21] INFO  vault unlocked from the system keychain
-[2026-07-28 23:20:39] INFO  manual revocation from settings — token deleted
+[2026-08-01 11:24:00] INFO ──── session opened — machine “desktop” — plugin enabled — retention 90 d
+[2026-08-01 11:24:01] INFO bridge installed — the keychain will only be queried at the first unlock
+[2026-08-01 11:24:26] INFO vault unlocked from the system keychain
+[2026-08-01 11:31:02] INFO manual revocation from the settings — token deleted
 ```
 
 **It never contains your passphrase, nor its length** — only anonymous
 lifecycle events.
+
+**The log is always in English, whatever language the interface is in.** It is
+a file you read back later, sometimes long after the fact and sometimes to send
+to someone else; a line whose language depended on the locale active when it was
+written would make a single file switch languages halfway through, and would be
+impossible to search reliably.
 
 Two limits worth stating plainly:
 
@@ -99,6 +108,21 @@ Two limits worth stating plainly:
   editable by anyone with access to it — which is precisely the attacker an
   audit trail would be up against. Treat it as a diagnostic and after-the-fact
   detection tool, not as evidence.
+
+## Languages
+
+The plugin follows the language set in Tabby — there is nothing to configure.
+It ships with **English, French, Spanish and German**; under any other locale
+the interface falls back to English.
+
+Adding a language is one file in `src/i18n/`, keyed by the English source
+strings, plus one line in the table at the top of `src/i18n/index.ts`. Run
+`npm run lint:i18n` afterwards: it refuses an incomplete table, and catches the
+mistakes this mechanism otherwise makes silently — a key that no longer matches
+its source, or a `{placeholder}` lost in translation.
+
+Contributions are welcome, including for languages already listed: these
+translations were not made by native speakers.
 
 ## How it works
 
