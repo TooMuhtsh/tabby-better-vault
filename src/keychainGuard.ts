@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import { configDir } from './tabbyConfig'
+import { GUARD, Message, OPERATION, OperationId, REASON, english, isOperationId } from './messages'
 
 /**
  * Garde-fou contre le gel du démarrage par un appel bloquant au trousseau.
@@ -69,8 +70,12 @@ const SUSPENDED = 'betterVaultKeychainSuspended'
 export interface GuardState {
     /** Une sonde précédente n'est jamais revenue : le trousseau est consigné. */
     suspended: boolean
-    /** Opération qui a gelé, telle qu'elle avait été étiquetée. */
-    label?: string
+    /**
+     * Opération qui a gelé. Identifiant et non phrase : ce champ est écrit sur
+     * disque et relu au démarrage suivant, éventuellement sous une autre locale
+     * — voir `OperationId` dans `messages.ts`.
+     */
+    operation?: OperationId
     /** Date de l'appel gelé (ms depuis l'époque). */
     since?: number
 }
@@ -89,14 +94,27 @@ function witnessPath (): string {
  */
 let depth = 0
 
-export function suspendedError (detail: string): Error {
-    const e = new Error(detail)
-    ;(e as any)[SUSPENDED] = true
+/**
+ * Erreur de refus du garde-fou.
+ *
+ * Elle transporte son `Message` non rendu en plus du texte anglais : l'appelant
+ * qui l'affiche doit pouvoir le traduire, celui qui la journalise doit obtenir
+ * de l'anglais. Le `message` de l'`Error` reste l'anglais, seul utile dans une
+ * trace de pile.
+ */
+export function suspendedError (detail: Message): Error {
+    const e = new Error(english(detail))
+    ;(e as any)[SUSPENDED] = detail
     return e
 }
 
 export function isSuspendedError (e: any): boolean {
     return !!e?.[SUSPENDED]
+}
+
+/** Message traduisible porté par une erreur de refus, ou `null`. */
+export function suspendedMessage (e: any): Message | null {
+    return e?.[SUSPENDED] ?? null
 }
 
 export function guardState (): GuardState {
@@ -112,7 +130,11 @@ export function guardState (): GuardState {
         const parsed = JSON.parse(raw)
         return {
             suspended: true,
-            label: typeof parsed.label === 'string' ? parsed.label : undefined,
+            // Un témoin écrit par une version antérieure porte une phrase
+            // française sous la clé `label` : elle est ignorée, et l'état est
+            // relu comme anonyme. Afficher une étiquette non traduisible au
+            // milieu d'une interface traduite serait pire que ne rien nommer.
+            operation: isOperationId(parsed.operation) ? parsed.operation : undefined,
             since: typeof parsed.since === 'number' ? parsed.since : undefined,
         }
     } catch {
@@ -120,11 +142,27 @@ export function guardState (): GuardState {
     }
 }
 
-/** Phrase prête à journaliser ou à afficher, au format « le … a gelé le … ». */
-export function describeState (state: GuardState): string {
-    const what = state.label ? `l'opération « ${state.label} »` : 'un accès au trousseau'
-    const when = state.since ? ` le ${new Date(state.since).toLocaleString()}` : ''
-    return `${what} n'est jamais revenue${when} — le trousseau est probablement verrouillé`
+/**
+ * Message prêt à journaliser (en anglais) ou à afficher (traduit).
+ *
+ * Quatre variantes entières plutôt qu'une phrase assemblée : voir `GUARD` dans
+ * `messages.ts` pour la raison. La date est rendue ici, avec la locale du
+ * système — c'est un paramètre, pas une clé.
+ */
+export function describeState (state: GuardState): Message {
+    const operation = state.operation ? OPERATION[state.operation] : null
+    const date = state.since ? new Date(state.since).toLocaleString() : null
+
+    if (operation && date) {
+        return { source: GUARD.operationDated, params: { date }, sourceParams: { operation } }
+    }
+    if (operation) {
+        return { source: GUARD.operation, sourceParams: { operation } }
+    }
+    if (date) {
+        return { source: GUARD.anonymousDated, params: { date } }
+    }
+    return { source: GUARD.anonymous }
 }
 
 function clearWitness (): void {
@@ -156,24 +194,24 @@ export function rearm (): void {
  * better-vault.json, le cas suppose de toute façon un plugin déjà hors d'état
  * d'enregistrer quoi que ce soit.
  */
-export function runGuarded<T> (label: string, fn: () => T): T {
+export function runGuarded<T> (operation: OperationId, fn: () => T): T {
     if (depth > 0) {
         return fn()
     }
 
     const state = guardState()
     if (state.suspended) {
-        throw suspendedError(`accès au trousseau suspendu — ${describeState(state)}`)
+        throw suspendedError(describeState(state))
     }
 
     try {
         fs.writeFileSync(
             witnessPath(),
-            JSON.stringify({ label, since: Date.now(), pid: process.pid }),
+            JSON.stringify({ operation, since: Date.now(), pid: process.pid }),
             { mode: 0o600 },
         )
     } catch (e) {
-        throw suspendedError(`garde-fou du trousseau non armable (${String(e)}) — accès refusé par précaution`)
+        throw suspendedError({ source: REASON.guardNotArmable, params: { error: String(e) } })
     }
 
     depth++

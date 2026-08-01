@@ -5,8 +5,10 @@ import { PlatformService } from 'tabby-core'
 // (piège hérité #3), les styles sont injectés en CSS globale.
 import './settingsTab.component.scss'
 
+import { I18nService } from '../i18n'
 import { guardState, describeState, rearm } from '../keychainGuard'
 import { log, warn, purge, LOG_PATH } from '../logger'
+import { english } from '../messages'
 import { keychainStatus, keychainRoundTrip, KeychainStatus } from '../osKeychain'
 import {
     Settings,
@@ -40,6 +42,9 @@ export class BetterVaultSettingsTabComponent {
      */
     keychain: KeychainStatus | null = null
 
+    /** Motif de `keychain`, déjà traduit — voir `setKeychain()`. */
+    keychainReason = ''
+
     /**
      * Champs et non accesseurs : le gabarit les lit, et Angular réévalue une
      * expression de gabarit à CHAQUE cycle de détection — chaque frappe dans le
@@ -54,26 +59,32 @@ export class BetterVaultSettingsTabComponent {
 
     logPath = LOG_PATH
 
+    /**
+     * `source` et non `label` : c'est la chaîne source anglaise, que le gabarit
+     * passe au pipe `translate`. Traduire ici, à la construction, figerait ces
+     * listes dans la langue active à l'ouverture de l'onglet — un changement de
+     * locale ne les rattraperait qu'à la réouverture du panneau.
+     */
     readonly weekdays = [
-        { value: 1, label: 'Lundi' },
-        { value: 2, label: 'Mardi' },
-        { value: 3, label: 'Mercredi' },
-        { value: 4, label: 'Jeudi' },
-        { value: 5, label: 'Vendredi' },
-        { value: 6, label: 'Samedi' },
-        { value: 0, label: 'Dimanche' },
+        { value: 1, source: 'Monday' },
+        { value: 2, source: 'Tuesday' },
+        { value: 3, source: 'Wednesday' },
+        { value: 4, source: 'Thursday' },
+        { value: 5, source: 'Friday' },
+        { value: 6, source: 'Saturday' },
+        { value: 0, source: 'Sunday' },
     ]
 
     readonly hours = Array.from({ length: 24 }, (_, h) => h)
 
     readonly retentions = [
-        { value: 30, label: '30 jours' },
-        { value: 90, label: '90 jours' },
-        { value: 365, label: '1 an' },
-        { value: 0, label: 'Illimitée' },
+        { value: 30, source: '30 days' },
+        { value: 90, source: '90 days' },
+        { value: 365, source: '1 year' },
+        { value: 0, source: 'Unlimited' },
     ]
 
-    constructor (private platform: PlatformService) {
+    constructor (private platform: PlatformService, private i18n: I18nService) {
         this.settings = readSettings()
         this.refreshGuard()
         if (this.settings.enabled) {
@@ -84,7 +95,26 @@ export class BetterVaultSettingsTabComponent {
     private refreshGuard (): void {
         const state = guardState()
         this.suspended = state.suspended
-        this.suspendedDetail = state.suspended ? describeState(state) : ''
+        this.suspendedDetail = state.suspended ? this.i18n.message(describeState(state)) : ''
+    }
+
+    /**
+     * Enregistre le résultat d'un diagnostic et en dérive le texte affiché.
+     *
+     * Champ et non accesseur, pour la raison donnée plus haut à propos de
+     * `suspended` : un `get` serait réévalué à chaque cycle de détection, donc à
+     * chaque frappe dans le champ « nom de cette machine ». `translate.instant()`
+     * coûte moins qu'un `readFileSync`, mais rien n'oblige à le payer des
+     * milliers de fois pour une valeur qui ne change qu'ici.
+     *
+     * Conséquence assumée, la même que pour `suspendedDetail` : changer la langue
+     * de Tabby pendant que ce panneau est ouvert ne retraduit pas ce motif — il
+     * faut rouvrir l'onglet. Le reste du panneau, lui, passe par le pipe
+     * `translate` et suit immédiatement.
+     */
+    private setKeychain (status: KeychainStatus): void {
+        this.keychain = status
+        this.keychainReason = status.reason ? this.i18n.message(status.reason) : ''
     }
 
     /**
@@ -92,7 +122,7 @@ export class BetterVaultSettingsTabComponent {
      * actif. Ne prouve pas que le trousseau répond — voir `verifyKeychain()`.
      */
     private probeKeychain (): void {
-        this.keychain = keychainStatus()
+        this.setKeychain(keychainStatus())
         // La sonde peut consigner le trousseau à son tour : l'affichage doit
         // suivre sans attendre une réouverture du panneau.
         this.refreshGuard()
@@ -113,16 +143,19 @@ export class BetterVaultSettingsTabComponent {
      * système et l'appel rend la main dès qu'il y répond.
      */
     verifyKeychain (): void {
-        this.keychain = keychainRoundTrip()
+        this.setKeychain(keychainRoundTrip())
         this.refreshGuard()
 
         // Tracé dans les deux sens : c'est le seul geste par lequel
         // l'utilisateur peut remettre le plugin en marche, son résultat doit
-        // rester lisible après coup.
-        if (this.keychain.verified) {
-            log(`trousseau vérifié depuis les réglages — aller-retour de chiffrement réussi (${this.keychain.backend})`)
+        // rester lisible après coup. En anglais, comme tout le journal — et via
+        // `english()` plutôt que via le champ déjà traduit, sans quoi la ligne
+        // suivrait la locale de l'utilisateur.
+        const status = this.keychain as KeychainStatus
+        if (status.verified) {
+            log(`keychain verified from the settings — encryption round trip succeeded (${status.backend})`)
         } else {
-            warn(`vérification du trousseau infructueuse depuis les réglages — ${this.keychain.reason}`)
+            warn(`keychain verification from the settings failed — ${status.reason ? english(status.reason) : 'no reason given'}`)
         }
     }
 
@@ -138,7 +171,7 @@ export class BetterVaultSettingsTabComponent {
      */
     rearmKeychain (): void {
         rearm()
-        log('garde-fou du trousseau levé manuellement depuis les réglages')
+        log('keychain guard lifted manually from the settings')
         this.refreshGuard()
         this.verifyKeychain()
     }
@@ -155,9 +188,9 @@ export class BetterVaultSettingsTabComponent {
     async purgeLog (): Promise<void> {
         const result = await this.platform.showMessageBox({
             type: 'warning',
-            message: 'Vider le journal ?',
-            detail: "Tout l'historique des ouvertures du coffre, des expirations et des révocations sera perdu. Cette action est irréversible.",
-            buttons: ['Vider', 'Annuler'],
+            message: this.i18n.t('Empty the log?'),
+            detail: this.i18n.t('All history of vault openings, expiries and revocations will be lost. This action cannot be undone.'),
+            buttons: [this.i18n.t('Empty'), this.i18n.t('Cancel')],
             defaultId: 1,
             cancelId: 1,
         })
@@ -177,11 +210,11 @@ export class BetterVaultSettingsTabComponent {
      */
     get expiryLabel (): string {
         if (this.settings.expiry.mode === 'never') {
-            return 'aucune expiration'
+            return this.i18n.t('no expiry')
         }
         const at = this.hasToken ? this.settings.tokenExpiresAt : computeExpiry(this.settings.expiry)
         if (!at) {
-            return 'aucune expiration'
+            return this.i18n.t('no expiry')
         }
         return new Date(at).toLocaleString()
     }
@@ -203,7 +236,7 @@ export class BetterVaultSettingsTabComponent {
         deleteToken()
         // Purge délibérée de l'utilisateur : c'est l'événement le plus
         // significatif du cycle de vie, il doit laisser une trace.
-        log('révocation manuelle depuis les réglages — jeton supprimé')
+        log('manual revocation from the settings — token deleted')
         this.settings = readSettings()
     }
 
@@ -245,27 +278,32 @@ export class BetterVaultSettingsTabComponent {
         // Trace les changements qui modifient le comportement du plugin, pas
         // les cosmétiques (le nom de machine n'en fait pas partie).
         if (enabled !== current.enabled) {
-            log(`plugin ${enabled ? 'activé' : 'désactivé'} sur cette machine`)
+            log(`plugin ${enabled ? 'enabled' : 'disabled'} on this machine`)
         }
         if (debug !== current.debug) {
-            log(`mode observation ${debug ? 'activé' : 'désactivé'}`)
+            log(`observation mode ${debug ? 'enabled' : 'disabled'}`)
         }
         if (recomputeExpiry && JSON.stringify(expiry) !== JSON.stringify(current.expiry)) {
-            log(`politique d'expiration modifiée : ${this.describeExpiry(expiry)}`)
+            log(`expiry policy changed: ${this.describeExpiry(expiry)}`)
         }
 
         // Relecture : l'affichage reflète le fichier, pas notre instantané.
         this.settings = readSettings()
     }
 
+    /**
+     * Politique d'expiration en une phrase, pour le journal — donc en anglais et
+     * non traduite, comme le reste du fichier. Elle réutilise `weekdays`, dont
+     * les entrées portent justement la chaîne source anglaise.
+     */
     private describeExpiry (expiry: Settings['expiry']): string {
         if (expiry.mode === 'never') {
-            return 'aucune expiration'
+            return 'no expiry'
         }
         if (expiry.mode === 'sliding') {
-            return `${expiry.days} jour(s) après la saisie`
+            return `${expiry.days} day(s) after entry`
         }
-        const day = this.weekdays.find(d => d.value === expiry.weekday)?.label ?? '?'
-        return `chaque ${day.toLowerCase()} à ${expiry.hour} h`
+        const day = this.weekdays.find(d => d.value === expiry.weekday)?.source ?? '?'
+        return `every ${day} at ${expiry.hour}:00`
     }
 }
