@@ -24,6 +24,54 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Troisième campagne de vérification Linux (2026-08-01)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-01</td><td><code>cb97067</code></td>
+<td><strong>Les correctifs D1 et D2 tiennent, et la prémisse de D1 est prouvée.</strong> Mesuré sur
+Ubuntu / gnome-keyring / Tabby 1.0.235 : sur trousseau verrouillé, le motif rendu est
+<code>roundTripFailed</code>, qui n'est atteignable que si <code>keychainStatus()</code> a d'abord
+répondu <code>available: true</code> — l'ancien test se serait donc bien déclaré satisfait. C'est la
+première fois qu'une campagne de ce projet établit qu'un défaut corrigé <em>existait</em>, au lieu de
+constater qu'un correctif ne casse rien.
+<br><br>
+<strong>Mais dix défauts sont sortis du hors-périmètre</strong>, tous revérifiés un par un contre les
+sources avant d'être consignés. Deux touchent la raison d'être du plugin : annuler une invite
+d'authentification <strong>détruit le mot de passe enregistré</strong> (le <code>catch</code> de
+déchiffrement ne distingue pas « le trousseau refuse maintenant » de « le jeton est corrompu », et le
+contrôle sans annulation montre que le jeton survit), et <strong>D4 est confirmé jusqu'en usage
+spontané</strong> — trois fenêtres déverrouillent, une quatrième se refuse le trousseau en invoquant
+une opération démarrée dans la même seconde. <em>Aucun des dix n'est une régression de D1/D2</em> :
+ce sont des zones que les campagnes précédentes n'avaient jamais exercées, ce qui fait tomber la
+clause « revue de conception » au sens où elle était écrite — elle se déclenche pour un autre motif.
+<br><br>
+Pièges <a href="AI-CONTEXT.html#piege-v23">#V23</a> à <a href="AI-CONTEXT.html#piege-v27">#V27</a>
+consignés, compteur porté à <code>#V28</code> (A-6). Le plus contre-intuitif est <code>#V23</code> :
+<strong>la clé d'<code>OSCrypt</code> est mise en cache pour la vie du processus</strong>, si bien que
+reverrouiller un trousseau en cours de session ne reverrouille rien — tout scénario de test qui
+procède ainsi ne teste pas ce qu'il croit tester, et le fait conditionne l'interprétation de la
+campagne entière.
+<br><br>
+<strong>L'aveuglement a été perdu en cours de route</strong>, et l'instance l'a signalé elle-même :
+elle a reçu le document de protocole entier, hypothèses de défaut et grille de dépouillement
+comprises. Les défauts restent des mesures — un défaut trouvé n'est pas un défaut suggéré — mais les
+verdicts de conformité valent « tient sous l'angle prévu », un cran en dessous de ce qui était visé.
+Correction pour la campagne 4 : scinder le protocole en un fichier <em>prompt</em> et un fichier
+<em>dépouillement</em>. C'est la deuxième fois que l'aveuglement se perd par une omission de forme et
+non par une décision, d'où une séparation de fichiers plutôt qu'une discipline de lecture.
+<br><br>
+<strong>Deux consignes du protocole ont été réfutées par leur propre exécution.</strong> La purge des
+transcripts par l'instance elle-même était fausse sur trois plans indépendants — le glob ne couvrait
+pas le scratchpad, <code>shred</code> ne garantit rien sur ext4 + NVMe, et le classifieur de
+permissions lui a refusé le listage qui aurait permis de vérifier la couverture demandée. Remplacée
+par un instantané de VM pris avant l'exécution : <strong>ne jamais confier à un acteur la
+certification de son propre effacement</strong>. Et les phrases de test étaient trop longues, ce qui
+est un défaut de méthode et non de confort — retaper une phrase de vingt-cinq caractères des dizaines
+de fois décourage la répétition des scénarios, donc appauvrit la mesure, sur un plugin dont l'objet
+est justement d'éviter cette saisie.</td></tr>
+</table>
+
 <h2>Internationalisation de l'interface (2026-08-01)</h2>
 
 <table>
