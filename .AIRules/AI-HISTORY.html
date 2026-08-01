@@ -24,6 +24,60 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Réécriture de l'historique — retrait des liens de session (2026-08-01)</h2>
+<p>L'option <code>attribution</code> ayant été tranchée le jour même à « co-auteur seul, sans
+<code>Claude-Session</code> », les <strong>32 commits</strong> qui portaient déjà un lien de session
+ont été réécrits pour l'en retirer, sur décision explicite de l'utilisateur. Les trailers
+<code>Co-Authored-By</code> sont conservés.</p>
+
+<div class="callout warning">
+<span class="callout-title">Tous les hashes antérieurs au 2026-08-01 ont changé</span>
+<p>La réécriture touche les 49 commits de la branche, y compris ceux qui ne portaient pas de lien de
+session : leur contenu est identique, mais leurs parents ont changé. <strong>Les hashes cités par
+les entrées ci-dessous ne résolvent plus.</strong> Ils ne sont pas corrigés — le journal est en ajout
+seul (A-4) — et c'est la table ci-dessous qui les rattrape. Le seul commit inchangé est le commit
+initial, qui n'a pas de parent.</p>
+<p><strong>Vérifié avant publication</strong> : arbre racine identique
+(<code>0618d5b</code>), 49 commits avant comme après, <code>git diff</code> vide entre l'ancien et le
+nouveau sommet — seuls les messages diffèrent.</p>
+</div>
+
+<table>
+<tr><th>Hash cité</th><th>Hash réel</th><th>Commit</th></tr>
+<tr><td><code>92be359</code></td><td><code>92be359</code></td><td>Initial commit — inchangé, sans parent</td></tr>
+<tr><td><code>9572ae0</code></td><td><code>147ab27</code></td><td>Implement automatic vault unlock via the OS keychain</td></tr>
+<tr><td><code>5b2b3a9</code></td><td><code>623f768</code></td><td>Add settings panel, token expiry and per-machine configuration</td></tr>
+<tr><td><code>e5b192b</code></td><td><code>d8c05ff</code></td><td>Polish the settings panel, notify on storage, add CLAUDE.md</td></tr>
+<tr><td><code>719cd0a</code></td><td><code>c8ea224</code></td><td>Add public-facing README in English and French</td></tr>
+<tr><td><code>70cfc72</code></td><td><code>10ad983</code></td><td>Turn the log into an audit trail with configurable retention</td></tr>
+<tr><td><code>c5a2489</code></td><td><code>f9fddac</code></td><td>Add open and purge buttons for the audit log</td></tr>
+<tr><td><code>4b5224a</code></td><td><code>a8f86b4</code></td><td>Notify on automatic unlock, align log wording with the UI</td></tr>
+<tr><td><code>e008d5a</code></td><td><code>2f672b4</code></td><td>Anchor the unlock notification to the active tab</td></tr>
+<tr><td><code>cf201ca</code></td><td><code>4358ca8</code></td><td>Document the encrypted-config/titlebar mismatch as a pitfall</td></tr>
+<tr><td><code>a5d23d5</code></td><td><code>2f38b3c</code></td><td>Fix the Linux keychain guard: reachable reason, inert control</td></tr>
+<tr><td><code>c9f434d</code></td><td><code>27677be</code></td><td>Hide the keychain-dependent settings instead of greying them</td></tr>
+<tr><td><code>75de08a</code></td><td><code>e0c4411</code></td><td>Record the independent Linux campaign and its three findings</td></tr>
+<tr><td><code>f0548f8</code></td><td><code>5eac211</code></td><td>Guard every safeStorage call behind an on-disk witness</td></tr>
+<tr><td><code>f086739</code></td><td><code>9b39222</code></td><td>Keep the keychain off Tabby's startup path entirely</td></tr>
+<tr><td><code>2dc049c</code></td><td><code>8c22cff</code></td><td>Make the 0600 mode an invariant and the write atomic</td></tr>
+<tr><td><code>4c1fe0d</code></td><td><code>804f44b</code></td><td>State the guarantee the code actually delivers</td></tr>
+<tr><td><code>a1243ba</code></td><td><code>5bb5617</code></td><td>Bring the governance folder up to charter compliance</td></tr>
+<tr><td><code>76e950f</code></td><td><code>0bf059e</code></td><td>Add the two mandatory callouts to the governance index</td></tr>
+<tr><td><code>0328740</code></td><td><code>96a66b8</code></td><td>Cadrer le projet et le remettre à niveau sur la charte</td></tr>
+</table>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-01</td><td><code>n/a</code> (réécriture d'historique, hors commit)</td>
+<td><strong>32 trailers <code>Claude-Session</code> retirés de l'historique public</strong> par
+<code>git filter-branch --msg-filter</code>, suivi d'un <em>force-push</em>. Ils publiaient une URL
+de session <code>claude.ai</code> sur un dépôt public. Sauvegarde préalable : tag local
+<code>backup-pre-rewrite-20260801</code> et bundle Git hors dépôt.
+<strong>Ce que l'opération coûte</strong> : tout clone existant du dépôt diverge et doit être
+refait ; un lien externe vers un commit de ce dépôt est cassé. Aucun n'était connu au moment de
+l'opération.</td></tr>
+</table>
+
 <h2>Revue de gouvernance — cadrage complet et charte refondue (2026-08-01)</h2>
 <p>Revue au sens d'<strong>A-15, cas B</strong>, déclenchée par une révision de la charte touchant le
 noyau (A-7) : la refonte en noyau / options / entretien de cadrage, propagée par la veille
