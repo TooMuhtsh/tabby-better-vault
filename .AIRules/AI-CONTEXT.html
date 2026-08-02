@@ -25,10 +25,14 @@ Angular 15, Electron, TypeScript, webpack) — à confirmer plutôt qu'à redéc
 
 <div class="callout note">
 <span class="callout-title">Compteur de numérotation</span>
-<p><strong>Prochain numéro libre : <code>#V28</code></strong> — <code>#V1</code> à <code>#V27</code>
-sont attribués, sans trou. Celui qui ajoute un piège incrémente ce compteur dans le même geste
-(A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune lecture partielle ne donne
-cette information.</p>
+<p><strong>Prochain numéro libre : <code>#V30</code></strong> — <code>#V1</code> à <code>#V27</code> et
+<code>#V29</code> sont attribués <em>sur cette branche</em>. Celui qui ajoute un piège incrémente ce
+compteur dans le même geste (A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune
+lecture partielle ne donne cette information.</p>
+<p><strong><code>#V28</code> est réservé et absent d'ici</strong> : il est écrit sur
+<code>fix/c3-lot3-lisibilite</code> et arrivera avec ce lot. Le trou est délibéré — un numéro se
+réserve, il ne se recycle jamais, et deux branches qui attribueraient le même feraient perdre l'un des
+deux au merge.</p>
 </div>
 
 <div class="callout note">
@@ -864,6 +868,30 @@ l'écriture du temporaire, bien avant le <code>rename</code> que le <code>try</c
 <p><strong><code>rename</code> ne donne l'atomicité que face à un lecteur concurrent, pas face à une
 coupure d'alimentation</strong> — ce sont deux garanties différentes, et sans <code>fsync</code> sur
 le temporaire seule la première est acquise.</p>
+</div>
+
+<h3 id="piege-v29">#V29 — Sans <code>author</code> dans son <code>package.json</code>, Tabby ignore le plugin en silence</h3>
+<p><code>findPlugins()</code> lit le <code>package.json</code> de chaque candidat et fait :</p>
+<pre><code>let author = info.author
+author = author.name || author</code></pre>
+<p>Sur un <code>author</code> absent, le déréférencement lève un <code>TypeError</code> — que le
+<code>try</code> englobant avale pour rendre <code>null</code>. <strong>Le plugin n'est alors pas
+découvert du tout</strong> : rien dans la liste des plugins, aucun panneau de réglages, aucune ligne
+de journal, aucun message d'erreur. Le seul indice est un <code>Cannot load package info for …</code>
+dans la console du processus principal, que personne ne regarde.</p>
+<p>Les quatre champs que Tabby lit vraiment sont <code>keywords</code> (qui doit contenir
+<code>tabby-plugin</code>, et dont l'absence est proprement traitée), <code>version</code>,
+<code>description</code> et <code>author</code>. Seul le dernier est déréférencé sans garde.</p>
+<div class="callout warning">
+<span class="callout-title">Où ça mord</span>
+<p>Mesuré le 2026-08-02 en préparant la quatrième campagne : un <code>package.json</code> réduit aux
+champs jugés utiles — pour retirer l'URL du dépôt d'un paquet remis à une instance aveuglée — a fait
+disparaître le plugin sans le moindre signal. Le diagnostic est venu de l'instance auditrice, pas de
+l'outillage.</p>
+<p><strong>À vérifier avant publication npm</strong> : un paquet publié sans <code>author</code>
+s'installerait correctement et ne se chargerait jamais. La leçon générale est celle du champ
+facultatif : <em>facultatif pour npm</em> ne veut pas dire <em>facultatif pour le consommateur</em>,
+et c'est le consommateur qui décide.</p>
 </div>
 
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>

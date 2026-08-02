@@ -24,6 +24,46 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Préparation de la quatrième campagne (2026-08-02)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-02</td><td><em>ce commit</em></td>
+<td><strong>Les quatre lots de correctifs sont écrits, la campagne 4 est préparée mais non menée.</strong>
+Chaque lot vit sur sa branche avec sa documentation ; seul le lot 4 est validé, parce qu'il ne touche
+pas le runtime. Détail dans <a href="ROADMAP.html#correctifs-c3">#correctifs-c3</a> et
+<a href="ROADMAP.html#campagne-4">#campagne-4</a>.
+<br><br>
+<strong>Le dispositif d'aveuglement des trois campagnes précédentes est caduc, et c'est mesuré.</strong>
+Retirer <code>.AIRules/</code>, <code>CLAUDE.md</code> et <code>.git</code> du clone ne suffit plus :
+le bundle de développement porte les commentaires du code en clair, et ceux des correctifs disent
+littéralement ce qu'ils corrigent et à quelle campagne ils répondent. La source map porte l'intégralité
+des sources ; trois <code>.d.ts</code> sont révélateurs ; et les commentaires SCSS survivent même à la
+minification, le CSS étant embarqué comme chaîne JS. <em>Le code raconte ses propres correctifs</em> —
+conséquence directe d'un projet qui commente abondamment, ce qui reste une qualité partout ailleurs.
+D'où le passage en <strong>boîte noire</strong> : l'instance ne reçoit ni sources ni source map, et ne
+construit rien.
+<br><br>
+<strong>Le protocole se contredisait sur un point, et c'est une instance auditrice qui l'a relevé.</strong>
+Il imposait le paquet <code>.deb</code>, qui exige les droits d'administration, alors qu'il interdit
+par ailleurs à l'opérateur toute saisie non déclarée. L'instance du poste B a pris l'archive portable
+— même binaire, SHA-256 relevé, aucun privilège — et a déclaré ses écarts d'elle-même. C'est devenu la
+méthode imposée aux trois postes. <strong>Une contrainte de protocole qui oblige à en violer une autre
+est un défaut du protocole, pas de celui qui l'exécute.</strong>
+<br><br>
+Piège <a href="AI-CONTEXT.html#piege-v29">#V29</a> consigné, compteur porté à <code>#V30</code> (A-6) :
+<strong>sans <code>author</code> dans son <code>package.json</code>, Tabby ignore le plugin en
+silence</strong> — <code>findPlugins()</code> déréférence <code>author.name</code> dans un
+<code>try</code> qui avale l'erreur. Découvert en réduisant le <code>package.json</code> d'un paquet
+aveuglé, et diagnostiqué par l'instance auditrice, pas par l'outillage. À vérifier avant la publication
+npm : un paquet sans ce champ s'installerait et ne se chargerait jamais.
+<br><br>
+<em>Réserve de méthode</em> : deux erreurs de préparation se ressemblent — imposer un format
+d'installation sans vérifier ce qu'il exige, et réduire un <code>package.json</code> sans vérifier ce
+que Tabby y lit. Dans les deux cas, un raisonnement sur ce que le paquet <em>devrait</em> contenir a
+tenu lieu de lecture de ce que le code en <em>fait</em>.</td></tr>
+</table>
+
 <h2>Troisième campagne de vérification Linux (2026-08-01)</h2>
 
 <table>

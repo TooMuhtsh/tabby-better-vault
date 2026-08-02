@@ -957,9 +957,37 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 </ul>
 
 <h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
-<p><strong>Rien n'est corrigé au 2026-08-01</strong> : la campagne a rendu son rapport, le plan
-ci-dessous est arrêté, aucun code n'a bougé. Les dix constats ont été revérifiés un par un contre les
-sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+<p>Le plan ci-dessous a été arrêté le 2026-08-01, après revérification des dix constats un par un
+contre les sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+
+<div class="callout note">
+<span class="callout-title">Avancement au 2026-08-02 — les quatre lots sont écrits, un seul est validé</span>
+<p>Chaque lot vit sur sa branche, avec sa documentation, et arrivera sur <code>master</code> avec elle
+(option <code>branches</code>) :</p>
+<table>
+<tr><th>Lot</th><th>Branche</th><th>État</th></tr>
+<tr><td>1 — le jeton détruit</td><td><code>fix/c3-lot1-jeton-detruit</code></td>
+    <td>écrit, non exercé sur Linux</td></tr>
+<tr><td>2 — écriture du fichier</td><td><code>fix/c3-lot2-ecriture-fichier</code></td>
+    <td>écrit, non exercé sur Linux</td></tr>
+<tr><td>3 — lisibilité</td><td><code>fix/c3-lot3-lisibilite</code></td>
+    <td>écrit, non exercé sur Linux</td></tr>
+<tr><td>4 — outillage</td><td><code>fix/c3-lot4-outillage</code></td>
+    <td><strong>écrit et validé</strong> — ne touche pas le runtime, ses contrôles ont été déclenchés
+    par injection sur le poste de développement</td></tr>
+</table>
+<p><strong>Un lot écrit n'est pas un lot corrigé.</strong> Les trois premiers attendent la
+<a href="#campagne-4">quatrième campagne</a> ; la publication reste bloquée par les quatre.</p>
+<p>Deux points restent ouverts et ne sont pas des oublis : le <code>fsync</code> du lot 2, laissé de
+côté parce que l'atomicité sous coupure est hors périmètre — c'est le commentaire qui affirmait le
+contraire qui a été corrigé, pas le code ; et un <code>String(e)</code> résiduel dans
+<code>vaultBridge.service.ts</code>, sur la ligne que le lot 1 réécrit de son côté, à passer en
+<code>briefError()</code> quand les deux branches se retrouveront sur <code>master</code>.</p>
+<p><strong>La fusion produira un conflit sur <code>AI-HISTORY.html</code> et <code>ROADMAP.html</code></strong>
+à partir du deuxième merge : les quatre branches écrivent le même chantier au même endroit. La
+résolution est mécanique — un seul titre de chantier, les lignes de tableau concaténées, un seul
+callout d'avancement. C'est le prix assumé de branches restées dissociables pour la campagne.</p>
+</div>
 
 <div class="callout important">
 <span class="callout-title">Deux défauts touchent la raison d'être du plugin, pas ses marges</span>
@@ -1040,6 +1068,88 @@ inter-processus. <strong>Le pid seul ne tranche pas</strong> — un Tabby gelé 
 vivant. Ce qui discrimine, c'est <em>pid vivant + ancienneté</em> : une opération gardée saine revient
 en millisecondes, une gelée jamais. C'est une refonte du garde-fou, avec sa propre campagne.</p>
 </div>
+
+<h2 id="campagne-4">Quatrième campagne — préparée le 2026-08-02, non menée</h2>
+<div class="callout important">
+<span class="callout-title">Trois postes en parallèle, un lot chacun</span>
+<p>Les VM sont dupliquées et les trois campagnes tournent en même temps, chacune sur la branche de son
+lot : <strong>A</strong> pour le jeton détruit, <strong>B</strong> pour l'écriture du fichier,
+<strong>C</strong> pour la lisibilité. Le lot 4 n'a pas de poste — il est déjà validé et ne touche pas
+le runtime.</p>
+<p>Le matériel vit dans <code>.tempfiles/</code>, hors dépôt comme celui de la campagne 3 : un dossier
+d'opérateur qui porte les hypothèses et la grille de dépouillement, trois prompts aveuglés, et trois
+paquets construits. <strong>Rien de tout cela n'est versionné</strong> — le dossier d'opérateur ne doit
+jamais atteindre une VM.</p>
+</div>
+
+<h3>Ce que la préparation a changé au protocole, et pourquoi</h3>
+
+<div class="callout warning">
+<span class="callout-title">Retirer <code>.AIRules/</code> du clone n'aveugle plus rien</span>
+<p>Le dispositif des campagnes précédentes — cloner sans <code>.AIRules/</code>, <code>CLAUDE.md</code>,
+<code>.tempfiles/</code> ni <code>.git</code> — est <strong>caduc</strong>. Mesuré le 2026-08-02 :
+le bundle construit en mode développement <strong>contient les commentaires du code en clair</strong>,
+et ceux des correctifs disent littéralement ce qu'ils corrigent et à quelle campagne ils répondent ;
+<code>dist/index.js.map</code> porte l'intégralité des sources commentées ; trois <code>.d.ts</code>
+sont révélateurs. <strong>Le code raconte ses propres correctifs</strong> — et ce projet commente
+abondamment, ce qui est une qualité partout ailleurs.</p>
+<p>D'où le régime retenu : <strong>boîte noire</strong>. L'instance ne reçoit aucune source et ne
+construit rien. Elle reçoit <code>dist/index.js</code> construit en <em>production</em>, plus un
+<code>package.json</code>, et teste ce que le plugin fait. C'est le seul aveuglement réel, et il est
+plus proche de l'usage.</p>
+<p>Un troisième canal est apparu à la construction : le CSS est embarqué comme chaîne JS, donc
+<strong>les commentaires SCSS survivent à la minification</strong>, avec leurs renvois vers
+<code>.AIRules/</code> et des numéros de pièges. Ils ne parlent d'aucun correctif, mais mettraient une
+instance curieuse sur la piste d'un dépôt public où tout est écrit. Un caviardage ciblé les retire,
+comme le <code>package.json</code> est réduit pour ne pas porter l'URL du dépôt.</p>
+</div>
+
+<div class="callout warning">
+<span class="callout-title">Le format d'installation était en contradiction avec le protocole</span>
+<p>Le protocole imposait le paquet <code>.deb</code>, hérité de la campagne 3. Or <strong>il exige les
+droits d'administration</strong>, donc une saisie du mot de passe du compte — que le protocole ne
+déclarait nulle part, alors qu'il interdit par ailleurs à l'opérateur de saisir quoi que ce soit
+d'imprévu. Le protocole se contredisait lui-même.</p>
+<p>C'est l'instance du poste B qui l'a résolu spontanément, en prenant l'archive portable
+<code>tabby-1.0.235-linux-x64.tar.gz</code> — même binaire officiel, SHA-256 relevé, aucun privilège
+requis — et en déclarant ses deux écarts (<code>--no-sandbox</code>, rendu nécessaire par un
+<code>chrome-sandbox</code> non setuid et le confinement des espaces de noms d'Ubuntu 24.04, et
+<code>--enable-logging</code>). <strong>C'est désormais la méthode imposée aux trois postes.</strong></p>
+<p>Ce qu'il faut en retenir dépasse le cas : <em>une contrainte de protocole qui oblige à en violer une
+autre est un défaut du protocole, pas de celui qui l'exécute.</em></p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">Les sollicitations de l'opérateur sont la ressource rare</span>
+<p>Le protocole les réduit désormais explicitement, en séparant ce qui est irréductible de ce qui ne
+l'était que par habitude. <strong>Irréductible</strong> : la pop-up de coffre appartient au moteur de
+rendu de Tabby, l'injection clavier ne l'atteint pas. <strong>Ne l'est pas</strong> : le trousseau se
+verrouille et se déverrouille en ligne de commande (<code>busctl</code>,
+<code>gnome-keyring-daemon --replace --unlock</code> qui lit la phrase sur <code>stdin</code>) ; les
+fenêtres d'authentification du système sont <strong>GTK et non Chromium</strong>, donc peut-être
+pilotables — la mesure qui fonde la règle portait sur le renderer de Tabby et ne dit rien de GTK ; et
+un état sauvegardé se restaure au lieu de se reconstruire, ce qui supprime la plupart des ressaisies.</p>
+<p><strong>Le garde-fou est ce qui compte</strong> : ces raccourcis sont interdits dans tout scénario
+dont l'invite d'authentification <em>est</em> l'objet. La supprimer ne rendrait pas le scénario plus
+rapide, elle le rendrait vide — en produisant un rapport d'apparence normale. Le mot de passe du
+compte est déclaré dans les prompts, la VM étant jetable et restaurée par instantané.</p>
+</div>
+
+<h3>Ce qui reste acquis des campagnes précédentes</h3>
+<ul>
+<li><strong>Un dossier partagé par VM</strong>, cloisonné : une instance qui verrait trois prompts
+  apprendrait qu'il y a trois axes vérifiés en parallèle, donc qu'elle vérifie des correctifs.</li>
+<li><strong>Le partage se coupe depuis l'hôte</strong>, pas depuis l'invité — un <code>umount</code>
+  ne survit pas aux redémarrages que les scénarios exigent, et un partage ouvert est un chemin vers
+  l'hôte que le rapport ne mentionnera pas.</li>
+<li><strong>L'effacement se fait par instantané</strong>, jamais par une purge que l'instance
+  lancerait elle-même (réfuté sur trois plans à la campagne 3). Elle déclare seulement où elle
+  écrit.</li>
+<li><strong>L'opérateur fait les saisies GUI qui restent</strong>, et ne saisit aucune valeur qui ne
+  figure pas au protocole.</li>
+<li><strong>Prompt et dépouillement sont deux fichiers</strong> — c'est la correction structurelle
+  décidée après la campagne 3, où l'aveuglement s'est perdu par une omission de forme.</li>
+</ul>
 
 <h2 id="i18n">Internationalisation — interface traduite, journal en anglais</h2>
 <p><strong>Fait le 2026-08-01</strong>, sur la branche <code>feat/i18n-ui</code> — priorisé le
