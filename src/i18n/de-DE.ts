@@ -24,6 +24,7 @@ export default {
 
     // Panneau de réglages — trousseau indisponible
     'System keychain unavailable.': 'Schlüsselbund des Systems nicht verfügbar.',
+    'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.': 'Starten Sie Tabby neu, bevor Sie es erneut versuchen: Der Schlüsselbund merkt sich diesen Fehlschlag, solange die Anwendung läuft — eine weitere Prüfung erreicht ihn daher nicht.',
     'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.': 'Das automatische Entsperren kann auf diesem Rechner nicht funktionieren; das Master-Passwort wird weiterhin jedes Mal abgefragt.',
     'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.': 'Die davon abhängigen Einstellungen bleiben so lange ausgeblendet. Protokoll und Beobachtungsmodus bleiben verfügbar, ebenso der Widerruf, falls ein Passwort gespeichert war.',
 

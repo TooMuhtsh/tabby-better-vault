@@ -216,7 +216,7 @@ export class BetterVaultSettingsTabComponent {
         if (!at) {
             return this.i18n.t('no expiry')
         }
-        return new Date(at).toLocaleString()
+        return this.i18n.date(at)
     }
 
     save (): void {

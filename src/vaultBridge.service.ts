@@ -6,7 +6,7 @@ import { I18nService } from './i18n'
 import { showInlineToast } from './inlineToast'
 import { guardState, describeState } from './keychainGuard'
 import { log, warn, crit } from './logger'
-import { english } from './messages'
+import { briefError, english, logDate } from './messages'
 import { keychainStatus, keychainName, encrypt, decrypt } from './osKeychain'
 import {
     readSettings, writeSettings, readToken, writeToken, deleteToken,
@@ -178,7 +178,7 @@ export class VaultBridgeService {
         if (settings.token && settings.tokenExpiresAt === null && settings.expiry.mode !== 'never') {
             const expiresAt = computeExpiry(settings.expiry)
             writeSettings({ ...settings, tokenExpiresAt: expiresAt })
-            log(`expiry applied to the existing token: ${expiresAt ? new Date(expiresAt).toLocaleString() : 'none'}`)
+            log(`expiry applied to the existing token: ${expiresAt ? logDate(expiresAt) : 'none'}`)
         }
 
         const blob = readToken()
@@ -325,12 +325,16 @@ export class VaultBridgeService {
         try {
             const expiresAt = writeToken(encrypt(passphrase))
             this.tokenVerified = true
-            log(`password saved in the system keychain — expires: ${expiresAt ? new Date(expiresAt).toLocaleString() : 'never'}`)
+            log(`password saved in the system keychain — expires: ${expiresAt ? logDate(expiresAt) : 'never'}`)
             this.announceStorage(expiresAt)
         } catch (e) {
             // Échec d'enregistrement : sans conséquence pour l'utilisateur, il
             // ressaisira au prochain démarrage.
-            warn(`could not save to the keychain — ${String(e)}`)
+            // `briefError` et non `String(e)` : cette erreur vient de
+            // `safeStorage`, donc de l'autre processus, et porte sa pile dans son
+            // message. Neuf lignes pour une entrée de journal dont la rétention
+            // raisonne par ligne.
+            warn(`could not save to the keychain — ${briefError(e)}`)
         }
         return passphrase
     }
@@ -351,7 +355,9 @@ export class VaultBridgeService {
         // voit qu'un fragment ne peut pas le rendre correctement. Les quatre
         // combinaisons sont donc écrites en toutes lettres.
         const keychain = this.i18n.t(keychainName())
-        const date = expiresAt ? new Date(expiresAt).toLocaleString() : null
+        // Locale de Tabby, pas celle du système : cette notification est traduite,
+        // la date qu'elle porte doit l'être avec elle.
+        const date = expiresAt ? this.i18n.date(expiresAt) : null
 
         const title = preview
             ? this.i18n.t('Observation mode — nothing was saved')

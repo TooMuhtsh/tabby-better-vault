@@ -27,7 +27,7 @@
 export interface Message {
     /** Chaîne source anglaise : texte du journal ET clé de traduction. */
     source: string
-    /** Substitutions littérales — dates, messages d'erreur système, noms techniques. */
+    /** Substitutions littérales — messages d'erreur système, noms techniques. */
     params?: Record<string, string>
     /**
      * Substitutions qui sont elles-mêmes des chaînes sources à traduire.
@@ -38,6 +38,63 @@ export interface Message {
      * l'interface les traduit d'abord.
      */
     sourceParams?: Record<string, string>
+    /**
+     * Substitutions qui sont des INSTANTS, non des textes — millisecondes depuis
+     * l'époque.
+     *
+     * Troisième catégorie pour la même raison que la deuxième : une date rendue
+     * une seule fois ne peut pas servir les deux sorties. Rendue ici, elle
+     * partait au journal dans la locale du SYSTÈME — soit ni la langue du
+     * journal, qui est figé en anglais, ni celle de l'interface, qui suit Tabby.
+     * Un `better-vault.log` en anglais pouvait donc porter des dates au format
+     * français, et le panneau les afficher dans une troisième forme encore.
+     *
+     * Le journal les rend par `logDate()` (format fixe), l'interface par la
+     * locale de Tabby. Voir `I18nService.date()`.
+     */
+    dateParams?: Record<string, number>
+}
+
+/** Longueur au-delà de laquelle un motif technique cesse d'informer. */
+const MAX_ERROR_LENGTH = 160
+
+/**
+ * Condense une erreur en une ligne.
+ *
+ * `String(e)` était inséré tel quel dans les motifs ci-dessous. Une erreur qui
+ * traverse `@electron/remote` embarque la pile de l'AUTRE processus dans son
+ * propre message : neuf lignes, dont sept de pile Node, mesurées à l'écran ET au
+ * journal par la campagne du 2026-08-01 — pour un utilisateur qui venait
+ * simplement de refuser une invite d'authentification. Au journal, c'est en
+ * outre une entrée étalée sur neuf lignes dans un fichier dont la rétention
+ * raisonne par ligne.
+ *
+ * La pile est perdue, délibérément : elle décrit le processus principal
+ * d'Electron et non le chemin de code du plugin, elle n'aide donc pas à situer
+ * un défaut d'ici. Le motif, lui, est conservé.
+ */
+export function briefError (e: unknown): string {
+    const raw = e instanceof Error && e.message ? e.message : String(e)
+    const first = raw
+        .split('\n')
+        .map(line => line.trim())
+        .find(line => line && !/^at\s/.test(line))
+    const brief = (first ?? raw.trim()).replace(/\s+/g, ' ')
+    return brief.length > MAX_ERROR_LENGTH ? brief.slice(0, MAX_ERROR_LENGTH - 1) + '…' : brief
+}
+
+/**
+ * Date pour le JOURNAL : format fixe, jamais localisé.
+ *
+ * Même raison que pour les phrases — un fichier persistant et relu après coup ne
+ * peut pas changer de format au gré de la locale active à l'instant de
+ * l'écriture. C'est le format des horodatages de `logger.ts`, qui l'emprunte à
+ * cette fonction : une ligne et les dates qu'elle cite s'écrivent pareil.
+ */
+export function logDate (at: number | Date = new Date()): string {
+    const d = at instanceof Date ? at : new Date(at)
+    const p = (n: number): string => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
 }
 
 /**
@@ -108,7 +165,11 @@ export const GUARD = {
  * lisible, une ligne qui affirme une valeur qu'elle n'a pas ne l'est pas.
  */
 export function english (message: Message): string {
-    const all = { ...message.sourceParams, ...message.params }
+    const dates: Record<string, string> = {}
+    for (const [key, at] of Object.entries(message.dateParams ?? {})) {
+        dates[key] = logDate(at)
+    }
+    const all = { ...message.sourceParams, ...dates, ...message.params }
     if (!Object.keys(all).length) {
         return message.source
     }

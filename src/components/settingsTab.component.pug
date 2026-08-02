@@ -36,6 +36,12 @@
   .alert.alert-warning(*ngIf='keychain && !keychain.available && !keychain.suspended')
     strong {{ 'System keychain unavailable.' | translate }}
     |  {{ keychainReason }}
+    //- Sans cette ligne, l'utilisateur reclique sur « vérifier » indéfiniment :
+        le trousseau ne sera plus interrogé de la session, et le bouton ne
+        l'annonce pas (#V23). Le redémarrage est le seul remède, il doit être
+        écrit là où l'échec s'affiche.
+    .mt-1(*ngIf='keychain.restartRequired')
+      strong {{ 'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.' | translate }}
     .mt-1 {{ 'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.' | translate }}
     .mt-1 {{ 'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.' | translate }}
 

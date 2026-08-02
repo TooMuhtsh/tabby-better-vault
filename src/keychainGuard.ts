@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import { configDir } from './tabbyConfig'
-import { GUARD, Message, OPERATION, OperationId, REASON, english, isOperationId } from './messages'
+import { GUARD, Message, OPERATION, OperationId, REASON, briefError, english, isOperationId } from './messages'
 
 /**
  * Garde-fou contre le gel du démarrage par un appel bloquant au trousseau.
@@ -146,21 +146,26 @@ export function guardState (): GuardState {
  * Message prêt à journaliser (en anglais) ou à afficher (traduit).
  *
  * Quatre variantes entières plutôt qu'une phrase assemblée : voir `GUARD` dans
- * `messages.ts` pour la raison. La date est rendue ici, avec la locale du
- * système — c'est un paramètre, pas une clé.
+ * `messages.ts` pour la raison.
+ *
+ * LA DATE N'EST PAS RENDUE ICI. Elle l'était, avec la locale du système : le
+ * même instant partait donc au journal — figé en anglais — dans un format qui
+ * dépendait des réglages de la machine, et à l'écran sans égard pour la langue
+ * de Tabby. Elle voyage désormais en millisecondes et chaque sortie la rend à
+ * sa façon (`dateParams`).
  */
 export function describeState (state: GuardState): Message {
     const operation = state.operation ? OPERATION[state.operation] : null
-    const date = state.since ? new Date(state.since).toLocaleString() : null
+    const since = state.since ?? null
 
-    if (operation && date) {
-        return { source: GUARD.operationDated, params: { date }, sourceParams: { operation } }
+    if (operation && since) {
+        return { source: GUARD.operationDated, dateParams: { date: since }, sourceParams: { operation } }
     }
     if (operation) {
         return { source: GUARD.operation, sourceParams: { operation } }
     }
-    if (date) {
-        return { source: GUARD.anonymousDated, params: { date } }
+    if (since) {
+        return { source: GUARD.anonymousDated, dateParams: { date: since } }
     }
     return { source: GUARD.anonymous }
 }
@@ -211,7 +216,7 @@ export function runGuarded<T> (operation: OperationId, fn: () => T): T {
             { mode: 0o600 },
         )
     } catch (e) {
-        throw suspendedError({ source: REASON.guardNotArmable, params: { error: String(e) } })
+        throw suspendedError({ source: REASON.guardNotArmable, params: { error: briefError(e) } })
     }
 
     depth++

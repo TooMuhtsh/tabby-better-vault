@@ -31,6 +31,7 @@ export default {
 
     // Panneau de réglages — trousseau indisponible
     'System keychain unavailable.': 'Trousseau du système indisponible.',
+    'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.': 'Redémarrez Tabby avant de réessayer : le trousseau garde la mémoire de cet échec tant que l\'application tourne, une nouvelle vérification ne l\'atteindrait donc pas.',
     'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.': 'Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.',
     'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.': 'Les réglages qui en dépendent sont masqués tant que c\'est le cas. Le journal et le mode observation restent accessibles, ainsi que la révocation si un mot de passe avait été enregistré.',
 
