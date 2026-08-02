@@ -957,9 +957,17 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 </ul>
 
 <h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
-<p><strong>Rien n'est corrigé au 2026-08-01</strong> : la campagne a rendu son rapport, le plan
-ci-dessous est arrêté, aucun code n'a bougé. Les dix constats ont été revérifiés un par un contre les
-sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+<p>Le plan ci-dessous a été arrêté le 2026-08-01, après revérification des dix constats un par un contre
+les sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+
+<div class="callout note">
+<span class="callout-title">Avancement au 2026-08-02 — lot 2 écrit, non exercé sur Linux</span>
+<p><strong>Lot 2 écrit</strong> (<code>9a67513</code>, branche <code>fix/c3-lot2-ecriture-fichier</code>),
+avec la mesure du défaut avant correction. <strong>Aucun de ces correctifs ne sera validé avant la
+quatrième campagne</strong> : les scénarios qui les révèlent sont linuxiens par nature — ici le lien
+symbolique, que Windows ne crée pas sans privilège. Un lot écrit et poussé n'est pas un lot corrigé,
+et la publication reste bloquée par les quatre.</p>
+</div>
 
 <div class="callout important">
 <span class="callout-title">Deux défauts touchent la raison d'être du plugin, pas ses marges</span>
@@ -986,7 +994,8 @@ refusée reste dégradée pour toute sa session, sans réessai.</p>
   trousseau, pas de jeton. Pire cas si on ne purge plus : un déchiffrement raté par démarrage sur un
   jeton réellement corrompu, révocable depuis les réglages. Strictement meilleur que détruire un bon
   jeton.</li>
-<li><strong>Écriture du fichier</strong> — quatre constats, un seul geste sur
+<li><strong>Écriture du fichier — écrit le 2026-08-02, non exercé</strong> (<code>9a67513</code>).
+  Quatre constats, un seul geste sur
   <code>writeSettings()</code>. Le temporaire à nom fixe est plantable en lien symbolique :
   <code>writeFileSync</code> écrit <em>à travers</em> le lien et <code>renameSync</code> déplace le
   lien lui-même, si bien que <code>better-vault.json</code> devient un lien et que le jeton atterrit
