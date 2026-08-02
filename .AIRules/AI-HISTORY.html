@@ -24,6 +24,36 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Correctifs de la troisième campagne (2026-08-02)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-02</td><td><code>405b67d</code></td>
+<td><strong>Lot 4 — <code>lint:i18n</code> vérifie enfin l'enregistrement des tables et les collisions
+de <code>msgid</code>. Le seul lot validable sans la VM, et il l'est.</strong>
+<br><br>
+Le script tenait sa liste de langues en dur et <strong>n'ouvrait jamais <code>src/i18n/index.ts</code></strong> :
+une table écrite, traduite, complète, mais absente de <code>TABLES</code> passait au vert sans jamais
+s'afficher. Il lit désormais <code>TABLES</code>, vérifie que chaque fichier y est enregistré, que
+chaque code enregistré a son fichier et son import, et que ce code existe dans
+<code>LocaleService.allLanguages</code> — un <code>'fr'</code> au lieu de <code>'fr-FR'</code>
+n'active jamais la locale, donc ne lit jamais la table.
+<br><br>
+Il surveille aussi les <strong>collisions avec les <code>msgid</code> de Tabby</strong>
+(<a href="AI-CONTEXT.html#piege-v24">#V24</a>) : valeur identique, signalée pour mémoire ; valeur
+différente, échec — ce plugin changerait le vocabulaire de Tabby pour l'application entière. Les deux
+listes sont extraites du bundle compilé de <code>tabby-core</code>, où les <code>.po</code> sont
+embarqués en JSON : lecture seule, aucune exécution, aucune dépendance ajoutée.
+<br><br>
+<strong>Les quatre contrôles neufs ont été exercés par injection, pas relus</strong> — table non
+enregistrée, code de locale invalide, valeur divergente, bundle absent — et les codes de sortie
+suivent. L'état mesuré confirme la campagne : <code>'Cancel'</code> est bien partagée avec Tabby dans
+les trois langues, valeurs identiques.
+<br><br>
+Le cas « <code>tabby-core</code> non installé » <strong>annonce ses contrôles comme NON VÉRIFIÉS</strong>
+au lieu de se taire : un lint dégradé qui ressemble à un lint complet est pire qu'un lint absent.</td></tr>
+</table>
+
 <h2>Troisième campagne de vérification Linux (2026-08-01)</h2>
 
 <table>

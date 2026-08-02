@@ -957,9 +957,18 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 </ul>
 
 <h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
-<p><strong>Rien n'est corrigé au 2026-08-01</strong> : la campagne a rendu son rapport, le plan
-ci-dessous est arrêté, aucun code n'a bougé. Les dix constats ont été revérifiés un par un contre les
-sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+<p>Le plan ci-dessous a été arrêté le 2026-08-01, après revérification des dix constats un par un contre
+les sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+
+<div class="callout note">
+<span class="callout-title">Avancement au 2026-08-02 — lot 4 écrit ET validé</span>
+<p><strong>Lot 4 écrit et exercé</strong> (<code>405b67d</code>, branche
+<code>fix/c3-lot4-outillage</code>). C'est le seul des quatre qui ne touche pas le runtime du plugin,
+donc le seul dont la validation n'attend pas la VM : ses quatre contrôles neufs ont été déclenchés par
+injection sur ce poste.</p>
+<p>Ça ne débloque pas la publication : elle dépend des trois autres lots, dont aucun n'a tourné sur
+Linux.</p>
+</div>
 
 <div class="callout important">
 <span class="callout-title">Deux défauts touchent la raison d'être du plugin, pas ses marges</span>
@@ -1009,7 +1018,8 @@ refusée reste dégradée pour toute sa session, sans réessai.</p>
   et <code>learnFromUser</code> ne peut alors plus rien enregistrer : il faut le dire à l'écran,
   puisque le redémarrage de Tabby est le seul remède. Et <code>withSafeStorage()</code> ne teste que
   <code>if (!safeStorage)</code>, jamais l'existence des méthodes.</li>
-<li><strong>Outillage</strong> — <code>lint:i18n</code> ne lit jamais <code>TABLES</code> : sa liste
+<li><strong>Outillage — écrit et validé le 2026-08-02</strong> (<code>405b67d</code>).
+  <code>lint:i18n</code> ne lisait jamais <code>TABLES</code> : sa liste
   de langues est codée en dur et le script n'ouvre pas <code>src/i18n/index.ts</code>. Une table
   écrite mais non enregistrée, ou enregistrée sous un code invalide (<code>'fr'</code> au lieu de
   <code>'fr-FR'</code>), passerait au vert. Collision latente à traiter dans le même geste : la clé
