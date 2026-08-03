@@ -15,7 +15,7 @@
 </nav>
 
 <h1>Roadmap</h1>
-<p class="muted">Dernière revue : 2026-08-01</p>
+<p class="muted">Dernière revue : 2026-08-03</p>
 
 <h2>Vue d'ensemble</h2>
 <table>
@@ -43,6 +43,8 @@
     <td><span class="pill done">✅ Menée le 2026-08-01 — D1 et D2 conformes, <strong>dix défauts trouvés hors périmètre</strong>, dont D4 confirmé jusqu'en usage spontané</span></td><td>—</td></tr>
 <tr><td><a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
     <td><span class="pill progress">🚧 Quatre lots écrits, deux sujets de conception ouverts — rien de corrigé au 2026-08-01</span></td><td><strong>Priorité absolue</strong></td></tr>
+<tr><td><a href="#bruit-journal">Journal saturé par les déverrouillages répétés</a></td>
+    <td><span class="pill progress">🚧 Constaté le 2026-08-03 — mécanisme établi (deux <code>getPassphrase()</code> par sauvegarde de config), <strong>rien de corrigé</strong></span></td><td><strong>Haute</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
     <td><span class="pill done">✅ Fusionnée dans <code>master</code> le 2026-08-01 et <strong>vérifiée sur Linux</strong> le jour même — quatre langues, journal figé en anglais. Deux défauts d'outillage et de format de date en découlent</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -1150,6 +1152,77 @@ compte est déclaré dans les prompts, la VM étant jetable et restaurée par in
 <li><strong>Prompt et dépouillement sont deux fichiers</strong> — c'est la correction structurelle
   décidée après la campagne 3, où l'aveuglement s'est perdu par une omission de forme.</li>
 </ul>
+
+<h2 id="bruit-journal">Journal saturé par les déverrouillages répétés — constat du 2026-08-03</h2>
+<p>Signalé par l'utilisateur à partir de la console de Tabby : la ligne <code>INFO vault unlocked
+from the system keychain</code> se répète en rafale, jusqu'à quatre fois par seconde pendant des
+salves de trente secondes à une minute. Comptage sur <code>better-vault.log</code> : <strong>262
+déverrouillages le 2026-08-03</strong>, 167 la veille, 26 l'avant-veille.</p>
+
+<div class="callout important">
+<span class="callout-title">Le pont ne boucle pas — c'est Tabby qui appelle, et nous qui parlons</span>
+<p>Sur une configuration chiffrée, <code>ConfigService.save()</code> passe par
+<code>maybeEncryptConfig()</code>, qui appelle <code>vault.load()</code> — donc
+<code>decrypt()</code>, donc <code>getPassphrase()</code> — <em>puis</em> <code>vault.encrypt()</code>,
+qui rappelle <code>getPassphrase()</code>. <strong>Deux appels par sauvegarde de configuration.</strong>
+Deux faits le confirment : les lignes du journal arrivent systématiquement par paires, et le
+<code>mtime</code> de <code>config.yaml</code> coïncide à la seconde près avec la dernière ligne de la
+rafale. Rythme observé : environ deux sauvegardes par seconde.</p>
+<p>Sans le plugin, ces mêmes appels sont servis en silence par le cache natif
+<code>_rememberedPassphrase</code>, que le chemin du déverrouillage automatique ne remplit jamais
+(<a href="AI-CONTEXT.html#piege-v6">#V6</a>) : le premier appel ouvre le modal, les suivants
+retournent la valeur mémorisée sans un mot. Notre remplaçante, elle, refait le cycle complet et le
+journalise à chaque fois. <strong>Le bruit est un symptôme que nous rendons visible, pas un défaut
+que nous créons.</strong></p>
+</div>
+
+<h3>Ce que chaque appel coûte réellement</h3>
+<ul>
+<li><strong>De notre côté</strong> : une lecture de <code>better-vault.json</code>
+  (<code>readSettings()</code>), un <code>safeStorage.decryptString</code>, un
+  <code>console.log</code> et un <code>appendFileSync</code> <em>synchrone</em>. Le PBKDF2 de
+  vérification, lui, est bien évité par <code>tokenVerified</code> — ce garde-là tient.</li>
+<li><strong>Du côté de Tabby, sans rapport avec nous</strong> : chaque <code>save()</code> sur une
+  configuration chiffrée fait <strong>deux dérivations PBKDF2 de 100 000 itérations SHA-512</strong>
+  (une pour <code>decryptVault</code>, une pour <code>encryptVault</code>, qui régénère son sel) et
+  réécrit les 49 Ko de <code>config.yaml</code>. Deux fois par seconde. Cela se produirait à
+  l'identique sans le plugin, silencieusement — <strong>c'est le vrai problème, et il est en
+  amont</strong>.</li>
+<li><strong>Le plafond de 4 Mo du journal</strong> (<code>HARD_SIZE_LIMIT</code>) est exactement le
+  garde-fou que ce cas anticipait : il protège, mais au prix de l'écrasement des lignes anciennes,
+  qui sont précisément celles qui portent l'information.</li>
+</ul>
+
+<h3>Ce qui n'est pas en cause</h3>
+<p>Aucun fichier de <code>src/</code> n'appelle <code>config.save()</code> ni n'injecte
+<code>ConfigService</code> — vérifié par recherche exhaustive sur l'arborescence. Le plugin
+n'enclenche donc pas les sauvegardes qu'il subit. Reste à identifier <em>qui</em> les enclenche : ce
+n'est pas nécessairement du ressort de ce projet, mais le pont est le seul point d'observation dont
+on dispose sur cet appel.</p>
+
+<h3>Ce qui est retenu</h3>
+<ol>
+<li><strong>Étouffer la répétition dans <code>logger.ts</code></strong>, pas dans
+  <code>vaultBridge.service.ts</code> : un mécanisme de temporisation réutilisable, sur le modèle de
+  <code>unlockAnnounced</code> mais côté journal. La <strong>première</strong> ligne de déverrouillage
+  d'une session reste écrite en clair — elle porte l'information « quand le coffre a été ouvert », qui
+  est l'une des deux raisons d'être du journal — et les répétitions sont comptées puis résumées en une
+  ligne. Corrige la console et le fichier au même endroit, puisque les deux passent par
+  <code>write()</code>.</li>
+<li><strong>Capturer la pile en mode observation</strong> (<code>debug</code>), et là seulement, pour
+  nommer l'appelant qui sauvegarde la configuration deux fois par seconde. Le mode observation est le
+  bon porteur : il existe déjà pour regarder sans agir.</li>
+</ol>
+
+<div class="callout warning">
+<span class="callout-title">Ce qu'il ne faut pas faire — la fausse bonne idée</span>
+<p>Élargir la fenêtre de <code>this.pending</code> — la garder quelques centaines de millisecondes
+au lieu de la libérer dans le <code>finally</code> — absorberait les rafales et supprimerait aussi
+bien le bruit que les allers-retours vers le trousseau. <strong>C'est exactement ce que l'invariant
+interdit</strong> : la promesse retenue contient le mot de passe en clair, donc le conserver entre
+deux appels, c'est le mettre en cache. Le coût par appel est le prix assumé de la règle « le mot de
+passe en clair ne survit à aucun appel ». Il ne se négocie pas contre du confort de journal.</p>
+</div>
 
 <h2 id="i18n">Internationalisation — interface traduite, journal en anglais</h2>
 <p><strong>Fait le 2026-08-01</strong>, sur la branche <code>feat/i18n-ui</code> — priorisé le
