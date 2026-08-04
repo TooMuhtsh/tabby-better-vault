@@ -231,7 +231,10 @@ Ordre après le `<h1>Roadmap</h1>` et la ligne de dernière revue :
    `Phase 2 — {{priorité}}`, `Non daté — à faire quand utile`, `Hors périmètre`. N'inclure
    que les phases pertinentes, mais garder « Hors périmètre » en dernier dès que des idées
    ont été explicitement écartées — c'est ce qui évite qu'elles soient reproposées sans
-   qu'on sache qu'elles ont déjà été tranchées.
+   qu'on sache qu'elles ont déjà été tranchées. Si l'option `registre-livrés` vaut `oui`, un
+   chantier arrivé à son état terminal n'a plus de section de détail ici : seule une ligne
+   pointant vers `annexes/REALISE.{{ext}}` (§ 9) subsiste, à la position chronologique qu'il
+   occupait.
 4. **Un titre ancré par chantier** dans une phase, avec :
    - un paragraphe de design aussi détaillé que possible — les choix d'architecture et d'UX
      déjà tranchés, pas seulement une intention vague ;
@@ -428,6 +431,7 @@ Réponses de cadrage de ce projet. La charte qui les rend nécessaires est
 |---|---|---|
 | `format` | `html` | défaut appliqué, non tranché |
 | `documents` | `4` | défaut appliqué, non tranché |
+| `registre-livrés` | `oui` | défaut appliqué, non tranché |
 | `fichier-instructions` | `CLAUDE.md` | défaut appliqué, non tranché |
 | `statuts` | `complet` | défaut appliqué, non tranché |
 | `outillage` | `oui` | le projet produit ses propres scripts de build et de publication |
@@ -470,6 +474,7 @@ Point de départ seulement — chaque ligne reste écrasable.
 |---|---|---|---|
 | `format` | `markdown` | `html` | `html` |
 | `documents` | `3` | `4` | `4` |
+| `registre-livrés` | `non` | `oui` | `oui` |
 | `fichier-instructions` | `CLAUDE.md` | `CLAUDE.md` | `CLAUDE.md` |
 | `statuts` | `réduit` | `complet` | `complet` |
 | `outillage` | `non` | à demander | `oui` |
@@ -628,5 +633,53 @@ Cinq exigences derrière cette forme :
 > échoue en silence fait croire à un rapport copié.
 
 ---
-*Version de ce fichier : **`20260803-182826`**. Il suit l'identifiant de
+
+# 9. Registre des chantiers livrés (option `registre-livrés`)
+
+Annexe (A-8) qui reçoit un chantier dès qu'il atteint son état terminal (`Livré`, ou
+`Adopté` pour l'outillage). Fichier `annexes/REALISE.{{ext}}`, suit le squelette de pages
+d'annexe du § 5 — pas de navbar, ligne de retour vers `ROADMAP.{{ext}}`.
+
+## Plan
+
+1. **Ligne de retour** (§ 5) vers la roadmap active.
+2. **Paragraphe de renvoi** : ce registre ne porte que l'état d'un chantier déjà livré ; ce
+   qui reste à faire est dans la roadmap active, l'événement daté est dans le journal.
+3. **Une section par chantier, la plus récente en tête** — l'inverse de l'ordre du journal :
+   un lecteur qui ouvre ce fichier cherche d'abord ce qui vient d'être livré. Titre ancré,
+   identifiant stable (A-6).
+4. **Une entrée porte, dans cet ordre** :
+   - le design retenu et l'ampleur du chantier, repris depuis la roadmap au moment de la
+     bascule — pas réécrit ;
+   - le renvoi vers l'entrée du journal qui l'a acté ;
+   - les évolutions post-livraison, une ligne chacune (ajout, retrait, remplacement), datées
+     par rapport à la livraison. Une ligne se limite au changement lui-même ; le récit du
+     pourquoi et du comment reste au journal, que la ligne renvoie sans le répéter. Une
+     évolution qui touche l'architecture, une convention ou plus d'un fichier rouvre un
+     chantier dans l'actif au lieu de s'ajouter ici (seuil de l'option
+     `roadmap-avant-code`) ;
+   - les numéros de pièges issus du chantier, sans les réexpliquer (A-2, le contexte les
+     porte) ;
+   - la liste des commits du chantier, en une seule ligne, en ordre chronologique — seule
+     information de l'entrée qu'aucun autre document ne porte.
+
+## Bascule
+
+- Un chantier `Écarté` ne bascule jamais : il reste en « Hors périmètre » dans la roadmap
+  active.
+- La roadmap active ne garde du chantier livré qu'**une ligne et son lien** vers l'entrée du
+  registre — jamais son statut ni son détail en double (A-2).
+- Indépendant de l'option `documents` : registre ou pas, la roadmap et le journal restent
+  scindés ou fusionnés selon cette option-là. Le registre est une annexe, pas un cinquième
+  document principal, et n'entre jamais dans la navbar.
+
+> **⚠️ Une réécriture d'historique invalide la ligne de commits, en silence**
+>
+> `rebase`, `filter-branch` ou une amende massive changent les hashes sans que la ligne
+> cesse d'être lisible — elle continue de désigner des commits qui n'existent plus. Toute
+> réécriture d'historique impose de rejouer les lignes de commits du registre touchées, ou
+> d'y porter une table de correspondance, le même geste qu'A-4 prévoit pour le journal.
+
+---
+*Version de ce fichier : **`20260804-064238`**. Il suit l'identifiant de
 [`GOUVERNANCE-IA.md`](./GOUVERNANCE-IA.md) et se propage avec elle.*
