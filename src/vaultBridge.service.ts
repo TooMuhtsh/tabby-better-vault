@@ -190,9 +190,25 @@ export class VaultBridgeService {
         try {
             passphrase = decrypt(blob)
         } catch (e) {
-            warn(`token unreadable (${String(e)}) — purged, manual entry`)
-            deleteToken()
+            // NE PAS PURGER ICI. `decrypt()` échoue de la même façon quand le
+            // trousseau refuse de répondre — invite d'authentification annulée,
+            // trousseau verrouillé — et quand le jeton est réellement corrompu.
+            // Purger sur cette indistinction détruisait un bon jeton au premier
+            // geste anodin : fermer une fenêtre d'authentification qui gêne
+            // annulait la raison d'être du plugin, sans que rien ne le dise.
+            // Mesuré par la campagne du 2026-08-01, contrôle apparié à l'appui —
+            // même trousseau verrouillé, même blocage, sans annulation le jeton
+            // survit.
+            //
+            // Les deux purges qui subsistent reposent sur une preuve POSITIVE
+            // que le jeton est faux : échéance dépassée, et échec de la
+            // vérification PBKDF2. Pire cas ici, un jeton réellement corrompu
+            // qui coûte un déchiffrement raté par démarrage — révocable depuis
+            // les réglages, et strictement préférable à la destruction d'un bon
+            // jeton.
+            warn(`token could not be read (${String(e)}) — kept, manual entry`)
             this.tokenVerified = false
+            this.announceKeychainHiccup()
             return null
         }
 
@@ -384,6 +400,34 @@ export class VaultBridgeService {
         } catch (e) {
             // Une notification qui échoue ne doit pas compromettre le
             // déverrouillage lui-même.
+            warn(`could not display the notification — ${String(e)}`)
+        }
+    }
+
+    /**
+     * Prévient l'utilisateur qu'une confirmation ponctuelle a échoué — jeton
+     * conservé (voir le commentaire de `serveFromToken()`), mot de passe
+     * simplement redemandé une fois. Sans ce toast, l'écran de démarrage ne
+     * dit rien de particulier : rien ne distingue ce cas d'un premier
+     * lancement ordinaire, alors que quelque chose vient bel et bien
+     * d'échouer (campagne 4, postes A et C).
+     *
+     * FIGÉ (`timeOut: 0`) et non temporisé : contrairement à l'annonce de
+     * déverrouillage, l'utilisateur doit pouvoir le lire même s'il n'est pas
+     * devant l'écran au moment exact où Tabby démarre.
+     */
+    private announceKeychainHiccup (): void {
+        try {
+            this.toastr.warning(
+                this.i18n.t('Restart Tabby to give automatic unlocking another try. Your password will be asked once in the meantime — nothing was lost.'),
+                this.i18n.t('Could not confirm the saved password with the keychain'),
+                {
+                    timeOut: 0,
+                    extendedTimeOut: 0,
+                    toastClass: 'ngx-toastr better-vault-toast',
+                },
+            )
+        } catch (e) {
             warn(`could not display the notification — ${String(e)}`)
         }
     }

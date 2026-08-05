@@ -88,6 +88,8 @@ export default {
 
     // Notifications
     'Vault unlocked automatically': 'Tresor automatisch entsperrt',
+    'Could not confirm the saved password with the keychain': 'Das gespeicherte Passwort konnte nicht beim Schlüsselbund bestätigt werden',
+    'Restart Tabby to give automatic unlocking another try. Your password will be asked once in the meantime — nothing was lost.': 'Starten Sie Tabby neu, um dem automatischen Entsperren eine weitere Chance zu geben. In der Zwischenzeit wird Ihr Passwort einmal abgefragt – nichts ist verloren gegangen.',
     'Observation mode — nothing was saved': 'Beobachtungsmodus – es wurde nichts gespeichert',
     'Password saved in {keychain}': 'Passwort gespeichert in {keychain}',
     'Outside observation mode, the password would be entrusted to {keychain}. Valid until {date}.': 'Außerhalb des Beobachtungsmodus würde das Passwort {keychain} anvertraut. Gültig bis {date}.',

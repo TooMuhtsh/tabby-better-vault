@@ -95,6 +95,8 @@ export default {
 
     // Notifications
     'Vault unlocked automatically': 'Coffre-fort déverrouillé automatiquement',
+    'Could not confirm the saved password with the keychain': 'Impossible de confirmer le mot de passe enregistré auprès du trousseau',
+    'Restart Tabby to give automatic unlocking another try. Your password will be asked once in the meantime — nothing was lost.': 'Relancez Tabby pour redonner sa chance au déverrouillage automatique. Le mot de passe sera redemandé une fois entre-temps — rien n\'a été perdu.',
     'Observation mode — nothing was saved': 'Mode observation — rien n\'a été enregistré',
     'Password saved in {keychain}': 'Mot de passe enregistré dans {keychain}',
     'Outside observation mode, the password would be entrusted to {keychain}. Valid until {date}.': 'Hors mode observation, le mot de passe serait confié à {keychain}. Valable jusqu\'au {date}.',

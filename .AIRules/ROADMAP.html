@@ -1009,8 +1009,9 @@ refusée reste dégradée pour toute sa session, sans réessai.</p>
 
 <h3>Les quatre lots</h3>
 <ol>
-<li><strong>Le jeton détruit</strong> — le <code>catch</code> de déchiffrement de
-  <code>serveFromToken()</code> ne doit plus purger. La purge se justifie là où on a une preuve
+<li><strong>Le jeton détruit — écrit le 2026-08-02, non exercé</strong> (<code>7608323</code>). Le
+  <code>catch</code> de déchiffrement de
+  <code>serveFromToken()</code> ne purge plus. La purge se justifie là où on a une preuve
   <em>positive</em> que le jeton est faux — échéance dépassée, échec PBKDF2 — et ces deux chemins
   existent déjà et purgent correctement. Un blob qu'on ne sait pas déchiffrer est un problème de
   trousseau, pas de jeton. Pire cas si on ne purge plus : un déchiffrement raté par démarrage sur un

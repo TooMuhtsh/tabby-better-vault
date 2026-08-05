@@ -89,6 +89,26 @@ affirmait le contraire qui a été corrigé, pas le code : <code>rename</code> p
 concurrent et de lui seul. Et le scénario du <strong>lien symbolique n'est pas exercé</strong> :
 Windows n'en crée pas sans privilège, le banc a utilisé un lien matériel, qui reproduit le mécanisme
 (écriture à travers) sans être la même primitive. Vérification sous symlink : campagne 4.</td></tr>
+<tr><td>2026-08-02</td><td><code>7608323</code></td>
+<td><strong>Lot 1 — le <code>catch</code> de déchiffrement de <code>serveFromToken()</code> ne purge
+plus le jeton.</strong> <code>decrypt()</code> échoue de la même façon quand le trousseau refuse de
+répondre et quand le jeton est corrompu ; purger sur cette indistinction détruisait un bon jeton dès
+qu'une invite d'authentification était annulée. Les deux purges qui subsistent reposent sur une preuve
+<em>positive</em> que le jeton est faux — échéance dépassée, échec PBKDF2. Pire cas désormais : un
+jeton réellement corrompu coûte un déchiffrement raté par démarrage, et reste révocable par
+<code>forgetNow()</code> depuis les réglages.
+<br><br>
+<code>tokenVerified</code> repasse quand même à <code>false</code> : un échec de <em>lecture</em> ne
+dit rien du <em>contenu</em> du jeton, et forcer une revérification PBKDF2 au prochain succès coûte
+50–100 ms une fois.
+<br><br>
+<strong>Mesuré sur Windows, dans les deux régimes</strong> (configuration chiffrée et non chiffrée) :
+aucune régression sur le chemin nominal, le coffre s'ouvre toujours automatiquement. <strong>Le
+correctif lui-même reste non exercé</strong>, et ne l'est pas ici : sous DPAPI il n'existe aucune
+invite d'authentification à annuler, donc aucun moyen de faire échouer <code>decrypt()</code> pour
+cause de trousseau. Il attend la quatrième campagne — <em>un correctif non exercé n'est pas une
+amélioration, c'est un pari</em>, et ce projet a déjà produit deux régressions en corrigeant trois
+défauts.</td></tr>
 </table>
 
 <h2>Troisième campagne de vérification Linux (2026-08-01)</h2>
