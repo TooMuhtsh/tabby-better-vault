@@ -88,6 +88,8 @@ export default {
 
     // Notifications
     'Vault unlocked automatically': 'Caja fuerte desbloqueada automáticamente',
+    'Could not confirm the saved password with the keychain': 'No se pudo confirmar la contraseña guardada con el llavero',
+    'Restart Tabby to give automatic unlocking another try. Your password will be asked once in the meantime — nothing was lost.': 'Reinicia Tabby para darle otra oportunidad al desbloqueo automático. Mientras tanto, se te pedirá la contraseña una vez: no se ha perdido nada.',
     'Observation mode — nothing was saved': 'Modo observación: no se ha guardado nada',
     'Password saved in {keychain}': 'Contraseña guardada en {keychain}',
     'Outside observation mode, the password would be entrusted to {keychain}. Valid until {date}.': 'Fuera del modo observación, la contraseña se confiaría a {keychain}. Válida hasta el {date}.',

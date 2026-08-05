@@ -208,6 +208,7 @@ export class VaultBridgeService {
             // jeton.
             warn(`token could not be read (${String(e)}) — kept, manual entry`)
             this.tokenVerified = false
+            this.announceKeychainHiccup()
             return null
         }
 
@@ -399,6 +400,34 @@ export class VaultBridgeService {
         } catch (e) {
             // Une notification qui échoue ne doit pas compromettre le
             // déverrouillage lui-même.
+            warn(`could not display the notification — ${String(e)}`)
+        }
+    }
+
+    /**
+     * Prévient l'utilisateur qu'une confirmation ponctuelle a échoué — jeton
+     * conservé (voir le commentaire de `serveFromToken()`), mot de passe
+     * simplement redemandé une fois. Sans ce toast, l'écran de démarrage ne
+     * dit rien de particulier : rien ne distingue ce cas d'un premier
+     * lancement ordinaire, alors que quelque chose vient bel et bien
+     * d'échouer (campagne 4, postes A et C).
+     *
+     * FIGÉ (`timeOut: 0`) et non temporisé : contrairement à l'annonce de
+     * déverrouillage, l'utilisateur doit pouvoir le lire même s'il n'est pas
+     * devant l'écran au moment exact où Tabby démarre.
+     */
+    private announceKeychainHiccup (): void {
+        try {
+            this.toastr.warning(
+                this.i18n.t('Restart Tabby to give automatic unlocking another try. Your password will be asked once in the meantime — nothing was lost.'),
+                this.i18n.t('Could not confirm the saved password with the keychain'),
+                {
+                    timeOut: 0,
+                    extendedTimeOut: 0,
+                    toastClass: 'ngx-toastr better-vault-toast',
+                },
+            )
+        } catch (e) {
             warn(`could not display the notification — ${String(e)}`)
         }
     }
