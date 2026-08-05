@@ -30,7 +30,7 @@ export default {
 
     // Panneau de réglages — activation et machine
     'Enable on this machine': 'Activar en este equipo',
-    'The master password is entrusted to the operating system keychain, never stored in clear text.': 'La contraseña maestra se confía al llavero del sistema operativo, nunca se guarda en claro.',
+    'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.': 'La contraseña maestra se cifra con una clave que guarda el llavero del sistema operativo, nunca se guarda en claro.',
     'Name of this machine': 'Nombre de este equipo',
     'Purely indicative — helps you find your way around the settings and the log.': 'Meramente indicativo: sirve para orientarse en los ajustes y en el registro.',
     'home machine': 'equipo de casa',

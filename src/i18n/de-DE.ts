@@ -30,7 +30,7 @@ export default {
 
     // Panneau de réglages — activation et machine
     'Enable on this machine': 'Auf diesem Rechner aktivieren',
-    'The master password is entrusted to the operating system keychain, never stored in clear text.': 'Das Master-Passwort wird dem Schlüsselbund des Betriebssystems anvertraut, niemals im Klartext gespeichert.',
+    'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.': 'Das Master-Passwort wird mit einem vom Schlüsselbund des Betriebssystems verwahrten Schlüssel verschlüsselt, niemals im Klartext gespeichert.',
     'Name of this machine': 'Name dieses Rechners',
     'Purely indicative — helps you find your way around the settings and the log.': 'Rein informativ – dient der Orientierung in den Einstellungen und im Protokoll.',
     'home machine': 'Rechner zu Hause',

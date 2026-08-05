@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 
+import { briefError } from './messages'
 import { configDir } from './tabbyConfig'
 
 /**
@@ -185,7 +186,7 @@ export function writeSettings (settings: Settings): void {
             // reste enveloppé, la résolution du cycle dépendant de l'empaqueteur.
             //
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            require('./logger').warn(`atomic write failed (${String(e)}) — falling back to a direct write`)
+            require('./logger').warn(`atomic write failed (${briefError(e)}) — falling back to a direct write`)
         } catch {
             // Journal indisponible : l'écriture, elle, a déjà eu lieu.
         }

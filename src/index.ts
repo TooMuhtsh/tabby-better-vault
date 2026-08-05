@@ -14,6 +14,7 @@ import { BetterVaultSettingsTabProvider } from './settings'
 import { I18nService } from './i18n'
 import { VaultBridgeService } from './vaultBridge.service'
 import { crit, startSession, applyRetention } from './logger'
+import { briefError } from './messages'
 
 // Purge avant d'ouvrir la session : les lignes du jour ne doivent jamais être
 // candidates à leur propre suppression.
@@ -56,7 +57,7 @@ export default class BetterVaultModule {
             i18n.install()
         } catch (e) {
             // L'interface reste en anglais : dégradé, jamais bloquant.
-            crit(`could not set up translations — ${String(e)}`)
+            crit(`could not set up translations — ${briefError(e)}`)
         }
 
         try {
@@ -68,7 +69,7 @@ export default class BetterVaultModule {
             // Ce filet ne couvre QUE les exceptions. Un appel bloquant n'en est
             // pas une : rien ici ne rattraperait un gel, d'où la règle ci-dessus
             // et le garde-fou de `keychainGuard.ts`.
-            crit(`installation failed — ${String(e)}`)
+            crit(`installation failed — ${briefError(e)}`)
         }
     }
 }

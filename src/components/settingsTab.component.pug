@@ -55,7 +55,11 @@
     .form-line
       .header
         .title {{ 'Enable on this machine' | translate }}
-        .description {{ 'The master password is entrusted to the operating system keychain, never stored in clear text.' | translate }}
+        //- « confié au trousseau » disait où le mot de passe allait, pas où il
+            va réellement : le trousseau du système ne détient qu'une CLÉ, le
+            mot de passe chiffré vit dans better-vault.json (campagne 4, poste
+            C, "1. Le panneau dit... ce n'est pas ce qui se passe").
+        .description {{ 'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.' | translate }}
       toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
 
   //- Conservé en toutes circonstances : ce nom étiquette les entrées du

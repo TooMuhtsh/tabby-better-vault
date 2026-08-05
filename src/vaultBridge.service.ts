@@ -63,7 +63,7 @@ export class VaultBridgeService {
         try {
             vault = this.injector.get(VaultService)
         } catch (e) {
-            crit(`cannot install: VaultService not found — ${String(e)}`)
+            crit(`cannot install: VaultService not found — ${briefError(e)}`)
             return
         }
 
@@ -190,7 +190,7 @@ export class VaultBridgeService {
         try {
             passphrase = decrypt(blob)
         } catch (e) {
-            warn(`token unreadable (${String(e)}) — purged, manual entry`)
+            warn(`token unreadable (${briefError(e)}) — purged, manual entry`)
             deleteToken()
             this.tokenVerified = false
             return null
@@ -390,7 +390,7 @@ export class VaultBridgeService {
         } catch (e) {
             // Une notification qui échoue ne doit pas compromettre le
             // déverrouillage lui-même.
-            warn(`could not display the notification — ${String(e)}`)
+            warn(`could not display the notification — ${briefError(e)}`)
         }
     }
 }

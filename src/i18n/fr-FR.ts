@@ -37,7 +37,7 @@ export default {
 
     // Panneau de réglages — activation et machine
     'Enable on this machine': 'Activer sur cette machine',
-    'The master password is entrusted to the operating system keychain, never stored in clear text.': 'Le mot de passe maître est confié au trousseau du système d\'exploitation, jamais stocké en clair.',
+    'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.': 'Le mot de passe maître est chiffré à l\'aide d\'une clé détenue par le trousseau du système d\'exploitation, jamais stocké en clair.',
     'Name of this machine': 'Nom de cette machine',
     'Purely indicative — helps you find your way around the settings and the log.': 'Purement indicatif — sert à s\'y retrouver dans les réglages et le journal.',
     'home machine': 'poste maison',

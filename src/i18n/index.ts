@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core'
 import { LocaleService, TranslateService } from 'tabby-core'
 
 import { warn } from '../logger'
-import { Message } from '../messages'
+import { briefError, Message } from '../messages'
 import fr_FR from './fr-FR'
 import es_ES from './es-ES'
 import de_DE from './de-DE'
@@ -139,7 +139,7 @@ export class I18nService {
         } catch (e) {
             // Une traduction qui ne se charge pas laisse l'anglais en place :
             // dégradé, mais utilisable. Rien ici ne justifie de casser Tabby.
-            warn(`could not register ${lang} translations — ${String(e)}`)
+            warn(`could not register ${lang} translations — ${briefError(e)}`)
         }
     }
 
