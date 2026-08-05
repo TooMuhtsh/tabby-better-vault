@@ -25,6 +25,17 @@ const path = require('path')
 const ROOT = path.resolve(__dirname, '..')
 const SRC = path.join(ROOT, 'src')
 
+/**
+ * Bundle compilé de `tabby-core`, seule source de vérité disponible hors
+ * exécution pour deux choses que ce script vérifie : la liste des locales que
+ * Tabby connaît, et les `msgid` qu'il traduit déjà.
+ *
+ * Absent si les dépendances ne sont pas installées — les contrôles qui en
+ * dépendent sont alors annoncés comme non faits, jamais silencieusement
+ * réputés bons.
+ */
+const TABBY_CORE = path.join(ROOT, 'node_modules', 'tabby-core', 'dist', 'index.js')
+
 /** Littéral simple quote, échappements compris. */
 const STR = "'((?:[^'\\\\]|\\\\.)*)'"
 
@@ -139,12 +150,164 @@ function icuProblems (text) {
     return problems
 }
 
-const LANGS = ['fr-FR', 'es-ES', 'de-DE']
+/** Contenu du bundle de `tabby-core`, ou `null` s'il n'est pas installé. */
+function tabbyBundle () {
+    try {
+        return fs.readFileSync(TABBY_CORE, 'utf8')
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Isole un littéral d'objet ou de tableau à partir de sa première accolade, en
+ * équilibrant les délimiteurs et en ignorant ceux qui vivent dans une chaîne.
+ */
+function sliceLiteral (text, from, open, close) {
+    let depth = 0
+    let quote = null
+    for (let i = from; i < text.length; i++) {
+        const c = text[i]
+        if (quote) {
+            if (c === '\\') {
+                i++
+            } else if (c === quote) {
+                quote = null
+            }
+            continue
+        }
+        if (c === '"' || c === "'") {
+            quote = c
+        } else if (c === open) {
+            depth++
+        } else if (c === close) {
+            depth--
+            if (!depth) {
+                return text.slice(from, i + 1)
+            }
+        }
+    }
+    return null
+}
+
+/**
+ * Locales que Tabby connaît, d'après `LocaleService.allLanguages`.
+ *
+ * Enregistrer une table sous un code absent de cette liste est sans effet : la
+ * locale ne sera jamais activée, donc la table jamais consultée. C'est le mode
+ * de défaillance le plus silencieux du chantier i18n — aucune erreur, aucune
+ * traduction, et un `lint:i18n` au vert puisqu'il ne regardait que les fichiers.
+ */
+function tabbyLocales (bundle) {
+    const marker = 'LocaleService.allLanguages = '
+    const at = bundle.indexOf(marker)
+    if (at === -1) {
+        return null
+    }
+    const literal = sliceLiteral(bundle, bundle.indexOf('[', at), '[', ']')
+    if (!literal) {
+        return null
+    }
+    return new Set([...literal.matchAll(/code:\s*'([\w-]+)'/g)].map(m => m[1]))
+}
+
+/**
+ * `msgid` que Tabby traduit déjà pour cette locale.
+ *
+ * Les `.po` sont bundlés dans `tabby-core` sous forme de `module.exports = {…}`
+ * JSON, ce qui les rend lisibles sans exécuter quoi que ce soit.
+ */
+function tabbyMessages (bundle, lang) {
+    const at = bundle.indexOf(`"../locale/${lang}.po":`)
+    if (at === -1) {
+        return null
+    }
+    const exportsAt = bundle.indexOf('module.exports = ', at)
+    const literal = sliceLiteral(bundle, bundle.indexOf('{', exportsAt), '{', '}')
+    if (!literal) {
+        return null
+    }
+    try {
+        const po = JSON.parse(literal)
+        const entries = po.translations?.[''] ?? {}
+        const messages = new Map()
+        for (const [msgid, entry] of Object.entries(entries)) {
+            if (msgid) {
+                messages.set(msgid, entry?.msgstr?.[0] ?? '')
+            }
+        }
+        return messages
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Locales réellement ENREGISTRÉES par `src/i18n/index.ts`, et non la liste de
+ * fichiers présents.
+ *
+ * Ce script tenait sa liste en dur et n'ouvrait jamais `index.ts` : une table
+ * écrite, traduite, complète, mais absente de `TABLES` passait au vert sans
+ * jamais s'afficher. Un fichier n'est une traduction que s'il est enregistré.
+ */
+function registeredTables () {
+    const raw = read('i18n/index.ts')
+    const at = raw.indexOf('const TABLES')
+    const literal = at === -1 ? null : sliceLiteral(raw, raw.indexOf('{', at), '{', '}')
+    if (!literal) {
+        console.error("src/i18n/index.ts : impossible de relire la table TABLES — le contrôle d'enregistrement est HORS SERVICE.")
+        process.exitCode = 1
+        return []
+    }
+
+    const registered = [...literal.matchAll(/'([\w-]+)'\s*:\s*(\w+)/g)].map(m => ({ lang: m[1], binding: m[2] }))
+    const files = fs.readdirSync(path.join(SRC, 'i18n'))
+        .filter(f => f.endsWith('.ts') && f !== 'index.ts')
+        .map(f => f.replace(/\.ts$/, ''))
+
+    for (const lang of files) {
+        if (!registered.some(r => r.lang === lang)) {
+            console.error(`  ${lang} : table présente mais JAMAIS ENREGISTRÉE dans TABLES — elle ne s'affichera pas.`)
+            process.exitCode = 1
+        }
+    }
+    for (const { lang, binding } of registered) {
+        if (!files.includes(lang)) {
+            console.error(`  ${lang} : enregistrée dans TABLES sans fichier src/i18n/${lang}.ts.`)
+            process.exitCode = 1
+        }
+        if (!new RegExp(`import\\s+${binding}\\s+from\\s+'\\./${lang}'`).test(raw)) {
+            console.error(`  ${lang} : enregistrée sous le nom « ${binding} », qui n'importe pas ./${lang}.`)
+            process.exitCode = 1
+        }
+    }
+
+    return registered.map(r => r.lang)
+}
+
+const bundle = tabbyBundle()
+const locales = bundle ? tabbyLocales(bundle) : null
+
+const LANGS = registeredTables()
 
 const sources = collectSources()
 let failures = 0
 
 console.log(`${sources.size} chaînes sources relevées dans src/.`)
+console.log(`${LANGS.length} table(s) enregistrée(s) dans src/i18n/index.ts : ${LANGS.join(', ') || '(aucune)'}.`)
+
+if (!bundle) {
+    console.log('tabby-core absent de node_modules : codes de locale et collisions de msgid NON VÉRIFIÉS.')
+} else if (!locales) {
+    console.log('LocaleService.allLanguages introuvable dans le bundle : codes de locale NON VÉRIFIÉS.')
+} else {
+    for (const lang of LANGS) {
+        if (!locales.has(lang)) {
+            console.error(`  ${lang} : code inconnu de Tabby — la locale ne sera jamais activée, la table jamais lue.`)
+            failures++
+        }
+    }
+}
 
 for (const lang of LANGS) {
     const table = loadTable(lang)
@@ -172,8 +335,38 @@ for (const lang of LANGS) {
         }
     }
 
-    if (!missing.length && !dead.length && !empty.length && !paramMismatch.length && !icu.length) {
-        console.log(`  ${lang} : ${keys.size} clés, complet.`)
+    // COLLISIONS AVEC LES MSGID DE TABBY. La clé est la chaîne source anglaise
+    // et l'enregistrement se fait avec `shouldMerge = true` : toute clé qui
+    // coïncide avec un msgid de Tabby remplace SA traduction pour l'application
+    // entière, pas seulement dans notre panneau (#V24). Une clé courte et
+    // générique — « Cancel », « Open », « File » — y expose naturellement.
+    //
+    // Valeur identique : sans effet visible, signalé pour mémoire. Valeur
+    // différente : ce plugin change le vocabulaire de Tabby, et c'est un défaut.
+    const clashes = []
+    const overrides = []
+    const tabby = bundle ? tabbyMessages(bundle, lang) : null
+    if (tabby) {
+        for (const k of keys) {
+            if (!tabby.has(k)) {
+                continue
+            }
+            const theirs = tabby.get(k)
+            if (theirs && theirs !== String(table[k])) {
+                overrides.push({ key: k, ours: table[k], theirs })
+            } else {
+                clashes.push(k)
+            }
+        }
+    }
+
+    if (!missing.length && !dead.length && !empty.length && !paramMismatch.length && !icu.length && !overrides.length) {
+        const shared = clashes.length ? ` — ${clashes.length} clé(s) partagée(s) avec Tabby, valeurs identiques : ${clashes.map(k => JSON.stringify(k)).join(', ')}` : ''
+        if (!tabby && bundle) {
+            console.log(`  ${lang} : ${keys.size} clés, complet (msgid de Tabby introuvables, collisions NON VÉRIFIÉES).`)
+            continue
+        }
+        console.log(`  ${lang} : ${keys.size} clés, complet${shared}.`)
         continue
     }
 
@@ -197,6 +390,12 @@ for (const lang of LANGS) {
     }
     for (const p of icu) {
         console.log(`    ICU       ${p.problem}\n              ${JSON.stringify(p.key)}`)
+    }
+    for (const o of overrides) {
+        console.log(`    ÉCRASE TABBY  ${JSON.stringify(o.key)}\n                  Tabby dit ${JSON.stringify(o.theirs)}, nous ${JSON.stringify(o.ours)} — notre valeur gagne pour TOUTE l'application (#V24).`)
+    }
+    for (const k of clashes) {
+        console.log(`    partagée avec Tabby, même valeur : ${JSON.stringify(k)}`)
     }
 }
 

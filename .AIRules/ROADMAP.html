@@ -1042,7 +1042,8 @@ refusée reste dégradée pour toute sa session, sans réessai.</p>
   et <code>learnFromUser</code> ne peut alors plus rien enregistrer : il faut le dire à l'écran,
   puisque le redémarrage de Tabby est le seul remède. Et <code>withSafeStorage()</code> ne teste que
   <code>if (!safeStorage)</code>, jamais l'existence des méthodes.</li>
-<li><strong>Outillage</strong> — <code>lint:i18n</code> ne lit jamais <code>TABLES</code> : sa liste
+<li><strong>Outillage — écrit et validé le 2026-08-02</strong> (<code>405b67d</code>).
+  <code>lint:i18n</code> ne lisait jamais <code>TABLES</code> : sa liste
   de langues est codée en dur et le script n'ouvre pas <code>src/i18n/index.ts</code>. Une table
   écrite mais non enregistrée, ou enregistrée sous un code invalide (<code>'fr'</code> au lieu de
   <code>'fr-FR'</code>), passerait au vert. Collision latente à traiter dans le même geste : la clé
