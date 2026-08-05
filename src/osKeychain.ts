@@ -15,7 +15,7 @@
 import * as crypto from 'crypto'
 
 import { runGuarded, isSuspendedError, suspendedMessage } from './keychainGuard'
-import { GUARD, Message, OperationId, REASON } from './messages'
+import { briefError, GUARD, Message, OperationId, REASON } from './messages'
 
 /**
  * Champs optionnels plutôt qu'union discriminée : le tsconfig de ce projet
@@ -46,6 +46,20 @@ export interface KeychainStatus {
      * la distinction n'est pas cosmétique dans le commentaire de cette fonction.
      */
     verified?: boolean
+    /**
+     * L'appel a échoué par une EXCEPTION de `safeStorage`, et non par un verdict
+     * du plugin : réessayer dans cette session ne sert à rien.
+     *
+     * `OSCrypt` de Chromium acquiert sa clé une fois et mémorise son échec pour
+     * la vie du processus principal (#V23, mesuré). Après un refus
+     * d'authentification, le clic suivant sur « vérifier » rejoue le même échec
+     * SANS émettre le moindre appel au service Secret, et `learnFromUser()` ne
+     * peut plus rien enregistrer. Seul un redémarrage de Tabby rétablit l'accès.
+     *
+     * D'où ce drapeau : sans lui, le panneau offre un bouton de récupération qui
+     * ne touche plus rien, sur lequel l'utilisateur peut cliquer indéfiniment.
+     */
+    restartRequired?: boolean
 }
 
 /**
@@ -56,6 +70,15 @@ export interface KeychainStatus {
  * où le trousseau a cessé de répondre. Identifiant et non phrase — le témoin est
  * relu au démarrage suivant, éventuellement sous une autre locale.
  */
+/**
+ * Méthodes dont ce fichier dépend, toutes opérations confondues.
+ *
+ * `getSelectedStorageBackend` n'y figure pas à dessein : elle n'existe que sur
+ * Linux et sur les Electron récents, et son absence est déjà traitée là où elle
+ * est appelée.
+ */
+const REQUIRED_METHODS = ['isEncryptionAvailable', 'encryptString', 'decryptString']
+
 function withSafeStorage<T> (operation: OperationId, fn: (safeStorage: any) => T): T {
     return runGuarded(operation, () => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -63,6 +86,15 @@ function withSafeStorage<T> (operation: OperationId, fn: (safeStorage: any) => T
         const safeStorage = remote?.safeStorage
         if (!safeStorage) {
             throw new Error('@electron/remote or safeStorage is unreachable')
+        }
+        // Le test se limitait à l'existence de l'objet. `safeStorage` est un
+        // pont IPC, pas un module : un objet présent mais amputé — version
+        // d'Electron antérieure, pont partiellement initialisé — passait le
+        // filtre et échouait plus loin sur un `TypeError` indéchiffrable, à
+        // l'endroit précis où le plugin manipule un secret.
+        const missing = REQUIRED_METHODS.filter(name => typeof safeStorage[name] !== 'function')
+        if (missing.length) {
+            throw new Error(`safeStorage is missing: ${missing.join(', ')}`)
         }
         return fn(safeStorage)
     })
@@ -131,7 +163,11 @@ export function keychainStatus (): KeychainStatus {
                 reason: suspendedMessage(e) ?? { source: GUARD.anonymous },
             }
         }
-        return { available: false, reason: { source: REASON.safeStorageUnusable, params: { error: String(e) } } }
+        return {
+            available: false,
+            restartRequired: true,
+            reason: { source: REASON.safeStorageUnusable, params: { error: briefError(e) } },
+        }
     }
 }
 
@@ -189,7 +225,11 @@ export function keychainRoundTrip (): KeychainStatus {
                 reason: suspendedMessage(e) ?? { source: GUARD.anonymous },
             }
         }
-        return { available: false, reason: { source: REASON.roundTripFailed, params: { error: String(e) } } }
+        return {
+            available: false,
+            restartRequired: true,
+            reason: { source: REASON.roundTripFailed, params: { error: briefError(e) } },
+        }
     }
 }
 

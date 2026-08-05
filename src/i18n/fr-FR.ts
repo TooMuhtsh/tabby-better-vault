@@ -31,12 +31,13 @@ export default {
 
     // Panneau de réglages — trousseau indisponible
     'System keychain unavailable.': 'Trousseau du système indisponible.',
+    'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.': 'Redémarrez Tabby avant de réessayer : le trousseau garde la mémoire de cet échec tant que l\'application tourne, une nouvelle vérification ne l\'atteindrait donc pas.',
     'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.': 'Le déverrouillage automatique ne peut pas fonctionner sur cette machine ; le mot de passe restera demandé à chaque fois.',
     'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.': 'Les réglages qui en dépendent sont masqués tant que c\'est le cas. Le journal et le mode observation restent accessibles, ainsi que la révocation si un mot de passe avait été enregistré.',
 
     // Panneau de réglages — activation et machine
     'Enable on this machine': 'Activer sur cette machine',
-    'The master password is entrusted to the operating system keychain, never stored in clear text.': 'Le mot de passe maître est confié au trousseau du système d\'exploitation, jamais stocké en clair.',
+    'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.': 'Le mot de passe maître est chiffré à l\'aide d\'une clé détenue par le trousseau du système d\'exploitation, jamais stocké en clair.',
     'Name of this machine': 'Nom de cette machine',
     'Purely indicative — helps you find your way around the settings and the log.': 'Purement indicatif — sert à s\'y retrouver dans les réglages et le journal.',
     'home machine': 'poste maison',

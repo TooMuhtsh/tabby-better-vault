@@ -25,14 +25,14 @@ Angular 15, Electron, TypeScript, webpack) — à confirmer plutôt qu'à redéc
 
 <div class="callout note">
 <span class="callout-title">Compteur de numérotation</span>
-<p><strong>Prochain numéro libre : <code>#V30</code></strong> — <code>#V1</code> à <code>#V27</code> et
-<code>#V29</code> sont attribués <em>sur cette branche</em>. Celui qui ajoute un piège incrémente ce
-compteur dans le même geste (A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune
-lecture partielle ne donne cette information.</p>
-<p><strong><code>#V28</code> est réservé et absent d'ici</strong> : il est écrit sur
-<code>fix/c3-lot3-lisibilite</code> et arrivera avec ce lot. Le trou est délibéré — un numéro se
-réserve, il ne se recycle jamais, et deux branches qui attribueraient le même feraient perdre l'un des
-deux au merge.</p>
+<p><strong>Prochain numéro libre : <code>#V30</code></strong> — <code>#V1</code> à <code>#V29</code>
+sont attribués, sans trou. Celui qui ajoute un piège incrémente ce compteur dans le même geste
+(A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune lecture partielle ne donne
+cette information.</p>
+<p>Le trou entre <code>#V27</code> et <code>#V29</code> a existé le temps que les branches de
+correctifs restent séparées : <code>#V28</code> était réservé pour <code>fix/c3-lot3-lisibilite</code>
+pendant que <code>#V29</code> s'attribuait sur une autre branche. Les deux se retrouvent ici au merge,
+dans l'ordre de leur numéro — un numéro se réserve, il ne se recycle jamais.</p>
 </div>
 
 <div class="callout note">
@@ -868,6 +868,31 @@ l'écriture du temporaire, bien avant le <code>rename</code> que le <code>try</c
 <p><strong><code>rename</code> ne donne l'atomicité que face à un lecteur concurrent, pas face à une
 coupure d'alimentation</strong> — ce sont deux garanties différentes, et sans <code>fsync</code> sur
 le temporaire seule la première est acquise.</p>
+</div>
+
+<h3 id="piege-v28">#V28 — <code>TabbyFormatedDatePipe</code> existe, mais Tabby n'enregistre aucune donnée de locale</h3>
+<p>Chercher l'équivalent officiel avant d'écrire le sien est la bonne réflexe, et il aboutit ici :
+<code>tabby-core</code> réexporte bien <code>TabbyFormatedDatePipe</code>, vérifié dans le bundle
+compilé, et son corps est <code>formatDate(date, 'medium', locale.getLocale())</code>. Le réutiliser
+paraît donc évident.</p>
+<p>Sauf que <code>formatDate</code> d'Angular exige que les données de la locale visée aient été
+déclarées par <code>registerLocaleData()</code> — seul <code>en-US</code> est fourni d'office, et
+toute autre locale lève « Missing locale data ». Or <strong>l'appel n'existe nulle part dans
+<code>app.asar</code></strong> : les douze occurrences du nom y sont la définition de la fonction par
+Angular lui-même, jamais un appel de Tabby.</p>
+<div class="callout warning">
+<span class="callout-title">Ce qu'il faut en retenir</span>
+<p><strong>Un export vérifié ne garantit pas un appel sûr.</strong> Le contrôle habituel de ce projet
+— la classe est-elle réellement exportée ? (<a href="#piege-v1">#V1</a>) — répond oui et ne dit rien
+de ses <em>préconditions</em>. Ici la dépendance manquante est chez Angular, pas chez Tabby, et
+n'apparaît qu'à l'exécution sous une locale non anglaise.</p>
+<p>Les dates du plugin passent donc par <code>Intl</code> natif avec la locale rendue par
+<code>LocaleService</code> : la bonne langue, sans donnée à enregistrer. Le format diffère un peu de
+celui de Tabby — une exception au milieu d'un message de panne coûterait plus cher.</p>
+<p>Non mesuré, et assumé comme tel : <code>formatDate</code> n'a pas pu être exercé hors d'un
+contexte Angular (le module refuse de se charger sans compilateur JIT). Ce qui est mesuré, c'est
+l'<strong>absence d'appel à <code>registerLocaleData</code></strong> ; le reste est le comportement
+documenté d'Angular.</p>
 </div>
 
 <h3 id="piege-v29">#V29 — Sans <code>author</code> dans son <code>package.json</code>, Tabby ignore le plugin en silence</h3>

@@ -109,6 +109,42 @@ invite d'authentification à annuler, donc aucun moyen de faire échouer <code>d
 cause de trousseau. Il attend la quatrième campagne — <em>un correctif non exercé n'est pas une
 amélioration, c'est un pari</em>, et ce projet a déjà produit deux régressions en corrigeant trois
 défauts.</td></tr>
+<tr><td>2026-08-02</td><td><code>d72c669</code></td>
+<td><strong>Lot 3 — motifs d'échec lisibles, dates dans la langue de Tabby.</strong> Les quatre
+constats de lisibilité, plus un piège qu'ils ont fait sortir.
+<br><br>
+<code>briefError()</code> remplace <code>String(e)</code> dans les motifs : une erreur qui traverse
+<code>@electron/remote</code> porte la pile de l'autre processus DANS son message, soit neuf lignes à
+l'écran et au journal pour un utilisateur qui venait de refuser une authentification — et une entrée
+sur neuf lignes dans un fichier dont la rétention raisonne par ligne. La pile est perdue à dessein :
+elle décrit le processus principal d'Electron, pas le chemin de code du plugin.
+<br><br>
+<strong>Une date voyage désormais en millisecondes</strong> (<code>Message.dateParams</code>),
+troisième catégorie de paramètre à côté de <code>params</code> et <code>sourceParams</code>, et pour
+la même raison que la deuxième existait : <em>une valeur rendue une seule fois ne peut pas servir deux
+sorties</em>. Les cinq sites appelaient <code>toLocaleString()</code> sans argument, donc dans la
+locale du système — ni celle du journal, figé en anglais, ni celle de l'interface, qui suit Tabby. Le
+journal rend par <code>logDate()</code>, l'écran par la locale de Tabby ; <code>logger.ts</code>
+emprunte le même format, de sorte qu'une ligne et les dates qu'elle cite s'écrivent pareil.
+<br><br>
+Après un refus d'authentification, le panneau <strong>dit que le redémarrage est le seul remède</strong>
+(<a href="AI-CONTEXT.html#piege-v23">#V23</a>) : sans cette ligne, l'utilisateur reclique sur un bouton
+qui n'atteint plus rien. Et <code>withSafeStorage()</code> vérifie que les méthodes existent, non plus
+seulement l'objet — <code>safeStorage</code> est un pont IPC, un objet amputé passait le filtre et
+échouait plus loin, à l'endroit où le plugin manipule un secret.
+<br><br>
+<strong>Piège <a href="AI-CONTEXT.html#piege-v28">#V28</a>, sorti de ce lot.</strong> La roadmap
+prescrivait <code>TabbyFormatedDatePipe</code>. Il existe, il est réexporté, et il ferait lever —
+<code>formatDate</code> exige <code>registerLocaleData()</code>, que <strong>Tabby n'appelle
+jamais</strong> (mesuré dans <code>app.asar</code>). Les dates passent par <code>Intl</code> natif. La
+leçon dépasse le cas : le contrôle habituel de ce projet (<a href="AI-CONTEXT.html#piege-v1">#V1</a>)
+répond sur l'export et ne dit rien des préconditions. <em>Non mesuré et assumé</em> :
+<code>formatDate</code> lui-même n'a pas pu être exercé hors contexte Angular ; ce qui est mesuré,
+c'est l'absence d'appel.
+<br><br>
+<strong>Reste à traiter au merge</strong> : <code>vaultBridge.service.ts</code> déverse encore
+<code>String(e)</code> sur la ligne que le lot 1 réécrit de son côté. Elle a été laissée telle quelle
+pour ne pas fabriquer un conflit entre deux branches qui doivent rester dissociables.</td></tr>
 </table>
 
 <h2>Troisième campagne de vérification Linux (2026-08-01)</h2>

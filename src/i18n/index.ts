@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core'
 import { LocaleService, TranslateService } from 'tabby-core'
 
 import { warn } from '../logger'
-import { Message } from '../messages'
+import { briefError, Message } from '../messages'
 import fr_FR from './fr-FR'
 import es_ES from './es-ES'
 import de_DE from './de-DE'
@@ -139,7 +139,7 @@ export class I18nService {
         } catch (e) {
             // Une traduction qui ne se charge pas laisse l'anglais en place :
             // dégradé, mais utilisable. Rien ici ne justifie de casser Tabby.
-            warn(`could not register ${lang} translations — ${String(e)}`)
+            warn(`could not register ${lang} translations — ${briefError(e)}`)
         }
     }
 
@@ -164,6 +164,42 @@ export class I18nService {
         for (const [key, source] of Object.entries(message.sourceParams ?? {})) {
             params[key] = this.t(source)
         }
+        for (const [key, at] of Object.entries(message.dateParams ?? {})) {
+            params[key] = this.date(at)
+        }
         return this.t(message.source, params)
+    }
+
+    /**
+     * Date dans la locale de TABBY, et non dans celle du système.
+     *
+     * Les cinq sites qui affichaient une date appelaient `toLocaleString()` sans
+     * argument : un utilisateur qui met Tabby en espagnol sur une machine
+     * française lisait une interface espagnole ponctuée de dates françaises.
+     *
+     * POURQUOI PAS `TabbyFormatedDatePipe`, QUI EXISTE. Tabby le réexporte bien
+     * (vérifié dans le bundle compilé) et il fait
+     * `formatDate(date, 'medium', locale.getLocale())`. Mais `formatDate`
+     * d'Angular exige que les données de la locale visée aient été déclarées par
+     * `registerLocaleData()`, faute de quoi il lève « Missing locale data » —
+     * seul `en-US` est fourni d'office. Or **Tabby n'appelle jamais
+     * `registerLocaleData`** : mesuré dans `app.asar`, les seules occurrences y
+     * sont la définition de la fonction par Angular lui-même. Emprunter ce pipe
+     * ferait donc dépendre l'affichage d'une donnée absente, sur un chemin qui
+     * sert notamment à expliquer une panne.
+     *
+     * `Intl`, lui, est natif à Chromium et n'a rien à enregistrer. Le format
+     * diffère un peu de celui du reste de Tabby ; une exception au milieu d'un
+     * message d'erreur coûterait plus cher que cette différence.
+     */
+    date (at: number | Date): string {
+        const value = at instanceof Date ? at : new Date(at)
+        try {
+            return value.toLocaleString(this.locale.getLocale())
+        } catch {
+            // Étiquette de locale que l'`Intl` du moteur refuse : la date du
+            // système reste préférable à une exception.
+            return value.toLocaleString()
+        }
     }
 }

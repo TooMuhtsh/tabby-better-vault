@@ -24,12 +24,13 @@ export default {
 
     // Panneau de réglages — trousseau indisponible
     'System keychain unavailable.': 'Llavero del sistema no disponible.',
+    'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.': 'Reinicie Tabby antes de volver a intentarlo: el llavero recuerda este fallo mientras la aplicación siga en ejecución, por lo que otra comprobación no llegaría a él.',
     'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.': 'El desbloqueo automático no puede funcionar en este equipo; la contraseña maestra se seguirá pidiendo cada vez.',
     'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.': 'Los ajustes que dependen de él permanecen ocultos mientras esto dure. El registro y el modo observación siguen disponibles, igual que la revocación si se había guardado una contraseña.',
 
     // Panneau de réglages — activation et machine
     'Enable on this machine': 'Activar en este equipo',
-    'The master password is entrusted to the operating system keychain, never stored in clear text.': 'La contraseña maestra se confía al llavero del sistema operativo, nunca se guarda en claro.',
+    'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.': 'La contraseña maestra se cifra con una clave que guarda el llavero del sistema operativo, nunca se guarda en claro.',
     'Name of this machine': 'Nombre de este equipo',
     'Purely indicative — helps you find your way around the settings and the log.': 'Meramente indicativo: sirve para orientarse en los ajustes y en el registro.',
     'home machine': 'equipo de casa',

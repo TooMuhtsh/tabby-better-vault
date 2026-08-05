@@ -1032,7 +1032,8 @@ refusée reste dégradée pour toute sa session, sans réessai.</p>
   création — le tout sous <code>try</code> qui journalise. <strong>Deux commentaires du code
   deviennent faux et tombent avec</strong> : « le fichier qui atterrit est TOUJOURS un fichier neuf »
   et « quel que soit l'état antérieur, il ressort en 0600 ».</li>
-<li><strong>Lisibilité</strong> — le motif d'échec déverse <code>String(e)</code> tel quel, soit neuf
+<li><strong>Lisibilité — écrit le 2026-08-02, non exercé</strong> (<code>d72c669</code>). Le motif
+  d'échec déversait <code>String(e)</code> tel quel, soit neuf
   lignes dont sept de pile Node, à l'écran <em>et</em> au journal, pour un utilisateur qui vient
   simplement de refuser une authentification. Les dates suivent la locale du système et non celle de
   Tabby (<code>toLocaleString()</code> sans argument, cinq sites) alors que Tabby fournit

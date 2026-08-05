@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
+import { logDate } from './messages'
 import { configDir } from './tabbyConfig'
 import { readSettings } from './store'
 
@@ -45,10 +46,12 @@ const HARD_SIZE_LIMIT = 4 * 1024 * 1024
 
 export const LOG_PATH = path.join(configDir(), 'better-vault.log')
 
-function stamp (d: Date = new Date()): string {
-    const p = (n: number, w = 2) => String(n).padStart(w, '0')
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
-}
+/**
+ * Emprunté à `messages.ts` plutôt que redéfini ici : une ligne de journal et
+ * une date CITÉE dans cette ligne doivent s'écrire pareil, sans quoi le même
+ * fichier porte deux formats.
+ */
+const stamp = logDate
 
 function append (line: string): void {
     try {

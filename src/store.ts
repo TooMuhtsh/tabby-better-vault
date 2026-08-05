@@ -2,6 +2,7 @@ import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 
+import { briefError } from './messages'
 import { configDir } from './tabbyConfig'
 
 /**
@@ -158,7 +159,7 @@ function writeDirectly (target: string, tmp: string, payload: string, cause: unk
         // c'est ce qui empêche `learnFromUser()` d'annoncer un enregistrement
         // qui n'a pas eu lieu — mais elle laisse d'abord une trace, faute de quoi
         // la seule manifestation de l'échec serait une absence.
-        journal('crit', `could not write ${FILENAME} (${String(e)}) — nothing was saved; the atomic path had failed with ${String(cause)}`)
+        journal('crit', `could not write ${FILENAME} (${briefError(e)}) — nothing was saved; the atomic path had failed with ${briefError(cause)}`)
         throw e
     }
 
@@ -167,7 +168,7 @@ function writeDirectly (target: string, tmp: string, payload: string, cause: unk
     } catch {
         // Temporaire déjà parti, ou verrouillé : sans conséquence.
     }
-    journal('warn', `atomic write failed (${String(cause)}) — fell back to a direct write`)
+    journal('warn', `atomic write failed (${briefError(cause)}) — fell back to a direct write`)
 }
 
 /**
