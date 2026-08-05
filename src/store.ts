@@ -114,81 +114,123 @@ export function readSettings (): Settings {
 }
 
 /**
- * Écrit les réglages : temporaire → chmod → rename.
+ * Journalise depuis ce module par `require` tardif et non par `import` :
+ * `logger.ts` importe déjà ce fichier, un import en tête créerait un cycle à
+ * l'initialisation des modules. Ces chemins-ci s'exécutent bien après, et
+ * restent enveloppés — la résolution du cycle dépend de l'empaqueteur.
+ */
+function journal (level: 'warn' | 'crit', message: string): void {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        require('./logger')[level](message)
+    } catch {
+        // Journal indisponible : on ne fait pas échouer l'appelant davantage
+        // pour une trace.
+    }
+}
+
+/**
+ * Dernier recours : écriture directe sur la cible, non atomique.
  *
- * DEUX DÉFAUTS CORRIGÉS ICI, mesurés par la campagne du 2026-07-29
- * (.AIRules/ROADMAP.html#campagne-linux), que le même geste règle.
+ * Abandonner ici PERDRAIT l'écriture, donc le jeton que l'utilisateur vient de
+ * confier — pire que le comportement d'avant que le motif atomique n'existe. On
+ * rétablit l'ancien compromis plutôt que rien. Le cas visé est Windows, où
+ * `rename` sur une cible existante échoue en EPERM ou EBUSY dès qu'un antivirus
+ * ou un client de synchronisation tient le fichier ouvert.
  *
- *   1. `writeFileSync(path, data, { mode: 0o600 })` n'applique le mode QU'À LA
- *      CRÉATION. Vérifié : création fraîche → 600 ; fichier préexistant en 644
- *      ou 666 → mode inchangé, jamais re-serré. Le cas nominal était donc
- *      correct, mais « lisible par le seul propriétaire » n'était pas un
- *      invariant — il tombait dès qu'un fichier préexistait plus large
- *      (restauration de sauvegarde, copie manuelle, umask différent). Écrire
- *      dans un temporaire puis le renommer fait que le fichier qui atterrit est
- *      TOUJOURS un fichier neuf, donc toujours créé en 600. Le `chmod` explicite
- *      couvre le cas où le temporaire lui-même préexistait.
+ * L'ÉCRITURE D'ABORD, LE JOURNAL ENSUITE : journaliser en premier ferait
+ * dépendre le sauvetage du jeton de la réussite d'une trace.
+ */
+function writeDirectly (target: string, tmp: string, payload: string, cause: unknown): void {
+    try {
+        // Si la CIBLE est elle-même un lien, ce chemin écrit à travers. Assumé :
+        // c'est un recours, et refuser ici perdrait le jeton. Le lien symbolique
+        // qui a été mesuré est celui du temporaire, dont le nom est prévisible ;
+        // celui de la cible suppose déjà un dossier de config compromis.
+        fs.writeFileSync(target, payload, { mode: 0o600 })
+        try {
+            fs.chmodSync(target, 0o600)
+        } catch {
+            // Système de fichiers sans permissions POSIX : rien à resserrer.
+        }
+    } catch (e) {
+        // Rien n'a été écrit, par aucun des deux chemins. L'erreur remonte —
+        // c'est ce qui empêche `learnFromUser()` d'annoncer un enregistrement
+        // qui n'a pas eu lieu — mais elle laisse d'abord une trace, faute de quoi
+        // la seule manifestation de l'échec serait une absence.
+        journal('crit', `could not write ${FILENAME} (${String(e)}) — nothing was saved; the atomic path had failed with ${String(cause)}`)
+        throw e
+    }
+
+    try {
+        fs.unlinkSync(tmp)
+    } catch {
+        // Temporaire déjà parti, ou verrouillé : sans conséquence.
+    }
+    journal('warn', `atomic write failed (${String(cause)}) — fell back to a direct write`)
+}
+
+/**
+ * Écrit les réglages : temporaire NEUF puis rename.
  *
- *   2. L'écriture était directe : une coupure en cours d'écriture tronquait le
- *      fichier. `rename` est atomique sur un même système de fichiers — d'où le
- *      temporaire dans le MÊME dossier que la cible, un rename entre volumes
- *      échouant (EXDEV).
+ * TROIS PROPRIÉTÉS VOULUES, et ce que chacune vaut réellement.
  *
- * Nom de temporaire fixe et non aléatoire : un incident répété laisserait
- * autrement une traînée de fichiers contenant chacun un jeton chiffré.
+ *   1. LE FICHIER QUI ATTERRIT EST NEUF, DONC EN 0600. `writeFileSync(path,
+ *      data, { mode })` n'applique le mode QU'À LA CRÉATION : sur un fichier
+ *      préexistant en 644 ou 666, le mode est ignoré et jamais re-serré, si bien
+ *      que « lisible par le seul propriétaire » tombait dès qu'un fichier
+ *      préexistait plus large. Le temporaire est donc supprimé puis ouvert en
+ *      `wx` (O_CREAT|O_EXCL), qui échoue si quoi que ce soit occupe déjà le
+ *      chemin : la création est garantie, donc le mode s'applique, et aucun
+ *      `chmod` postérieur n'est nécessaire.
+ *
+ *      C'est ce `chmod` postérieur qui portait le défaut suivant : le contenu
+ *      était écrit AVANT le resserrage des droits, si bien que le temporaire
+ *      existait en 0666 avec le jeton dedans — 82 250 observations à la mesure
+ *      (campagne du 2026-08-01).
+ *
+ *   2. AUCUN LIEN SYMBOLIQUE N'EST SUIVI. Le nom du temporaire est fixe, donc
+ *      prévisible, donc plantable : `writeFileSync` écrivait À TRAVERS un lien
+ *      posé à sa place et `renameSync` déplaçait le lien lui-même — better-vault.json
+ *      devenait un lien, le jeton atterrissait où le lien pointait, et le
+ *      `chmod` suivait vers la victime. `wx` refuse un chemin existant, lien
+ *      compris, et `unlink` retire le lien sans toucher sa cible.
+ *
+ *      Nom fixe malgré tout, et non aléatoire : un incident répété laisserait
+ *      autrement une traînée de fichiers portant chacun un jeton chiffré.
+ *
+ *   3. L'ÉCRITURE EST ATOMIQUE FACE À UN LECTEUR CONCURRENT — et à lui seul.
+ *      `rename` est atomique sur un même système de fichiers, d'où le temporaire
+ *      dans le MÊME dossier que la cible (un rename entre volumes échoue en
+ *      EXDEV). Face à une COUPURE il ne garantit rien : aucun `fsync` n'est émis,
+ *      ni sur le temporaire ni sur le dossier, `strace` en compte zéro. Ne pas
+ *      écrire ici que le fichier survit à une coupure — la mesure dit l'inverse.
+ *
+ * TOUT ÉCHEC EST JOURNALISÉ. Le `try` ne couvrait que `rename` : un dossier en
+ * lecture seule faisait échapper l'EACCES de l'écriture du temporaire sans
+ * laisser une seule ligne, et la cible restait telle quelle, avec son ancien
+ * contenu et ses anciens droits.
  */
 export function writeSettings (settings: Settings): void {
     const target = storePath()
     const tmp = target + '.tmp'
     const payload = JSON.stringify(settings, null, 2)
 
-    // mode 0600 : lisible par le seul propriétaire (sans effet réel sur
-    // Windows, où la protection vient de DPAPI lui-même).
-    fs.writeFileSync(tmp, payload, { mode: 0o600 })
     try {
-        fs.chmodSync(tmp, 0o600)
-    } catch {
-        // Système de fichiers sans permissions POSIX : rien à resserrer.
-    }
-
-    try {
-        fs.renameSync(tmp, target)
-        return
-    } catch (e) {
-        // Sur Windows, `rename` sur une cible existante peut échouer en EPERM ou
-        // EBUSY — antivirus ou client de synchronisation tenant le fichier
-        // ouvert. Abandonner ici PERDRAIT l'écriture, donc le jeton que
-        // l'utilisateur vient de confier : pire que le comportement d'avant ce
-        // correctif. On retombe donc explicitement sur l'écriture directe, qui
-        // rétablit l'ancien compromis (non atomique) plutôt que rien.
-        //
-        // L'ÉCRITURE D'ABORD, LE JOURNAL ENSUITE. Journaliser en premier ferait
-        // dépendre le sauvetage du jeton de la réussite d'une trace — et cette
-        // trace passe par un `require` tardif (voir plus bas). Une défaillance
-        // là ferait perdre l'écriture, c'est-à-dire exactement ce que ce repli
-        // existe pour empêcher.
-        fs.writeFileSync(target, payload, { mode: 0o600 })
-        try {
-            fs.chmodSync(target, 0o600)
-        } catch {
-            // Idem.
-        }
+        // Un temporaire résiduel — écriture interrompue, ou lien posé là — ferait
+        // échouer `wx`. On le retire d'abord ; sur un lien, `unlink` supprime le
+        // lien et non ce qu'il désigne, ce qui est exactement voulu.
         try {
             fs.unlinkSync(tmp)
         } catch {
-            // Temporaire déjà parti, ou verrouillé : sans conséquence.
+            // Absent : c'est le cas nominal.
         }
-        try {
-            // `require` tardif et non `import` : `logger.ts` importe déjà ce
-            // fichier, un import en tête créerait un cycle à l'initialisation
-            // des modules. Le chemin d'erreur, lui, s'exécute bien après — et
-            // reste enveloppé, la résolution du cycle dépendant de l'empaqueteur.
-            //
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            require('./logger').warn(`atomic write failed (${String(e)}) — falling back to a direct write`)
-        } catch {
-            // Journal indisponible : l'écriture, elle, a déjà eu lieu.
-        }
+        // mode 0600 : lisible par le seul propriétaire (sans effet réel sur
+        // Windows, où la protection vient de DPAPI lui-même).
+        fs.writeFileSync(tmp, payload, { mode: 0o600, flag: 'wx' })
+        fs.renameSync(tmp, target)
+    } catch (e) {
+        writeDirectly(target, tmp, payload, e)
     }
 }
 

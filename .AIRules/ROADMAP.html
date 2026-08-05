@@ -1016,7 +1016,8 @@ refusée reste dégradée pour toute sa session, sans réessai.</p>
   trousseau, pas de jeton. Pire cas si on ne purge plus : un déchiffrement raté par démarrage sur un
   jeton réellement corrompu, révocable depuis les réglages. Strictement meilleur que détruire un bon
   jeton.</li>
-<li><strong>Écriture du fichier</strong> — quatre constats, un seul geste sur
+<li><strong>Écriture du fichier — écrit le 2026-08-02, non exercé</strong> (<code>9a67513</code>).
+  Quatre constats, un seul geste sur
   <code>writeSettings()</code>. Le temporaire à nom fixe est plantable en lien symbolique :
   <code>writeFileSync</code> écrit <em>à travers</em> le lien et <code>renameSync</code> déplace le
   lien lui-même, si bien que <code>better-vault.json</code> devient un lien et que le jeton atterrit

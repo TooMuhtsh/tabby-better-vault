@@ -12,6 +12,8 @@
  * ailleurs : le garde-fou ne protège que ce qu'il enveloppe.
  */
 
+import * as crypto from 'crypto'
+
 import { runGuarded, isSuspendedError, suspendedMessage } from './keychainGuard'
 import { GUARD, Message, OperationId, REASON } from './messages'
 
@@ -209,10 +211,43 @@ export function keychainName (): string {
     return 'the system keychain'
 }
 
+/**
+ * Longueur fixe, en caractères hexadécimaux, du sel préfixé au texte clair —
+ * voir `encrypt()`. Fixe pour que `decrypt()` puisse le retrancher sans
+ * séparateur, quel que soit le contenu du mot de passe lui-même.
+ */
+const SALT_LENGTH = 16
+
+function randomSalt (): string {
+    return crypto.randomBytes(SALT_LENGTH / 2).toString('hex')
+}
+
+/**
+ * `safeStorage` chiffre de façon DÉTERMINISTE sur Linux : la clé dérivée du
+ * trousseau est fixe pour l'installation, et l'IV l'est tout autant côté
+ * OSCrypt de Chromium (16 espaces). Deux appels avec le même texte clair
+ * produisent donc EXACTEMENT le même octet-à-octet chiffré — mesuré par la
+ * campagne 4 (poste C) : révoquer puis ré-enregistrer le même mot de passe
+ * redonne un `token` identique au caractère près.
+ *
+ * CONSÉQUENCE. Sans ce préfixe, comparer deux `better-vault.json` — entre deux
+ * machines, ou le même fichier à deux instants — révèle si le mot de passe
+ * maître est identique, sans jamais le connaître. Ce n'est pas une fuite du
+ * mot de passe lui-même, mais une fuite d'ÉGALITÉ, qui n'a pas lieu d'être.
+ *
+ * Le sel n'est PAS stocké à part : il voyage à l'intérieur du texte chiffré
+ * lui-même, en préfixe du texte clair confié à `safeStorage`. Rien à lire ni
+ * à écrire ailleurs, rien à faire migrer sur les jetons déjà enregistrés — un
+ * jeton pré-existant sans sel se décode simplement avec ses seize premiers
+ * caractères ignorés au lieu d'un sel véritable, sans que cela ne fausse rien
+ * : `decrypt()` les retranche dans tous les cas, sans les interpréter.
+ */
 export function encrypt (plaintext: string): Buffer {
-    return withSafeStorage('store', s => s.encryptString(plaintext))
+    const salted = randomSalt() + plaintext
+    return withSafeStorage('store', s => s.encryptString(salted))
 }
 
 export function decrypt (blob: Buffer): string {
-    return withSafeStorage('read', s => s.decryptString(blob))
+    const salted = withSafeStorage('read', s => s.decryptString(blob))
+    return salted.slice(SALT_LENGTH)
 }

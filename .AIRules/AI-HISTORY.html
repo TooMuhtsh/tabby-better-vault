@@ -64,6 +64,33 @@ que Tabby y lit. Dans les deux cas, un raisonnement sur ce que le paquet <em>dev
 tenu lieu de lecture de ce que le code en <em>fait</em>.</td></tr>
 </table>
 
+<h2>Correctifs de la troisième campagne (2026-08-02)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-02</td><td><code>9a67513</code></td>
+<td><strong>Lot 2 — <code>better-vault.json</code> s'écrit dans un temporaire NEUF.</strong> Quatre
+constats, un seul geste sur <code>writeSettings()</code> : <code>unlink</code> puis création en
+<code>wx</code>, et le <code>chmod</code> postérieur disparaît. Le temporaire à nom fixe n'est plus
+plantable — <code>wx</code> refuse un chemin déjà occupé, quel qu'il soit — le mode 0600 s'applique à
+la création, donc le fichier n'existe jamais en 0666 avec le jeton dedans, et le <code>try</code>
+couvre les deux chemins au lieu du seul <code>rename</code>. Un échec total est journalisé en
+<code>CRIT</code> puis <strong>remonte</strong> : l'avaler ferait annoncer par
+<code>learnFromUser()</code> un enregistrement qui n'a pas eu lieu.
+<br><br>
+<strong>Le défaut a été mesuré avant d'être corrigé</strong>, sur un banc comparant l'ancienne
+séquence à la nouvelle : temporaire occupé par une entrée qui pointe ailleurs, l'ancienne écrit le
+jeton dans le fichier visé et fait de <code>better-vault.json</code> un alias de celui-ci, la nouvelle
+laisse la victime intacte. Les deux passent le cas nominal et la réécriture.
+<br><br>
+<strong>Deux réserves, écrites pour ne pas être reperdues.</strong> Le <code>fsync</code> n'est pas
+ajouté — la roadmap range l'atomicité sous coupure hors périmètre, et c'est le commentaire qui
+affirmait le contraire qui a été corrigé, pas le code : <code>rename</code> protège d'un lecteur
+concurrent et de lui seul. Et le scénario du <strong>lien symbolique n'est pas exercé</strong> :
+Windows n'en crée pas sans privilège, le banc a utilisé un lien matériel, qui reproduit le mécanisme
+(écriture à travers) sans être la même primitive. Vérification sous symlink : campagne 4.</td></tr>
+</table>
+
 <h2>Troisième campagne de vérification Linux (2026-08-01)</h2>
 
 <table>
