@@ -9,19 +9,17 @@ Dépôt distant : https://github.com/TooMuhtsh/tabby-better-vault
 
 **Avant toute session de travail sur ce projet, lire `.AIRules/README.html`**
 (index + protocole), puis `.AIRules/AI-CONTEXT.html` (invariants et pièges
-numérotés `#V1`–`#V29` — le prochain numéro libre est indiqué en tête du
+numérotés `#V1`–`#V30` — le prochain numéro libre est indiqué en tête du
 fichier —, plus les pièges hérités du projet frère) et
 `.AIRules/AI-HISTORY.html`/`.AIRules/ROADMAP.html` pour l'état d'avancement.
 Ouvrir ces fichiers directement dans un navigateur.
 
-**Quatre chantiers vivent sur des branches** et ne sont pas dans `master` : les
-quatre lots de correctifs de la 3ᵉ campagne (`fix/c3-lot1-jeton-detruit`,
-`fix/c3-lot2-ecriture-fichier`, `fix/c3-lot3-lisibilite`,
-`fix/c3-lot4-outillage`). Trois attendent d'être exercés sur Linux ; le
-quatrième est validé. Ne pas réécrire un de ces correctifs depuis `master` sans
-regarder la branche qui le porte — voir `.AIRules/ROADMAP.html#correctifs-c3`.
-Le piège `#V28` y est réservé par le lot 3, d'où le trou dans la numérotation
-de `master`.
+**Les quatre lots de correctifs de la 3ᵉ campagne sont fusionnés sur `master`**
+depuis le 2026-08-05 (`fix/c3-lot1-jeton-detruit`, `fix/c3-lot2-ecriture-fichier`,
+`fix/c3-lot3-lisibilite`, `fix/c3-lot4-outillage`), validés en conditions
+réelles — voir `.AIRules/ROADMAP.html#correctifs-c3` et `.AIRules/AI-HISTORY.html`.
+Les branches elles-mêmes peuvent être supprimées une fois la publication npm
+faite.
 
 La charte qui régit ce projet est `.AIRules/GOUVERNANCE-IA.md`, version
 `20260803-182826` ; **les réponses de cadrage propres à ce projet sont dans

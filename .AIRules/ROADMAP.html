@@ -991,6 +991,21 @@ résolution est mécanique — un seul titre de chantier, les lignes de tableau 
 callout d'avancement. C'est le prix assumé de branches restées dissociables pour la campagne.</p>
 </div>
 
+<div class="callout note">
+<span class="callout-title">Avancement au 2026-08-05 — clos, les quatre lots sont sur master</span>
+<p><strong>Les trois correctifs de suivi ont été validés en conditions réelles</strong>, pas sur la
+VM Ubuntu prévue par la <a href="#campagne-4">quatrième campagne</a> — restée hors d'atteinte — mais
+sur l'installation Windows réelle de l'utilisateur, pilotée par l'injecteur Angular (jeton réel
+purgé, <code>learnFromUser()</code> appelé directement avec un mot de passe stubé, sans jamais
+simuler de frappe sur la pop-up native). Détail de la méthode et des deux fausses pistes écartées en
+route dans <a href="AI-HISTORY.html">AI-HISTORY.html</a>.</p>
+<p>Les quatre lots sont fusionnés sur <code>master</code>
+(<code>9c96ec4</code> → <code>710412e</code> → <code>9ba5f6f</code> → <code>817b673</code>) : les
+deux conflits anticipés dans le callout ci-dessus se sont produits exactement comme prévu et ont été
+résolus selon les notes laissées par chaque branche. <strong>Ce chantier est clos</strong> — les deux
+sujets de conception ci-dessous restent ouverts, mais n'en font pas partie.</p>
+</div>
+
 <div class="callout important">
 <span class="callout-title">Deux défauts touchent la raison d'être du plugin, pas ses marges</span>
 <p><strong>Annuler une invite d'authentification détruit le mot de passe enregistré.</strong>
@@ -1075,7 +1090,17 @@ vivant. Ce qui discrimine, c'est <em>pid vivant + ancienneté</em> : une opérat
 en millisecondes, une gelée jamais. C'est une refonte du garde-fou, avec sa propre campagne.</p>
 </div>
 
-<h2 id="campagne-4">Quatrième campagne — préparée le 2026-08-02, non menée</h2>
+<h2 id="campagne-4">Quatrième campagne — préparée le 2026-08-02, non menée telle quelle</h2>
+<div class="callout note">
+<span class="callout-title">Ce qui s'est réellement passé le 2026-08-05</span>
+<p>Le protocole tri-postes ci-dessous n'a <strong>pas</strong> été exécuté : la VM Ubuntu prévue est
+restée hors d'atteinte. La validation des trois correctifs de suivi qui manquaient a eu lieu sur
+l'installation Windows réelle de l'utilisateur, par un chemin différent — l'injecteur Angular plutôt
+que l'aveuglement en boîte noire à trois postes. Voir le callout de clôture sous
+<a href="#correctifs-c3">#correctifs-c3</a> et le détail dans <code>AI-HISTORY.html</code>. Le
+protocole ci-dessous reste utile tel quel pour une prochaine campagne multi-postes en boîte noire —
+rien de ce qu'il documente n'est devenu faux, il n'a simplement pas servi cette fois.</p>
+</div>
 <div class="callout important">
 <span class="callout-title">Trois postes en parallèle, un lot chacun</span>
 <p>Les VM sont dupliquées et les trois campagnes tournent en même temps, chacune sur la branche de son

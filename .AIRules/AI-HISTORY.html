@@ -24,6 +24,54 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Fusion des quatre lots et validation réelle des correctifs c3 (2026-08-05)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-05</td><td><code>817b673</code></td>
+<td><strong>Les quatre lots sont fusionnés sur <code>master</code></strong>
+(<code>9c96ec4</code>, <code>710412e</code>, <code>9ba5f6f</code>, <code>817b673</code>, dans cet
+ordre), après validation en conditions réelles des trois correctifs de suivi qui restaient à exercer
+— pas sur la VM Ubuntu de la quatrième campagne, restée hors d'atteinte, mais sur l'installation
+Windows réelle de l'utilisateur (<code>ARA_DESKTOP</code>), le dépôt de développement étant relié au
+dossier de plugins de Tabby par jonction NTFS.
+<br><br>
+<strong>Méthode</strong> : Tabby relancé en <code>--debug --remote-debugging-port</code>, instance
+vivante de <code>VaultBridgeService</code> retrouvée dans les records de l'injecteur racine Angular
+(<code>getPlatform()._modules[0]._r3Injector</code>). D'abord la primitive isolée — appeler
+<code>safeStorage.encryptString</code> avec le sel du lot 2 deux fois de suite dans le vrai
+processus — pour confirmer que le mécanisme produit des chiffrés distincts. Puis le vrai chemin
+applicatif : jeton réel purgé, <code>bridge.original</code> stubé pour répondre un mot de passe
+choisi sans jamais simuler de frappe sur la pop-up native ni la déverrouiller pour de vrai, puis
+<code>learnFromUser()</code> appelé directement. Résultat conforme au code : mot de passe non
+vérifiable par <code>passphraseOpensVault()</code> → rien n'est écrit.
+<br><br>
+<strong>Fausse alerte sur le point 2 (sel du chiffrement), et sa cause</strong> : les deux jetons
+comparés par l'utilisateur commençaient tous deux par <code>djEw</code>, lu comme un signe de
+non-hasard. C'est simplement <code>v10</code> encodé en base64, l'étiquette de version que
+Chromium/Electron préfixe à <strong>tout</strong> blob <code>safeStorage</code> quel que soit son
+contenu — au-delà de ce préfixe constant, les deux jetons différaient entièrement. Une deuxième
+mesure a par ailleurs montré que <code>safeStorage</code> sur Windows (DPAPI) n'est <strong>pas
+déterministe nativement</strong>, contrairement au repli <code>basic_text</code> mesuré sur Linux à
+la campagne 4 : le sel corrige un défaut qui, sur ce poste précis, ne se serait pas manifesté sans
+lui de toute façon.
+<br><br>
+<strong>Les cinq points du protocole condensé sont validés</strong> : toast rouge fixe sur jeton
+corrompu, jeton différent à chaque ré-enregistrement, phrase corrigée dans les réglages, ligne
+<code>WARN</code> tenant sur une seule ligne, formats de date cohérents entre notification et
+panneau.
+<br><br>
+<strong>Deux conflits de fusion résolus comme prévu</strong>, exactement selon la note laissée dans
+ce document lors de la préparation : dans <code>vaultBridge.service.ts</code>, la structure du lot 1
+(pas de purge sur simple échec de lecture) l'emporte, avec <code>briefError()</code> du lot 3
+appliqué par-dessus ; dans <code>store.ts</code>, le mécanisme atomique du lot 2 l'emporte sur
+l'ancienne version que le lot 3 avait modifiée en parallèle, <code>briefError()</code> appliqué aux
+deux <code>String(e)</code>/<code>String(cause)</code> résiduels de <code>writeDirectly()</code> que
+le lot 3 ne connaissait pas. Piège <a href="AI-CONTEXT.html#piege-v28">#V28</a> et
+<a href="AI-CONTEXT.html#piege-v29">#V29</a> se retrouvent dans <code>AI-CONTEXT.html</code>,
+prochain numéro libre <code>#V30</code>, sans trou.</td></tr>
+</table>
+
 <h2>Préparation de la quatrième campagne (2026-08-02)</h2>
 
 <table>
