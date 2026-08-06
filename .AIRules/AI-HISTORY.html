@@ -24,6 +24,48 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2><code>configDir()</code>, garde-fou multi-processus, journal saturé (2026-08-06)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-06</td><td><code>5f60364</code></td>
+<td><strong>Les deux sujets de conception restés ouverts après la clôture des correctifs c3, plus le
+constat du journal saturé, ont un correctif écrit</strong> — les trois relevaient de
+<code>ROADMAP.html</code> comme chantiers ouverts distincts (<a href="ROADMAP.html#correctifs-c3">§
+Deux sujets de conception</a>, <a href="ROADMAP.html#bruit-journal">§ Journal saturé</a>).
+<br><br>
+<strong><code>tabbyConfig.ts</code></strong> : <code>configDir()</code> résout désormais
+<code>app.getPath('userData')</code> via <code>@electron/remote</code> — un accès à une propriété
+côté processus principal, pas un pont vers <code>safeStorage</code>, donc hors du périmètre du
+garde-fou — avec repli sur l'ancien calcul figé si inatteignable, et mis en cache pour le coût de
+l'IPC sur un chemin appelé à chaque lecture de réglages. Respecte désormais <code>--user-data-dir</code>
+et tout profil alternatif, là où le calcul figé écrivait toujours dans le profil par défaut.
+<br><br>
+<strong><code>keychainGuard.ts</code></strong> : <code>guardState()</code> discrimine désormais « un
+appel est en vol » de « un appel n'est jamais revenu » par pid vivant
+(<code>process.kill(pid, 0)</code>) et ancienneté du témoin (<code>STUCK_AGE_MS</code>, 60 s). Un
+témoin récent posé par un processus encore vivant n'est plus lu comme une suspension définitive — ce
+qui visait la course mesurée sur D4 (une fenêtre refusée à tort pendant que d'autres se
+déverrouillaient normalement dans la même seconde).
+<br><br>
+<strong><code>logger.ts</code></strong> : les répétitions immédiates d'une même ligne sont désormais
+étouffées pour <code>log</code>/<code>warn</code>/<code>crit</code> — la première occurrence part en
+clair, les suivantes sont comptées puis résumées après 3 s d'accalmie. Vise le constat du 2026-08-03
+(jusqu'à 262 lignes de déverrouillage par jour, Tabby rappelant <code>getPassphrase()</code> deux
+fois par sauvegarde de configuration chiffrée).
+<br><br>
+<strong><code>vaultBridge.service.ts</code></strong> : en mode observation (<code>debug</code>),
+<code>resolve()</code> capture la pile d'appel synchrone dès son entrée — donc encore celle de
+Tabby, avant tout <code>await</code> — pour nommer l'appelant responsable d'une rafale.
+<br><br>
+<strong>Vérifié par</strong> <code>npm run build</code> et <code>lint:i18n</code>, tous deux verts.
+<strong>Non exercé</strong> en conditions réelles : ni multi-fenêtres, ni sur trousseau Linux
+verrouillé (garde-fou), ni sur une session à configuration chiffrée (journal) — la VM Ubuntu étant
+restée hors d'atteinte au moment d'écrire ces correctifs, comme pour la quatrième campagne
+(<a href="ROADMAP.html#campagne-4">§ Quatrième campagne</a>). Écrit sur la branche
+<code>fix/configdir-guard-log-throttle</code>, pas encore fusionné sur <code>master</code>.</td></tr>
+</table>
+
 <h2>Fusion des quatre lots et validation réelle des correctifs c3 (2026-08-05)</h2>
 
 <table>
