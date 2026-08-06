@@ -42,9 +42,9 @@
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
     <td><span class="pill done">✅ Menée le 2026-08-01 — D1 et D2 conformes, <strong>dix défauts trouvés hors périmètre</strong>, dont D4 confirmé jusqu'en usage spontané</span></td><td>—</td></tr>
 <tr><td><a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
-    <td><span class="pill progress">🚧 Quatre lots <strong>clos</strong> (fusionnés le 2026-08-05) ; les deux sujets de conception restants ont un correctif écrit le 2026-08-06, <strong>non exercé</strong></span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill progress">🚧 Quatre lots <strong>clos</strong> (2026-08-05) ; <code>configDir()</code> <strong>livré</strong> (validé en conditions réelles le 2026-08-06) ; garde-fou logique validée en isolation le 2026-08-06, <strong>déclencheur réel (VM Linux) toujours en attente</strong></span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#bruit-journal">Journal saturé par les déverrouillages répétés</a></td>
-    <td><span class="pill progress">🚧 Constaté le 2026-08-03 — mécanisme de temporisation écrit le 2026-08-06, <strong>non exercé</strong></span></td><td><strong>Haute</strong></td></tr>
+    <td><span class="pill progress">🚧 Constaté le 2026-08-03 — mécanisme validé à l'exhaustif en isolation le 2026-08-06, <strong>déclencheur réel (rafale authentique) toujours en attente</strong></span></td><td><strong>Haute</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
     <td><span class="pill done">✅ Fusionnée dans <code>master</code> le 2026-08-01 et <strong>vérifiée sur Linux</strong> le jour même — quatre langues, journal figé en anglais. Deux défauts d'outillage et de format de date en découlent</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
@@ -1090,25 +1090,41 @@ vivant. Ce qui discrimine, c'est <em>pid vivant + ancienneté</em> : une opérat
 en millisecondes, une gelée jamais. C'est une refonte du garde-fou, avec sa propre campagne.</p>
 </div>
 
+<div class="callout important">
+<span class="callout-title"><code>configDir()</code> — livré, validé en conditions réelles (2026-08-06)</span>
+<p>Résout désormais <code>app.getPath('userData')</code> via <code>@electron/remote</code> — un
+simple accès à une propriété côté processus principal, pas un pont vers <code>safeStorage</code>,
+donc rien à passer par le garde-fou pour cet appel — avec repli sur l'ancien calcul figé si
+<code>@electron/remote</code> est inatteignable, et mis en cache pour le coût de l'IPC sur un chemin
+appelé à chaque lecture de réglages.</p>
+<p><strong>Validé en Electron réel</strong>, sans VM : instance Tabby jetable lancée avec
+<code>--user-data-dir</code> pointant vers un profil isolé (jonction NTFS de dev, aucune donnée
+réelle touchée), <code>--remote-debugging-port</code> pour confirmer le chargement. Résultat sans
+ambiguïté — <code>better-vault.log</code> est apparu <strong>dans le profil jetable</strong>, pas dans
+le vrai <code>%APPDATA%\tabby</code> : la preuve que le calcul figé aurait produite est exactement
+celle que ce correctif devait éliminer. Rien ne reste ouvert sur ce point.</p>
+</div>
+
 <div class="callout note">
-<span class="callout-title">Écrit le 2026-08-06, non exercé</span>
-<p><strong><code>configDir()</code></strong> résout désormais <code>app.getPath('userData')</code> via
-<code>@electron/remote</code> — un simple accès à une propriété côté processus principal, pas un pont
-vers <code>safeStorage</code>, donc rien à passer par le garde-fou pour cet appel — avec repli sur
-l'ancien calcul figé si <code>@electron/remote</code> est inatteignable, et mis en cache pour le coût
-de l'IPC sur un chemin appelé à chaque lecture de réglages. Sur le profil par défaut les deux chemins
-coïncident toujours ; ailleurs, seul le nouveau est correct.</p>
-<p><strong>Le garde-fou</strong> discrimine désormais par <em>pid vivant + ancienneté</em> :
+<span class="callout-title">Garde-fou — logique validée à l'exhaustif en isolation (2026-08-06), déclencheur réel toujours en attente</span>
+<p>Le garde-fou discrimine désormais par <em>pid vivant + ancienneté</em> :
 <code>guardState()</code> ne lit plus la seule présence du témoin comme suspension définitive.
 Un témoin récent (<code>STUCK_AGE_MS</code>, 60 s — marge au-delà des 45 s mesurés) posé par un
 processus dont <code>process.kill(pid, 0)</code> confirme qu'il est encore vivant est désormais lu
-comme un appel plausiblement en vol ailleurs, pas comme un appel jamais revenu — ce qui devrait lever
-la course mesurée sur D4 (une fenêtre refusée à tort pendant que d'autres se déverrouillaient
-normalement dans la même seconde). Un témoin dont le pid est mort reste, lui, non ambigu.</p>
-<p>Les deux tiennent sur <code>npm run build</code> et <code>lint:i18n</code>. <strong>Non
-exercé</strong> en conditions réelles multi-fenêtres ni sur trousseau Linux verrouillé — la VM Ubuntu
-étant restée hors d'atteinte au moment d'écrire ce correctif, exactement comme pour la quatrième
-campagne ci-dessous. Une prochaine campagne devra faire porter sa mesure précisément sur ce point.</p>
+comme un appel plausiblement en vol ailleurs, pas comme un appel jamais revenu.</p>
+<p><strong>Validé par test isolé</strong>, module réel compilé et exécuté hors Electron (aucune
+dépendance dans <code>keychainGuard.ts</code> ne l'exige), <code>APPDATA</code> redirigé vers un
+dossier jetable avant le premier <code>require</code> pour ne jamais toucher au vrai témoin de
+l'utilisateur. Neuf cas, tous conformes : témoin frais + pid vivant → <strong>non suspendu</strong>
+(exactement le scénario D4, refusé à tort avant ce correctif) ; témoin vieux (&gt;60 s) + pid vivant,
+témoin frais + pid mort, témoin corrompu → suspendu dans les trois cas ; <code>runGuarded()</code>
+refuse quand suspendu, exécute et nettoie son témoin sinon.</p>
+<p>Ce que ce test ne couvre PAS, et c'est la nuance à ne pas perdre : il vérifie le
+<strong>discriminant</strong> à l'exhaustif, pas le <strong>déclencheur réel</strong> du bug D4 —
+plusieurs fenêtres Tabby accédant vraiment en même temps à un trousseau Linux verrouillé, avec le
+blocage <code>safeStorage</code> effectif que seule cette plateforme a mesuré. Ça reste au même point
+qu'avant : la VM Ubuntu restée hors d'atteinte, exactement comme pour la quatrième campagne
+ci-dessous. Une prochaine campagne devra faire porter sa mesure précisément sur ce point.</p>
 </div>
 
 <h2 id="campagne-4">Quatrième campagne — préparée le 2026-08-02, non menée telle quelle</h2>
@@ -1265,20 +1281,32 @@ on dispose sur cet appel.</p>
 </ol>
 
 <div class="callout note">
-<span class="callout-title">Écrit le 2026-08-06, non exercé</span>
-<p>Les deux points ci-dessus sont implémentés. <code>logger.ts</code> étouffe désormais les
-répétitions immédiates d'une même ligne, pour <code>log</code>/<code>warn</code>/<code>crit</code>
-indifféremment : la première occurrence part en clair, les suivantes sont comptées puis résumées
+<span class="callout-title">Mécanisme de temporisation validé à l'exhaustif en isolation (2026-08-06), déclencheur réel toujours en attente</span>
+<p><code>logger.ts</code> étouffe désormais les répétitions immédiates d'une même ligne, pour
+<code>log</code>/<code>warn</code>/<code>crit</code> indifféremment : la première occurrence part en
+clair, les suivantes sont comptées puis résumées
 (<code>« repeated N more times over the following Ys »</code>) après 3 s d'accalmie — pas avant, pour
 ne pas fragmenter un dénombrement en cours. Un <code>purge()</code> pendant une rafale en cours de
 comptage abandonne le résumé au lieu de le reporter dans le fichier qui vient d'être vidé.</p>
 <p>En mode observation, <code>resolve()</code> capture désormais <code>new Error().stack</code> avant
 tout <code>await</code> — donc encore sur le fil d'appel synchrone de Tabby, qui porte donc encore ses
 propres cadres — pour nommer l'appelant responsable d'une rafale, plutôt que d'en observer seulement
-le symptôme.</p>
-<p>Les deux tiennent sur <code>npm run build</code> et <code>lint:i18n</code>. <strong>Non
-mesuré</strong> en conditions réelles : aucune session avec configuration chiffrée sous la main pour
-reproduire les rafales au moment d'écrire ce correctif.</p>
+le symptôme. <strong>Cette capture de pile, elle, n'a été exercée ni isolément ni en réel</strong> :
+couplée à l'injecteur Angular (<code>this.settings</code>, <code>previewOnly()</code>), elle ne se
+prête pas au même test isolé que le reste de ce fichier.</p>
+<p><strong>Validé par test isolé</strong> pour la temporisation elle-même : module réel compilé et
+exécuté hors Electron, <code>APPDATA</code> redirigé vers un journal jetable. Onze cas, tous
+conformes : rafale de cinq lignes identiques → une seule écrite immédiatement, résumé après
+l'accalmie ; une ligne différente flushe le résumé en cours sans attendre son propre délai ;
+<code>purge()</code> en pleine rafale abandonne le résumé plutôt que de le reporter dans le fichier
+qui vient d'être vidé.</p>
+<p>Ce que ce test ne couvre PAS : le <strong>déclencheur réel</strong>, c'est-à-dire Tabby rappelant
+véritablement <code>getPassphrase()</code> deux fois par seconde via <code>ConfigService</code> sur
+une session à configuration chiffrée — le test appelle <code>log()</code> directement, il ne fait pas
+tourner le pipeline réel. Contrairement au garde-fou, ce n'est <strong>pas spécifique à Linux</strong>
+: reproductible sur Windows dans un profil jetable avec un mot de passe de test, sans toucher aux
+données réelles de l'utilisateur — pas fait à ce jour, faute de session sous la main au moment
+d'écrire ce correctif.</p>
 </div>
 
 <div class="callout warning">

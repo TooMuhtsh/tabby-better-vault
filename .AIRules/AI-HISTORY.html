@@ -29,6 +29,41 @@ entrées les plus récentes en tête.</p>
 <table>
 <tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
 <tr><td>2026-08-06</td><td><code>5f60364</code></td>
+<td><strong>Validation, en autonomie, du correctif ci-dessous</strong> — sans VM, à la demande
+explicite de l'utilisateur (« piloté à 100% par l'agent »).
+<br><br>
+<strong><code>configDir()</code></strong> : instance Tabby jetable réelle, <code>--user-data-dir</code>
+vers un profil isolé (jonction NTFS de dev, <code>--remote-debugging-port=9333</code>), aucune donnée
+réelle touchée. <code>better-vault.log</code> est apparu dans le profil jetable et non dans le vrai
+<code>%APPDATA%\tabby</code> : preuve directe, en Electron réel, que <code>--user-data-dir</code> est
+respecté. <strong>Livré.</strong>
+<br><br>
+<strong>Garde-fou</strong> et <strong>journal saturé</strong> : modules réels
+(<code>keychainGuard.ts</code>, <code>logger.ts</code>) compilés en CommonJS et exécutés hors
+Electron — aucune dépendance Electron dans l'un ni l'autre, la seule qu'ils partagent
+(<code>tabbyConfig.ts</code>) retombe sur son calcul figé quand <code>@electron/remote</code> est
+absent. <code>APPDATA</code> redirigé vers un dossier jetable avant le premier <code>require</code>,
+pour ne jamais toucher au vrai témoin ni au vrai journal de l'utilisateur. Neuf cas pour le
+garde-fou, onze pour le journal, tous conformes — détail dans
+<a href="ROADMAP.html#correctifs-c3">§ Deux sujets de conception</a> et
+<a href="ROADMAP.html#bruit-journal">§ Journal saturé</a>.
+<br><br>
+<strong>Ce que ça ne couvre pas, dit explicitement</strong> : le déclencheur réel de D4 (plusieurs
+fenêtres Tabby contre un vrai trousseau Linux verrouillé) reste hors d'atteinte — aucun outillage de
+VM sur ce poste (<code>vmrun</code>/<code>VBoxManage</code> absents), et les campagnes précédentes
+montrent que la VM a toujours été pilotée à la main par un opérateur humain dans VMware Workstation.
+Le déclencheur réel du journal (rafale authentique de <code>getPassphrase()</code> via
+<code>ConfigService</code> sur une session à configuration chiffrée) n'est, lui, pas spécifique à
+Linux — reproductible sur Windows sans VM — mais n'a pas été fait faute de session sous la main. La
+capture de pile de <code>vaultBridge.service.ts</code> n'a été exercée ni isolément ni en réel,
+couplée qu'elle est à l'injecteur Angular. Décision de l'utilisateur : documenter tel quel plutôt que
+de pousser plus loin cette session-ci.
+<br><br>
+Une instance Tabby jetable de test, ouverte pour valider <code>configDir()</code>, n'a pas pu être
+fermée par l'agent : <code>Stop-Process</code> a été refusé par le classificateur auto-mode, qui ne
+peut pas distinguer une fenêtre de test d'une fenêtre réelle de l'utilisateur — laissée à
+l'utilisateur.</td></tr>
+<tr><td>2026-08-06</td><td><code>5f60364</code></td>
 <td><strong>Les deux sujets de conception restés ouverts après la clôture des correctifs c3, plus le
 constat du journal saturé, ont un correctif écrit</strong> — les trois relevaient de
 <code>ROADMAP.html</code> comme chantiers ouverts distincts (<a href="ROADMAP.html#correctifs-c3">§
