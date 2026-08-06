@@ -238,6 +238,46 @@ function clearWitness (): void {
 }
 
 /**
+ * Efface le témoin, mais seulement s'il porte encore NOTRE `pid` et NOTRE
+ * `since` — pas sur sa seule présence.
+ *
+ * Mesuré par la campagne 5 (2026-08-06, VM Linux, deux vrais processus) : un
+ * appel concurrent, dans un AUTRE processus, peut avoir écrit son propre témoin
+ * PENDANT que le nôtre était gelé — `runGuarded()` l'autorise à le faire dès que
+ * `guardState()` nous voit vivants et récents, exactement ce que le correctif du
+ * discriminant vise. Effacer inconditionnellement dans le `finally`, comme avant
+ * cette fonction, supprimait alors SA protection à lui, pas la nôtre : s'il
+ * mourait à cet instant précis, plus aucun témoin ne survivait pour protéger le
+ * démarrage suivant — ce que ce fichier existe justement pour empêcher.
+ *
+ * Résiduel, assumé : une fenêtre TOCTOU subsiste entre la lecture ci-dessous et
+ * l'`unlink` de `clearWitness()` — un témoin qui appartient encore à quelqu'un
+ * d'autre pourrait être remplacé par le nôtre pile dans cet intervalle. Fenêtre
+ * de l'ordre de la microseconde, sans acteur malveillant à modéliser ici (même
+ * utilisateur, même machine) : hors périmètre de ce correctif, qui vise la
+ * suppression inconditionnelle mesurée, pas une garantie atomique complète.
+ */
+function clearOwnWitness (since: number): void {
+    let raw: string
+    try {
+        raw = fs.readFileSync(witnessPath(), 'utf8')
+    } catch {
+        return // Déjà absent.
+    }
+    try {
+        const parsed = JSON.parse(raw)
+        if (parsed.pid !== process.pid || parsed.since !== since) {
+            // Ce n'est plus le nôtre : un autre appel l'a reposé entre-temps.
+            return
+        }
+    } catch {
+        // Illisible : impossible de prouver qu'il est à nous, on ne le touche pas.
+        return
+    }
+    clearWitness()
+}
+
+/**
  * Lève la consignation à la demande explicite de l'utilisateur.
  *
  * Réservé au panneau de réglages : un ré-armement automatique ramènerait le gel
@@ -268,10 +308,11 @@ export function runGuarded<T> (operation: OperationId, fn: () => T): T {
         throw suspendedError(describeState(state))
     }
 
+    const since = Date.now()
     try {
         fs.writeFileSync(
             witnessPath(),
-            JSON.stringify({ operation, since: Date.now(), pid: process.pid }),
+            JSON.stringify({ operation, since, pid: process.pid }),
             { mode: 0o600 },
         )
     } catch (e) {
@@ -285,6 +326,8 @@ export function runGuarded<T> (operation: OperationId, fn: () => T): T {
         // Jamais atteint si `fn` gèle : c'est exactement l'effet recherché, le
         // témoin survit au processus et protège le démarrage suivant.
         depth--
-        clearWitness()
+        // Pas `clearWitness()` sans condition : voir `clearOwnWitness()`, un
+        // autre processus peut avoir reposé le sien entre-temps.
+        clearOwnWitness(since)
     }
 }
