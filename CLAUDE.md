@@ -67,6 +67,14 @@ rendue inaccessible. Ce plugin remplace donc `VaultService.getPassphrase` sur
 l'instance obtenue via l'injecteur Angular — un mécanisme **non contractuel**,
 à revérifier à chaque mise à jour de Tabby (`.AIRules/AI-CONTEXT.html`, #V2).
 
+## Version
+
+`package.json` est à `1.0.0` depuis le 2026-08-06 — voir
+`.AIRules/ROADMAP.html#publication` pour la décision. Politique semver
+explicite : un correctif mineur incrémente le patch (`x.x.1`), un ajout de
+contenu mineur (langue, réglage) incrémente le mineur (`x.1.x`) et remet le
+patch à zéro. Le majeur n'est pas prédécidé.
+
 ## Build
 
 ```

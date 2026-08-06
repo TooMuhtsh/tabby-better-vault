@@ -41,8 +41,13 @@ confie une fois au trousseau du système, puis répond à votre place.
       trousseau qui cesse de répondre coûte au pire un démarrage figé (voir
       [Trousseau verrouillé](#trousseau-verrouillé))
 - [ ] Publication sur npm, installable depuis le gestionnaire de plugins
-- [x] Vérification adversariale indépendante sous Linux, dont le refus du
-      backend `basic_text`
+- [x] **Vérifié sous Windows et Linux**, dont une vérification adversariale
+      indépendante sous Linux (cinq campagnes) ayant trouvé et corrigé de
+      vrais défauts, et confirmé le refus du backend `basic_text`.
+      **macOS n'est pas vérifié indépendamment** — le plugin y utilise la
+      même API `safeStorage`, mais aucune machine macOS n'a été disponible
+      pour le tester. À considérer comme un support de bonne foi tant que
+      personne ne l'a mesuré.
 - [ ] Panneau de réglages commun aux autres plugins `tabby-better-*`
 
 ## Installation

@@ -38,8 +38,12 @@ OS keychain once, then answers on your behalf.
       a keychain that stops answering costs you at most one hung start (see
       [When the keychain is locked](#when-the-keychain-is-locked))
 - [ ] Published on npm, installable from Tabby's plugin manager
-- [x] Verified on Linux by an independent adversarial review, including
-      refusing the insecure `basic_text` backend
+- [x] **Verified on Windows and Linux**, including an independent adversarial
+      review on Linux (five rounds) that found and fixed real defects, and
+      confirmed the insecure `basic_text` keychain backend is refused.
+      **macOS is not independently verified** — the plugin uses the same
+      `safeStorage` API there, but no macOS machine has been available to
+      test it. Treat macOS support as best-effort until someone measures it.
 - [ ] Shared settings panel with other `tabby-better-*` plugins
 
 ## Installation

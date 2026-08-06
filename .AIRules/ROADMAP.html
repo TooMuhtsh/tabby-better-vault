@@ -34,7 +34,7 @@
 <tr><td><a href="#audit">Journal d'audit et notifications</a></td>
     <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
-    <td><span class="pill progress">🚧 Dépôt public en ligne ; npm <strong>condition de sécurité remplie</strong> (2026-08-06, macOS accepté comme non testable) — reste la mécanique npm (version, vérifs package.json)</span></td><td>—</td></tr>
+    <td><span class="pill progress">🚧 Dépôt public en ligne ; version <code>1.0.0</code> et politique semver fixées (2026-08-06) — reste le rendu README npm à vérifier et <code>npm publish</code> lui-même</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
     <td><span class="pill done">✅ Closes — <strong>déplacées au registre des livrés</strong> le 2026-08-06 (option <code>registre-livrés</code>)</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
@@ -502,16 +502,33 @@ avec <code>README.md</code> (anglais) et <code>README.fr.md</code> (français).<
 <h3>Reste à faire — publication npm</h3>
 <p>C'est elle qui rendra le plugin installable en un clic depuis le gestionnaire de plugins de
 Tabby : celui-ci interroge le registre npm avec <code>keywords:tabby-plugin</code>, mot-clé déjà
-présent dans le <code>package.json</code>. À vérifier avant de publier :</p>
+présent dans le <code>package.json</code>. Vérifié avant de publier :</p>
 <ul>
 <li>Le champ <code>author</code> doit être présent, même vide, sinon la découverte du plugin échoue
   silencieusement (piège hérité #2) — c'est déjà le cas.</li>
 <li><code>npm run build</code> est déjà branché sur <code>prepublishOnly</code>, et
   <code>files</code> ne publie que <code>dist</code>.</li>
-<li>Passer la version de <code>0.0.1</code> à quelque chose de significatif, et décider si le plugin
-  sort en <code>0.x</code> (le mécanisme reste non contractuel) ou en <code>1.0</code>.</li>
-<li>Vérifier le rendu du README sur la page npm, qui n'affiche que <code>README.md</code>.</li>
+<li><strong>Version passée à <code>1.0.0</code> le 2026-08-06</strong>, décidée par l'utilisateur —
+  le mécanisme reste non contractuel (<a href="AI-CONTEXT.html#piege-v2">#V2</a>), mais la condition
+  de publication est remplie et le plugin est en usage réel depuis son lancement.</li>
+<li>Vérifier le rendu du README sur la page npm, qui n'affiche que <code>README.md</code> — pas
+  encore fait.</li>
 </ul>
+
+<div class="callout note">
+<span class="callout-title">Politique de version — décidée le 2026-08-06</span>
+<p>Semver standard, appliqué explicitement à partir de <code>1.0.0</code> :</p>
+<ul>
+<li><strong>Correctif mineur</strong> (comportement inchangé, un défaut de moins) → incrémente le
+  <strong>patch</strong>, <code>x.x.1</code>.</li>
+<li><strong>Ajout de contenu mineur</strong> (une fonctionnalité qui s'ajoute sans rien casser —
+  une langue, un réglage) → incrémente le <strong>mineur</strong>, <code>x.1.x</code>, et remet le
+  patch à zéro.</li>
+<li><strong>Majeur</strong> — non précisé par cette décision ; par convention semver, réservé à un
+  changement qui casse la compatibilité (peu probable ici, ce plugin n'exposant pas d'API consommée
+  par d'autres) ou à une refonte du mécanisme central. À arbitrer le moment venu, pas par défaut.</li>
+</ul>
+</div>
 <div class="callout warning">
 <span class="callout-title">À trancher avant publication</span>
 <p>Le plugin repose sur un patch d'une API interne de Tabby (<a href="AI-CONTEXT.html#piege-v2">#V2</a>)
