@@ -30,12 +30,15 @@ réglages, expiration du jeton, notification. Le dépôt est
 <a href="https://github.com/TooMuhtsh/tabby-better-vault">public</a> ; la publication npm reste à
 faire (<a href="ROADMAP.html#publication">§ Publication</a>). Plus aucune inconnue technique —
 <a href="AI-CONTEXT.html#piege-v4">#V4</a> et <a href="AI-CONTEXT.html#piege-v7">#V7</a> sont levés.</p>
-<p>Sous <strong>Linux</strong>, deux campagnes de vérification ont été menées sur une VM dédiée les
-2026-07-29 : la seconde a validé les cinq revendications du plugin, mais a trouvé deux défauts nés
-des correctifs du matin. <strong>Les correctifs de ces deux défauts sont poussés et n'ont jamais été
-exercés</strong> — dont un qui n'est pas exerçable ailleurs que sous un trousseau réel. C'est ce que
-la <a href="annexes/REALISE.html#campagne-3">troisième campagne</a> a levé, et
-<a href="ROADMAP.html#correctifs-c3">ce qui bloque encore la publication</a> aujourd'hui.</p>
+<p><strong>Cinq campagnes de vérification menées sur VM Linux</strong> entre le 2026-07-29 et le
+2026-08-06, chacune trouvant puis validant des correctifs sur la précédente — détail complet dans le
+<a href="annexes/REALISE.html">registre des livrés</a>. <strong>La condition de publication npm est
+remplie depuis le 2026-08-06</strong> : le plugin est testé sur Windows et Linux ;
+<strong>macOS est accepté comme non testable</strong> plutôt qu'attendu indéfiniment (aucune machine
+macOS n'a jamais été disponible pour ce projet) — un risque assumé et documenté
+(<a href="ROADMAP.html#correctifs-c3">détail</a>), pas une conviction que le défaut restant n'existe
+pas. Reste la mécanique avant publication effective : version, vérifications de
+<code>package.json</code>.</p>
 </div>
 
 <p>Plugin Tabby indépendant : déverrouillage automatique du coffre-fort (mot de passe maître) via
@@ -72,9 +75,13 @@ plugins de l'utilisateur.</p>
     (<code>horodatage | CHANTIER | Commit/Hash | Explication</code>, 250 caractères max), la plus
     récente en tête. Même règle d'ajout seul.</td></tr>
 <tr><td><a href="ROADMAP.html">ROADMAP.html</a></td>
-    <td>Statut et design des chantiers restants — au premier rang, les
-    <a href="ROADMAP.html#correctifs-c3">correctifs de la 3ᵉ campagne</a>, qui conditionnent
-    la publication (macOS non exercé).</td></tr>
+    <td>Statut et design des chantiers restants — au premier rang, le
+    <a href="ROADMAP.html#bruit-journal">bruit du journal</a> (priorité haute) et la
+    <a href="ROADMAP.html#granularite">granularité par profil/groupe</a>.</td></tr>
+<tr><td><a href="annexes/REALISE.html">annexes/REALISE.html</a></td>
+    <td>Registre des chantiers livrés (option <code>registre-livrés</code>, A-8) — cinq entrées au
+    2026-08-06, reprises verbatim depuis la roadmap au moment de leur bascule. Annexe, pas un
+    document principal : hors navbar.</td></tr>
 <tr><td><a href="PROFIL.md">PROFIL.md</a></td>
     <td><strong>Réponses de cadrage propres à ce projet</strong> — les vingt-quatre options de la
     partie B de la charte. S'y reporter plutôt que de redécider une convention au coup par coup.</td></tr>

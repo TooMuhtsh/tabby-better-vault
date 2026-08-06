@@ -8,13 +8,378 @@
 <body>
 
 <h1>Registre des livrés</h1>
-<p class="muted">Annexe de <a href="../ROADMAP.html#correctifs-c3">Roadmap → Correctifs issus de la 3ᵉ campagne</a>. Dernière revue : 2026-08-06</p>
+<p class="muted">Annexe de <a href="../ROADMAP.html#registre-livres-migration">Roadmap → Registre des livrés</a>. Dernière revue : 2026-08-06</p>
 
 <p>Ce registre ne porte que l'<strong>état</strong> d'un chantier déjà livré — le design retenu au
 moment de la bascule, repris ici sans être réécrit. Ce qui reste à faire vit dans
 <a href="../ROADMAP.html">ROADMAP.html</a> ; l'événement daté de chaque livraison vit dans
 <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, que cette page renvoie sans répéter. Le plus
 récent chantier livré est en tête — l'inverse de l'ordre du journal.</p>
+
+<h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
+<p>Le plan ci-dessous a été arrêté le 2026-08-01, après revérification des dix constats un par un
+contre les sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
+
+<div class="callout note">
+<span class="callout-title">Avancement au 2026-08-02 — les quatre lots sont écrits, un seul est validé</span>
+<p>Chaque lot vit sur sa branche, avec sa documentation, et arrivera sur <code>master</code> avec elle
+(option <code>branches</code>) :</p>
+<table>
+<tr><th>Lot</th><th>Branche</th><th>État</th></tr>
+<tr><td>1 — le jeton détruit</td><td><code>fix/c3-lot1-jeton-detruit</code></td>
+    <td>écrit, non exercé sur Linux</td></tr>
+<tr><td>2 — écriture du fichier</td><td><code>fix/c3-lot2-ecriture-fichier</code></td>
+    <td>écrit, non exercé sur Linux</td></tr>
+<tr><td>3 — lisibilité</td><td><code>fix/c3-lot3-lisibilite</code></td>
+    <td>écrit, non exercé sur Linux</td></tr>
+<tr><td>4 — outillage</td><td><code>fix/c3-lot4-outillage</code></td>
+    <td><strong>écrit et validé</strong> — ne touche pas le runtime, ses contrôles ont été déclenchés
+    par injection sur le poste de développement</td></tr>
+</table>
+<p><strong>Un lot écrit n'est pas un lot corrigé.</strong> Les trois premiers attendent la
+<a href="../ROADMAP.html#campagne-4">quatrième campagne</a> ; la publication reste bloquée par les quatre.</p>
+<p>Deux points restent ouverts et ne sont pas des oublis : le <code>fsync</code> du lot 2, laissé de
+côté parce que l'atomicité sous coupure est hors périmètre — c'est le commentaire qui affirmait le
+contraire qui a été corrigé, pas le code ; et un <code>String(e)</code> résiduel dans
+<code>vaultBridge.service.ts</code>, sur la ligne que le lot 1 réécrit de son côté, à passer en
+<code>briefError()</code> quand les deux branches se retrouveront sur <code>master</code>.</p>
+<p><strong>La fusion produira un conflit sur <code>AI-HISTORY.html</code> et <code>ROADMAP.html</code></strong>
+à partir du deuxième merge : les quatre branches écrivent le même chantier au même endroit. La
+résolution est mécanique — un seul titre de chantier, les lignes de tableau concaténées, un seul
+callout d'avancement. C'est le prix assumé de branches restées dissociables pour la campagne.</p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">Avancement au 2026-08-05 — clos, les quatre lots sont sur master</span>
+<p><strong>Les trois correctifs de suivi ont été validés en conditions réelles</strong>, pas sur la
+VM Ubuntu prévue par la <a href="../ROADMAP.html#campagne-4">quatrième campagne</a> — restée hors d'atteinte — mais
+sur l'installation Windows réelle de l'utilisateur, pilotée par l'injecteur Angular (jeton réel
+purgé, <code>learnFromUser()</code> appelé directement avec un mot de passe stubé, sans jamais
+simuler de frappe sur la pop-up native). Détail de la méthode et des deux fausses pistes écartées en
+route dans <a href="../AI-HISTORY.html">AI-HISTORY.html</a>.</p>
+<p>Les quatre lots sont fusionnés sur <code>master</code>
+(<code>9c96ec4</code> → <code>710412e</code> → <code>9ba5f6f</code> → <code>817b673</code>) : les
+deux conflits anticipés dans le callout ci-dessus se sont produits exactement comme prévu et ont été
+résolus selon les notes laissées par chaque branche. <strong>Ce chantier est clos</strong> — les deux
+sujets de conception ci-dessous restent ouverts, mais n'en font pas partie.</p>
+</div>
+
+<div class="callout important">
+<span class="callout-title">Deux défauts touchent la raison d'être du plugin, pas ses marges</span>
+<p><strong>Annuler une invite d'authentification détruit le mot de passe enregistré.</strong>
+<code>serveFromToken()</code> ne distingue pas « le trousseau refuse de répondre maintenant » de « le
+jeton est corrompu » : les deux tombent dans le même <code>catch</code> et appellent
+<code>deleteToken()</code>. Contrôle décisif de la campagne : même trousseau verrouillé, même blocage,
+même durée, mais <em>sans</em> annulation → le jeton survit. Un geste anodin — fermer une fenêtre
+d'authentification qui gêne — annule donc la raison d'être du plugin, et rien à l'écran ne le dit.
+Aucun risque de sûreté, la dégradation va vers la saisie manuelle.</p>
+<p><strong>D4 est confirmé jusqu'en usage spontané.</strong> Trois observations : au banc avec contrôle
+apparié, dans le produit provoqué, et <em>dans le produit sans aucune provocation</em> — trois fenêtres
+déverrouillent dans la seconde, une quatrième se refuse le trousseau en affirmant qu'une opération
+démarrée dans la même seconde n'est jamais revenue. Course intermittente mais réelle, et la fenêtre
+refusée reste dégradée pour toute sa session, sans réessai.</p>
+</div>
+
+<h3>Les quatre lots</h3>
+<ol>
+<li><strong>Le jeton détruit — écrit le 2026-08-02, non exercé</strong> (<code>7608323</code>). Le
+  <code>catch</code> de déchiffrement de
+  <code>serveFromToken()</code> ne purge plus. La purge se justifie là où on a une preuve
+  <em>positive</em> que le jeton est faux — échéance dépassée, échec PBKDF2 — et ces deux chemins
+  existent déjà et purgent correctement. Un blob qu'on ne sait pas déchiffrer est un problème de
+  trousseau, pas de jeton. Pire cas si on ne purge plus : un déchiffrement raté par démarrage sur un
+  jeton réellement corrompu, révocable depuis les réglages. Strictement meilleur que détruire un bon
+  jeton.</li>
+<li><strong>Écriture du fichier — écrit le 2026-08-02, non exercé</strong> (<code>9a67513</code>).
+  Quatre constats, un seul geste sur
+  <code>writeSettings()</code>. Le temporaire à nom fixe est plantable en lien symbolique :
+  <code>writeFileSync</code> écrit <em>à travers</em> le lien et <code>renameSync</code> déplace le
+  lien lui-même, si bien que <code>better-vault.json</code> devient un lien et que le jeton atterrit
+  hors du dossier de config — le <code>chmod</code> suit lui aussi vers la victime. Un dossier en
+  lecture seule fait échapper un <code>EACCES</code> non rattrapé, le <code>try</code> ne couvrant que
+  <code>rename</code> : la cible préexistante reste en 0666 avec son ancien contenu, sans une ligne de
+  journal. Le resserrage des droits est postérieur à l'écriture du contenu (82 250 observations du
+  temporaire en 0666 <em>avec</em> charge utile). Et <code>strace</code> compte zéro
+  <code>fsync</code>. Correctif : <code>unlink</code> puis création en <code>wx</code> — échoue si le
+  temporaire existe, lien compris, et garantit un fichier neuf donc le mode 0600 appliqué à la
+  création — le tout sous <code>try</code> qui journalise. <strong>Deux commentaires du code
+  deviennent faux et tombent avec</strong> : « le fichier qui atterrit est TOUJOURS un fichier neuf »
+  et « quel que soit l'état antérieur, il ressort en 0600 ».</li>
+<li><strong>Lisibilité — écrit le 2026-08-02, non exercé</strong> (<code>d72c669</code>). Le motif
+  d'échec déversait <code>String(e)</code> tel quel, soit neuf
+  lignes dont sept de pile Node, à l'écran <em>et</em> au journal, pour un utilisateur qui vient
+  simplement de refuser une authentification. Les dates suivent la locale du système et non celle de
+  Tabby (<code>toLocaleString()</code> sans argument, cinq sites) alors que Tabby fournit
+  <code>TabbyFormatedDatePipe</code>. Après un refus, le bouton de récupération est inopérant pour
+  toute la session — l'<code>OSCrypt</code> de Chromium mémorise son échec pour la vie du processus,
+  et <code>learnFromUser</code> ne peut alors plus rien enregistrer : il faut le dire à l'écran,
+  puisque le redémarrage de Tabby est le seul remède. Et <code>withSafeStorage()</code> ne teste que
+  <code>if (!safeStorage)</code>, jamais l'existence des méthodes.</li>
+<li><strong>Outillage — écrit et validé le 2026-08-02</strong> (<code>405b67d</code>).
+  <code>lint:i18n</code> ne lisait jamais <code>TABLES</code> : sa liste
+  de langues est codée en dur et le script n'ouvre pas <code>src/i18n/index.ts</code>. Une table
+  écrite mais non enregistrée, ou enregistrée sous un code invalide (<code>'fr'</code> au lieu de
+  <code>'fr-FR'</code>), passerait au vert. Collision latente à traiter dans le même geste : la clé
+  <code>'Cancel'</code> est aussi un msgid de Tabby, et la greffe fusionnant, <strong>notre valeur
+  écrase celle de Tabby pour toute l'application</strong>. Sans effet aujourd'hui — les valeurs
+  coïncident dans les trois langues — et non surveillé.</li>
+</ol>
+
+<h3>Deux sujets de conception, pas des correctifs</h3>
+<div class="callout warning">
+<span class="callout-title">À décider, pas à faire en passant</span>
+<p><strong><code>configDir()</code> est codé en dur et ignore <code>--user-data-dir</code>.</strong>
+Mesuré : une instance lancée avec un profil distinct a chargé le plugin et écrit sa ligne de journal
+dans <code>~/.config/tabby</code>, aucun <code>better-vault.log</code> n'apparaissant dans son propre
+profil. Trois conséquences, dont la dernière est la plus grave : mauvais
+<code>better-vault.json</code>, témoin partagé entre profils — c'est ce qui rend D4 reproductible à
+volonté — et <strong>validation de la phrase contre le <code>config.yaml</code> d'un autre
+profil</strong>. Le correctif est court (<code>app.getPath('userData')</code> avec repli sur le chemin
+actuel) mais il déplace des fichiers : sur le profil par défaut les deux chemins coïncident, ailleurs
+non.</p>
+<p><strong>Le garde-fou confond deux faits distincts</strong> : « un appel est en vol en ce moment »
+et « un appel n'est jamais revenu ». Le pid est écrit dans le témoin
+(<code>keychainGuard.ts</code>) mais <strong>jamais relu</strong> : un témoin dont le pid est vivant
+et un témoin dont le pid est mort produisent un objet identique, un message identique, un refus
+identique. Le court-circuit <code>if (depth &gt; 0)</code> traite exactement ce problème en
+intra-processus, et <code>depth</code> étant une variable de module il n'a aucun équivalent
+inter-processus. <strong>Le pid seul ne tranche pas</strong> — un Tabby gelé a lui aussi un pid
+vivant. Ce qui discrimine, c'est <em>pid vivant + ancienneté</em> : une opération gardée saine revient
+en millisecondes, une gelée jamais. C'est une refonte du garde-fou, avec sa propre campagne.</p>
+</div>
+
+<div class="callout important">
+<span class="callout-title"><code>configDir()</code> — livré, validé en conditions réelles (2026-08-06)</span>
+<p>Résout désormais <code>app.getPath('userData')</code> via <code>@electron/remote</code> — un
+simple accès à une propriété côté processus principal, pas un pont vers <code>safeStorage</code>,
+donc rien à passer par le garde-fou pour cet appel — avec repli sur l'ancien calcul figé si
+<code>@electron/remote</code> est inatteignable, et mis en cache pour le coût de l'IPC sur un chemin
+appelé à chaque lecture de réglages.</p>
+<p><strong>Validé en Electron réel</strong>, sans VM : instance Tabby jetable lancée avec
+<code>--user-data-dir</code> pointant vers un profil isolé (jonction NTFS de dev, aucune donnée
+réelle touchée), <code>--remote-debugging-port</code> pour confirmer le chargement. Résultat sans
+ambiguïté — <code>better-vault.log</code> est apparu <strong>dans le profil jetable</strong>, pas dans
+le vrai <code>%APPDATA%\tabby</code> : la preuve que le calcul figé aurait produite est exactement
+celle que ce correctif devait éliminer. Rien ne reste ouvert sur ce point.</p>
+</div>
+
+<div class="callout important">
+<span class="callout-title">Garde-fou — validé en conditions réelles par la campagne 5 (2026-08-06)</span>
+<p>Le garde-fou discrimine désormais par <em>pid vivant + ancienneté</em> :
+<code>guardState()</code> ne lit plus la seule présence du témoin comme suspension définitive.
+Un témoin récent (<code>STUCK_AGE_MS</code>, 60 s — marge au-delà des 45 s mesurés) posé par un
+processus dont <code>process.kill(pid, 0)</code> confirme qu'il est encore vivant est désormais lu
+comme un appel plausiblement en vol ailleurs, pas comme un appel jamais revenu.</p>
+<p><strong>Ce qui n'était que testé en isolation l'a été pour de vrai</strong> — VM Linux, trousseau
+réellement verrouillé <em>en cours de session</em> (après négociation du vrai backend
+<code>gnome_libsecret</code>, condition qui s'est révélée décisive : verrouiller <em>avant</em> le
+premier lancement ne produit qu'un repli <code>basic_text</code> propre, sans blocage — deux
+scénarios distincts, tous deux désormais mesurés). Résultat : une vraie invite d'authentification
+système (GTK, pas une fenêtre Tabby), un vrai blocage, un témoin réel relu par le vrai
+<code>guardState()</code> compilé — et le discriminant fait exactement ce qu'il promet : pid vivant à
+4 s / 12 s / 59,7 s → autorisé ; même pid vivant à 71,8 s → suspendu, pile au franchissement de
+<code>STUCK_AGE_MS</code> ; pid tué à âge constant (21,5 s vs 25,6 s) → suspendu immédiatement. Le
+cycle complet — blocage, <code>SIGKILL</code>, témoin qui survit, démarrage suivant non gelé (~6 s),
+repli manuel, levée explicite, vérification réelle réussie — a été parcouru de bout en bout. Détail :
+<a href="../AI-HISTORY.html">AI-HISTORY.html</a>, entrée du 2026-08-06.</p>
+<p><strong>D4 par l'interface de Tabby est structurellement impossible sur Linux</strong>, code à
+l'appui : verrou single-instance dur (<code>requestSingleInstanceLock()</code>), l'entrée « New
+window » n'existe que sur macOS, la zone de notification est désactivée sur Linux, la palette de
+commandes ne propose rien pour une fenêtre. Le correctif <code>configDir()</code> supprime en plus le
+seul autre vecteur connu (témoin partagé entre profils) : deux profils distincts ont désormais deux
+témoins distincts. Il ne reste donc plus rien à discriminer dans les scénarios atteignables sur cette
+plateforme.</p>
+<p><strong>Un défaut réel trouvé, mesuré sur du vrai code multi-processus, et corrigé</strong> : le
+<code>finally</code> de <code>runGuarded()</code> effaçait le témoin sans vérifier qu'il portait
+encore notre <code>pid</code> et notre <code>since</code> — un appel concurrent qui repose son propre
+témoin pendant que le nôtre est encore gelé (exactement ce que le discriminant autorise) se le
+faisait effacer par erreur, ce qui aurait pu laisser un blocage sans protection au démarrage suivant
+si ce concurrent mourait à cet instant précis. Corrigé par <code>clearOwnWitness()</code>
+(<code>2c15b1e</code>) : le témoin n'est effacé que s'il correspond encore exactement à ce qui a été
+écrit. <strong>Reachability mesurée</strong> : nulle sur Linux (les deux garde-fous ci-dessus s'y
+opposent déjà), mais atteignable sur macOS via « New window » — deux <code>BrowserWindow</code>, un
+seul processus principal, un seul <code>configDir</code>, donc un témoin partagé entre deux
+renderers.</p>
+<p><strong>Le scénario « deux fenêtres, un seul processus principal »</strong> — le seul chemin
+restant vers le défaut ci-dessus, et le dernier vrai vecteur de D4 — n'a pas pu être exercé, faute
+de machine macOS. Le chemin <code>decrypt()</code>/<code>operation: "read"</code> sous trousseau
+verrouillé n'a pas non plus été mesuré directement (seuls <code>store</code> et <code>verify</code>
+l'ont été) ; la structure de <code>withSafeStorage()</code> et <code>#V23</code> rendent son
+comportement déductible, pas mesuré.</p>
+<p><strong>Risque accepté le 2026-08-06 : macOS n'est pas testable sur ce poste, et ne le sera pas.</strong>
+Décision de l'utilisateur — pas une déduction. Ce projet n'a jamais eu de machine macOS, à aucune
+campagne ; le garder « en attente de mesure » indéfiniment revenait à bloquer la publication sur une
+inconnue qui ne se lèvera pas. Le correctif s'applique à toutes les plateformes, sans code
+spécifique à Linux — ce n'est donc pas un trou dans le code, seulement dans sa vérification.
+<strong>Le plugin est testé sur Windows et Linux ; macOS reste non vérifié</strong>, à le dire
+explicitement partout où la portée « toutes plateformes » était sous-entendue (README, § Publication
+ci-dessous). Si un utilisateur ou un contributeur macOS mesure un jour ce scénario, la trouvaille
+prend le pas sur cette acceptation — elle est un choix par défaut de preuve, pas une conviction que
+le défaut n'existe pas.</p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">Deux constats annexes, campagne 5</span>
+<p>Sans rapport avec ce plugin, relevés en passant : un <code>config.yaml</code> réduit à un saut de
+ligne fait planter Tabby au démarrage avant toute fenêtre (<code>TypeError: Cannot read properties of
+undefined (reading 'appearance')</code>) — bug de Tabby, non corrigé, hors périmètre.</p>
+<p>Propre au plugin, mais sans code à changer : tant que le plugin est activé et le trousseau
+disponible et non consigné, le panneau de réglages n'offre <strong>aucun</strong> moyen de déclencher
+<code>keychainRoundTrip()</code> — <code>settingsTab.component.pug</code> conditionne l'encadré de
+vérification à <code>!keychain</code>, renseigné dès que <code>settings.enabled</code> est vrai.
+Cohérent avec l'intention (ne pas sonder sans consentement), mais l'effet de bord est que le seul
+contrôle qui vérifie vraiment est cachée précisément dans l'état où l'utilisateur s'appuie sur le
+plugin — et ça a rendu la mesure elle-même plus difficile à mener. Pas un chantier ouvert à ce stade,
+juste à garder en tête.</p>
+</div>
+
+<div class="callout">
+<span class="callout-title">Registre</span>
+<p><strong>Journal</strong> : <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, entrées « Correctifs
+de la troisième campagne (2026-08-02) », « Fusion des quatre lots et validation réelle des
+correctifs c3 (2026-08-05) », « <code>configDir()</code>, garde-fou multi-processus, journal saturé
+(2026-08-06) » ; puis <a href="../AI-HISTORY.log">AI-HISTORY.log</a>, entrée du 2026-08-06
+(acceptation macOS).</p>
+<p><strong>Évolutions post-livraison</strong> : macOS accepté comme non testable le 2026-08-06 —
+décision de principe qui clôt ce chantier plutôt qu'une évolution de son contenu technique.</p>
+<p><strong>Pièges</strong> : <a href="../AI-CONTEXT.html#piege-v26">#V26</a>,
+<a href="../AI-CONTEXT.html#piege-v28">#V28</a>, <a href="../AI-CONTEXT.html#piege-v29">#V29</a>
+(nouveaux). Résout aussi <a href="../AI-CONTEXT.html#piege-v25">#V25</a> et
+<a href="../AI-CONTEXT.html#piege-v27">#V27</a>, déjà consignés par la
+<a href="#campagne-3">3ᵉ campagne</a>.</p>
+<p><strong>Commits</strong> : <code>7608323</code>, <code>9a67513</code>, <code>d72c669</code>,
+<code>405b67d</code> (les quatre lots) · <code>9c96ec4</code>, <code>710412e</code>,
+<code>9ba5f6f</code>, <code>817b673</code> (fusions) · <code>ce246a6</code> ·
+<code>5f60364</code>, <code>6f16117</code>, <code>f0aa6e5</code> · <code>2c15b1e</code>,
+<code>8a9a998</code>, <code>d5902c2</code> · <code>6ba8203</code> (acceptation macOS).</p>
+</div>
+
+<h2 id="i18n">Internationalisation — interface traduite, journal en anglais</h2>
+<p><strong>Fait le 2026-08-01</strong>, sur la branche <code>feat/i18n-ui</code> — priorisé le
+2026-07-29 devant la granularité par profil, motif donné par l'utilisateur : « à l'usage c'est ce
+qui est le plus important maintenant, le reste c'est du bonus ». <strong>Validé en conditions
+réelles sur Windows 11</strong> le jour même, fusionné dans <code>master</code>, puis
+<strong>vérifié sur Linux</strong> par la <a href="#campagne-3">3ᵉ campagne</a>.
+Testé sur Windows &amp; Linux ; macOS accepté comme non testable le 2026-08-06 (voir
+<a href="#correctifs-c3">correctifs-c3</a>), même règle ici.</p>
+
+<div class="callout note">
+<span class="callout-title">Ce que la campagne a établi sur l'i18n, et les deux défauts qu'elle a trouvés</span>
+<p><strong>Le défaut le plus grave n'existe pas.</strong> Tabby en français puis en italien, plugin
+installé : ses traductions se chargent normalement, contrôle plugin retiré à l'appui. C'est le point
+qui justifiait à lui seul le sixième point du protocole — greffer une table sur le mécanisme de Tabby
+peut dégrader Tabby, et ça ne se voit qu'en regardant l'application entière.</p>
+<p>Conformes également : le repli d'une locale non couverte (sous <code>it-IT</code>, panneau
+intégralement anglais, zéro résidu français sur sept marqueurs), le journal resté anglais (135 lignes
+après passage par cinq langues), et l'absence de clé orpheline (85 sources, trois tables, deux sens,
+sur le gabarit compilé). <strong>Une prédiction de l'analyse statique est falsifiée</strong> : le
+panneau déjà rendu se retraduit à chaud, sans recréation du composant — Tabby affiche pourtant un
+bandeau « redémarrage nécessaire », plus prudent que nécessaire.</p>
+<p>Deux défauts en revanche, traités en <a href="#correctifs-c3">lot 3 et lot 4</a> : les dates
+suivent la locale du système et non celle de Tabby, et <code>lint:i18n</code> ne vérifie pas que les
+tables sont réellement enregistrées.</p>
+<p>Fait d'environnement à retenir : <strong>avec une config chiffrée, la pop-up du coffre est
+toujours en anglais</strong> — le réglage de langue est à l'intérieur du blob chiffré. Ça corrobore
+par la mesure ce qui n'était qu'un raisonnement : toute notification antérieure au déverrouillage ne
+peut pas être traduite.</p>
+</div>
+
+<h3>Ce qui a été décidé, et qui n'était pas décidé au départ</h3>
+<p>La demande du 2026-07-29 portait sur « les cinq langues les plus utilisées, journal d'audit
+compris ». Les deux termes ont bougé le 2026-08-01, sur décision de l'utilisateur :</p>
+<ul>
+<li><strong>Quatre langues, pas cinq</strong> : <code>fr-FR</code>, <code>en-US</code>,
+  <code>es-ES</code>, <code>de-DE</code>. La cinquième n'a pas été choisie faute de pouvoir la
+  justifier. La mesure faite ce jour-là — taux de complétion des 24 <code>.po</code> livrés par
+  Tabby — <strong>ne discrimine pas</strong> : dix-huit locales sont à 100 %, et elle n'écarte que
+  <code>en-GB</code> (3 %), <code>pt-PT</code> (71 %) et <code>da-DK</code> (78 %). Elle ne dit rien
+  de l'usage réel. Ajouter une langue plus tard ne coûte qu'une table.</li>
+<li><strong>Le journal n'est pas traduit</strong> : il passe en anglais fixe. La réserve posée en
+  amont — un fichier persistant dont la langue suivrait la locale devient incohérent et
+  incherchable — a été tranchée dans ce sens plutôt que par des codes d'événement. Pas de changement
+  de format du journal, donc.</li>
+</ul>
+
+<div class="callout note">
+<span class="callout-title">La contrainte structurante s'est confirmée, et elle a coûté ce qu'elle annonçait</span>
+<p>Tabby cherche ses traductions par la <strong>chaîne source anglaise</strong> (msgid gettext) et
+son <code>CustomMissingTranslationHandler</code> compile la clé elle-même faute de traduction.
+Réécrire l'interface en anglais n'était donc pas une option : une source française afficherait du
+français à un utilisateur turc. Les 85 chaînes sources du plugin sont désormais anglaises, et les
+traductions vivent dans <code>src/i18n/</code>.</p>
+<p>Conséquence non anticipée : ce mécanisme ne signale <strong>jamais</strong> une traduction morte —
+la phrase retombe simplement en anglais. D'où <code>npm run lint:i18n</code>. Détail en
+<a href="../AI-CONTEXT.html#piege-v21">#V21</a>.</p>
+</div>
+
+<h3>Ce que la réalisation a appris — quatre pièges consignés</h3>
+<p>Aucun n'avait été anticipé par la préparation de ce chantier, et deux d'entre eux sont
+silencieux par construction. Voir <a href="../AI-CONTEXT.html">AI-CONTEXT.html</a> :</p>
+<ul>
+<li><a href="../AI-CONTEXT.html#piege-v19">#V19</a> — enregistrer une traduction avant Tabby fait
+  sauter le chargement de ses propres <code>.po</code> : <strong>toute l'interface de Tabby</strong>
+  serait restée en anglais, pas seulement celle du plugin. Le défaut ne se voit qu'en regardant
+  Tabby ; c'est ce qui rend le point 2 du protocole de test indispensable.</li>
+<li><a href="../AI-CONTEXT.html#piege-v20">#V20</a> — <code>TranslateService</code> est typé
+  <code>any</code>, contrairement au reste de <code>tabby-core</code>, et c'est justement le membre
+  le plus dangereux qui n'était pas vérifié.</li>
+<li><a href="../AI-CONTEXT.html#piege-v21">#V21</a> — la chaîne source est la clé, et le piège ICU de
+  l'apostrophe collée à une accolade, que le français déclenche naturellement.</li>
+<li><a href="../AI-CONTEXT.html#piege-v22">#V22</a> — ce qui est écrit sur disque ne se traduit pas :
+  le témoin du garde-fou portait une phrase française, il porte désormais un identifiant.</li>
+</ul>
+
+<div class="callout warning">
+<span class="callout-title">Le point qui reste ouvert — la contradiction entre écran et journal</span>
+<p>Cinq messages servaient les deux usages : le motif d'indisponibilité du trousseau
+(<code>KeychainStatus.reason</code>, affiché par le panneau ET journalisé) et la phrase du garde-fou.
+<code>src/messages.ts</code> les transporte désormais sous forme de chaîne source + paramètres, sans
+les rendre : le journal les écrit en anglais, l'interface les traduit avec la même chaîne comme clé.
+Une seule table de vérité, deux rendus.</p>
+<p><strong>Ce fichier est le point de contact entre les deux exigences.</strong> Toute nouvelle
+chaîne qui doit à la fois s'afficher et se journaliser passe par là — l'écrire en dur d'un côté ou
+de l'autre rouvre exactement le défaut que ce chantier a fermé.</p>
+</div>
+
+<h3>Reste à faire</h3>
+<div class="callout note">
+<span class="callout-title">Deux points de cette liste corrigés le 2026-08-06, devenus faux entre-temps</span>
+<p><code>feat/i18n-ui</code> est fusionnée dans <code>master</code> depuis le 2026-08-01 (<code>git
+branch --merged master</code> le confirme) — le premier point ci-dessous demandait une fusion déjà
+faite. Le Linux annoncé « rien n'y a été vérifié » l'a pourtant été, par la
+<a href="#campagne-3">3ᵉ campagne</a> du même jour (voir le paragraphe
+au-dessus). macOS, resté réellement non exercé, n'est plus un point d'action : accepté comme non
+testable le même jour (voir <a href="#correctifs-c3">correctifs-c3</a>).</p>
+</div>
+<ul>
+<li><strong>Une cinquième langue</strong>, si une donnée d'usage finit par exister. Le validateur
+  refuse une table incomplète, donc l'ajout est mécanique.</li>
+</ul>
+
+<div class="callout note">
+<span class="callout-title">Défaut mineur relevé au passage, non corrigé</span>
+<p>La ligne <code>vault unlocked from the system keychain</code> apparaît <strong>deux fois</strong>
+par démarrage (mesuré le 2026-08-01). <strong>Préexistant, sans rapport avec l'i18n</strong> : la
+traduction l'a seulement rendu visible. <code>serveFromToken()</code> journalise à chaque résolution,
+alors que la notification, elle, est dédupliquée par <code>unlockAnnounced</code> — le commentaire de
+ce champ note que le coffre est déverrouillé « trois fois en une seconde en usage réel ».</p>
+<p>C'est du bruit, pas une perte d'information. À corriger en même temps qu'un autre passage sur le
+pont plutôt que seul : toucher au chemin de <code>resolve()</code> pour du confort de lecture n'est
+pas un bon échange tant que la troisième campagne n'a pas eu lieu.</p>
+</div>
+
+<div class="callout">
+<span class="callout-title">Registre</span>
+<p><strong>Journal</strong> : <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, entrée
+« Internationalisation de l'interface (2026-08-01) ».</p>
+<p><strong>Évolutions post-livraison</strong> : deux dérives de documentation corrigées le
+2026-08-06 en préparant cette migration (statut de <code>feat/i18n-ui</code> annoncé « à fusionner »
+alors que fusionnée depuis le 2026-08-01, Linux annoncé « jamais vérifié » alors que vérifié par la
+<a href="#campagne-3">3ᵉ campagne</a>) ; macOS accepté comme non testable le même jour.</p>
+<p><strong>Pièges</strong> : <a href="../AI-CONTEXT.html#piege-v19">#V19</a> à
+<a href="../AI-CONTEXT.html#piege-v22">#V22</a>.</p>
+<p><strong>Commits</strong> : <code>c189450</code>, <code>0f3e33a</code>.</p>
+</div>
 
 <h2 id="campagne-3">Troisième campagne — menée le 2026-08-01</h2>
 <div class="callout note">
@@ -26,7 +391,7 @@ a d'abord répondu <code>available: true</code> — l'ancien test se serait donc
 C'est la première fois qu'une campagne de ce projet établit qu'un défaut corrigé <em>existait</em>,
 au lieu de constater que le correctif ne casse rien.</p>
 <p><strong>Mais la campagne a trouvé dix défauts qu'elle ne cherchait pas</strong>, dont deux qui
-touchent la raison d'être du plugin. Ils sont traités en <a href="../ROADMAP.html#correctifs-c3">chantier propre</a>.
+touchent la raison d'être du plugin. Ils sont traités en <a href="#correctifs-c3">chantier propre</a>.
 Aucun n'est une régression des correctifs D1/D2 : ce sont des zones que les campagnes précédentes
 n'avaient jamais exercées.</p>
 <p>Rapport complet dans <code>.tempfiles/</code> avec le protocole — comme lui, hors dépôt : il cite
@@ -56,7 +421,7 @@ faisait toute la valeur de la première campagne, aurait été perdu sans qu'auc
 signaler. La suppression ne rattrape pas la lecture. C'est désormais explicite : l'opérateur, ou une
 instance de préparation qui ne participe pas à l'audit, jamais l'auditrice.</p>
 <p><strong>La branche à cloner</strong>, ensuite. Le protocole faisait cloner le dépôt par défaut
-alors que <a href="../ROADMAP.html#i18n">l'i18n</a> vivait sur <code>feat/i18n-ui</code> et touche
+alors que <a href="#i18n">l'i18n</a> vivait sur <code>feat/i18n-ui</code> et touche
 <code>keychainGuard.ts</code> et <code>osKeychain.ts</code> — précisément les deux fichiers que cette
 campagne doit vérifier. La campagne aurait porté sur le code d'avant, et aurait été bonne à refaire
 sans que rien ne le signale. Depuis la fusion du même jour, le clone simple suffit ; la vérification
@@ -203,8 +568,8 @@ défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est u
 <p><strong>Journal</strong> : <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, entrée « Troisième
 campagne de vérification Linux (2026-08-01) ».</p>
 <p><strong>Évolutions post-livraison</strong> : aucune à ce jour — les dix défauts trouvés hors
-périmètre vivent comme chantier actif (<a href="../ROADMAP.html#correctifs-c3">#correctifs-c3</a>),
-pas comme une évolution de cette entrée.</p>
+périmètre sont devenus leur propre chantier, <a href="#correctifs-c3">Correctifs issus de la 3ᵉ
+campagne</a>, lui-même livré et migré ici le 2026-08-06 ; pas une évolution de cette entrée.</p>
 <p><strong>Pièges</strong> : <a href="../AI-CONTEXT.html#piege-v23">#V23</a> à
 <a href="../AI-CONTEXT.html#piege-v27">#V27</a> (compteur porté à <code>#V28</code>).</p>
 <p><strong>Commits</strong> : <code>cb97067</code>.</p>
