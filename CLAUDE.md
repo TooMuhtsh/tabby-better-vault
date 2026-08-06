@@ -14,8 +14,10 @@ fichier —, plus les pièges hérités du projet frère) et `.AIRules/ROADMAP.h
 pour l'état d'avancement. Le journal est en deux fichiers depuis le
 2026-08-06 : `.AIRules/AI-HISTORY.html` (gelé, tout ce qui précède cette date)
 et `.AIRules/AI-HISTORY.log` (actif, une ligne par entrée — **c'est là qu'une
-nouvelle entrée de journal s'écrit désormais**, jamais dans le `.html`). Ouvrir
-les fichiers HTML directement dans un navigateur.
+nouvelle entrée de journal s'écrit désormais**, jamais dans le `.html`). Les
+chantiers livrés (option `registre-livrés`) vivent dans
+`.AIRules/annexes/REALISE.html`, pas dans `ROADMAP.html` qui n'en garde qu'une
+ligne et un lien. Ouvrir les fichiers HTML directement dans un navigateur.
 
 **Les quatre lots de correctifs de la 3ᵉ campagne sont fusionnés sur `master`**
 depuis le 2026-08-05 (`fix/c3-lot1-jeton-detruit`, `fix/c3-lot2-ecriture-fichier`,
@@ -29,9 +31,13 @@ ancienneté) sont fusionnés sur `master` depuis le 2026-08-06**, et **validés 
 conditions réelles** par la campagne 5 le jour même — vrai blocage reproduit sur
 VM Linux, D4 par l'interface confirmé structurellement impossible sur Linux, un
 défaut trouvé en cours de mesure (témoin effacé sans vérification par
-`runGuarded()`) corrigé dans la foulée. Reste ouvert : le cas « deux fenêtres, un
-processus principal », exposé sur macOS via « New window », jamais exercé faute
-de machine — voir `.AIRules/ROADMAP.html#correctifs-c3`.
+`runGuarded()`) corrigé dans la foulée. **macOS accepté comme non testable le
+même jour** (décision de l'utilisateur, pas une déduction — ce projet n'a jamais
+eu de machine macOS) : le cas « deux fenêtres, un processus principal », exposé
+via « New window », reste non vérifié mais n'est plus un blocage — voir
+`.AIRules/ROADMAP.html#correctifs-c3`. **La condition de publication npm est
+donc remplie** — reste la mécanique (version, vérifs `package.json`), publication
+elle-même pas déclenchée.
 
 La charte qui régit ce projet est `.AIRules/GOUVERNANCE-IA.md`, version
 `20260804-071239` ; **les réponses de cadrage propres à ce projet sont dans
