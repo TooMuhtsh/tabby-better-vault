@@ -15,3 +15,6 @@
 # sans changement de fichier versionné dans le même geste). "CHANTIER" reprend, quand il existe,
 # l'identifiant ancré de ROADMAP.html (ex. correctifs-c3) ou d'AI-CONTEXT.html (ex. piege-v30) ;
 # sinon un slug court et stable, jamais réutilisé pour autre chose ensuite.
+
+2026-08-06T15:11:21+02:00 | journal-log-migration | 67bef51 | AI-HISTORY.log cree (250 car max/ligne). Sans conversion retroactive : compresser l'existant aurait viole le contenu constant qu'exige l'exception d'A-4. AI-HISTORY.html gele, callout de renvoi ajoute.
+2026-08-06T15:11:21+02:00 | registre-livres-migration | 67bef51 | annexes/REALISE.html cree, 3 campagnes Linux migrees verbatim (renvoi journal, evolutions, pieges, commits). Reste : audit, reglages, correctifs-c3 attendent leur cloture reelle avant d'y basculer.
