@@ -131,7 +131,15 @@ export class VaultBridgeService {
         const { enabled, debug } = this.settings
 
         if (debug) {
-            log('observation mode: delegating to the native prompt, capturing nothing')
+            // La pile est capturée ICI, avant tout `await` : jusque-là,
+            // `resolve()` s'exécute encore sur le fil d'appel SYNCHRONE de Tabby,
+            // qui porte donc encore ses propres cadres. Utile pour nommer
+            // l'appelant lors d'une rafale (constat du 2026-08-03, ROADMAP.html
+            // § Journal saturé) — le pont ne boucle pas, c'est Tabby qui rappelle,
+            // et cette pile dit enfin depuis où. La première ligne, « Error »
+            // sans message, n'apprend rien.
+            const stack = (new Error().stack ?? '').split('\n').slice(1).join('\n')
+            log(`observation mode: delegating to the native prompt, capturing nothing — caller:\n${stack}`)
             return this.previewOnly()
         }
         if (!enabled) {

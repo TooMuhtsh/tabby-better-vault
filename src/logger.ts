@@ -61,11 +61,70 @@ function append (line: string): void {
     }
 }
 
-function write (level: Level, message: string): void {
+function writeLine (level: Level, message: string): void {
     const line = `[${stamp()}] ${level.padEnd(4)} ${message}`
     // eslint-disable-next-line no-console
     console.log('[better-vault]', line)
     append(line)
+}
+
+/**
+ * Étouffe les répétitions immédiates d'une même ligne — constaté le 2026-08-03 :
+ * sur une configuration chiffrée, Tabby appelle deux fois `getPassphrase()` par
+ * sauvegarde de `config.yaml`, jusqu'à quatre fois par seconde en rafale, 262
+ * déverrouillages journalisés en une journée (ROADMAP.html § Journal saturé).
+ * Le pont ne boucle pas : c'est Tabby qui rappelle, et nous qui parlons à chaque
+ * appel — le bruit est un symptôme que ce plugin rend visible, pas un défaut
+ * qu'il crée.
+ *
+ * Mécanisme réutilisable — sur le modèle de `unlockAnnounced` de
+ * `vaultBridge.service.ts`, mais porté ici pour profiter à toute ligne répétée,
+ * pas seulement au déverrouillage — et non spécifique à un message : n'importe
+ * quel appelant de `log`/`warn`/`crit` en bénéficie sans rien changer chez lui.
+ *
+ * La PREMIÈRE occurrence d'une rafale part en clair, immédiatement : elle porte
+ * l'information « quand », l'une des deux raisons d'être de ce journal. Les
+ * répétitions identiques qui suivent sont comptées, sans écrire une ligne
+ * chacune, puis résumées en une seule après une accalmie — pas avant, pour ne
+ * pas fragmenter un dénombrement en cours.
+ */
+const REPEAT_FLUSH_DELAY_MS = 3000
+
+interface PendingRepeat {
+    level: Level
+    message: string
+    count: number
+    firstAt: number
+    timer: ReturnType<typeof setTimeout>
+}
+
+let pending: PendingRepeat | null = null
+
+function flushPending (): void {
+    if (!pending) {
+        return
+    }
+    const { level, message, count, firstAt } = pending
+    pending = null
+    if (count <= 0) {
+        return
+    }
+    const seconds = Math.max(1, Math.round((Date.now() - firstAt) / 1000))
+    writeLine(level, `${message} (repeated ${count} more time${count === 1 ? '' : 's'} over the following ${seconds}s)`)
+}
+
+function write (level: Level, message: string): void {
+    if (pending && pending.level === level && pending.message === message) {
+        pending.count++
+        clearTimeout(pending.timer)
+        pending.timer = setTimeout(flushPending, REPEAT_FLUSH_DELAY_MS)
+        return
+    }
+    // Une ligne différente arrive : la rafale précédente, s'il y en avait une,
+    // est résumée maintenant plutôt que d'attendre son propre délai.
+    flushPending()
+    writeLine(level, message)
+    pending = { level, message, count: 0, firstAt: Date.now(), timer: setTimeout(flushPending, REPEAT_FLUSH_DELAY_MS) }
 }
 
 export function log (message: string): void {
@@ -158,6 +217,14 @@ export function applyRetention (): void {
  * indiscernable d'un journal qui n'a jamais rien enregistré.
  */
 export function purge (): void {
+    // Une rafale en cours de dénombrement écrirait sa ligne de résumé après
+    // coup, dans un fichier que l'utilisateur vient explicitement de vider —
+    // elle est abandonnée plutôt que reportée : le contexte qu'elle résumait a
+    // disparu avec le reste du journal.
+    if (pending) {
+        clearTimeout(pending.timer)
+        pending = null
+    }
     try {
         fs.writeFileSync(LOG_PATH, '', 'utf8')
     } catch {

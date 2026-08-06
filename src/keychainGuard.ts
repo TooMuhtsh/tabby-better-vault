@@ -67,6 +67,35 @@ const FILENAME = 'better-vault-keychain.lock'
 /** Marqueur porté par les erreurs de refus, pour les distinguer des vraies pannes. */
 const SUSPENDED = 'betterVaultKeychainSuspended'
 
+/**
+ * Au-delà de cet âge, un témoin est traité comme définitivement gelé même si le
+ * processus qui l'a posé est encore vivant : ce n'est alors plus une invite en
+ * cours mais un utilisateur absent, ou une fenêtre gelée pour une autre raison.
+ * La campagne du 2026-07-29 a mesuré un blocage indéfini, sans réponse, encore
+ * bloqué à 45 s ; ce seuil ajoute une marge plutôt que de coller à la mesure.
+ */
+const STUCK_AGE_MS = 60_000
+
+/**
+ * Le processus qui a posé ce témoin est-il toujours vivant ?
+ *
+ * `process.kill(pid, 0)` n'envoie aucun signal, il sonde seulement l'existence
+ * du processus — sur Windows comme ailleurs. `EPERM` signifie qu'il existe mais
+ * que nous n'avons pas le droit de lui envoyer un signal (processus élevé) : il
+ * reste vivant. `ESRCH`, ou tout autre échec, signifie qu'il n'existe plus.
+ */
+function processAlive (pid: number): boolean {
+    if (!Number.isInteger(pid) || pid <= 0) {
+        return false
+    }
+    try {
+        process.kill(pid, 0)
+        return true
+    } catch (e: any) {
+        return e?.code === 'EPERM'
+    }
+}
+
 export interface GuardState {
     /** Une sonde précédente n'est jamais revenue : le trousseau est consigné. */
     suspended: boolean
@@ -125,18 +154,48 @@ export function guardState (): GuardState {
         return { suspended: false }
     }
     // Témoin illisible ou tronqué : sa seule PRÉSENCE porte l'information, le
-    // contenu n'est qu'un confort de diagnostic. On ne le rejette donc pas.
+    // contenu n'est qu'un confort de diagnostic. On ne le rejette donc pas —
+    // mais faute de `pid` exploitable, on ne peut pas non plus lui appliquer le
+    // discriminant ci-dessous : il est relu comme définitivement suspendu.
     try {
         const parsed = JSON.parse(raw)
-        return {
-            suspended: true,
-            // Un témoin écrit par une version antérieure porte une phrase
-            // française sous la clé `label` : elle est ignorée, et l'état est
-            // relu comme anonyme. Afficher une étiquette non traduisible au
-            // milieu d'une interface traduite serait pire que ne rien nommer.
-            operation: isOperationId(parsed.operation) ? parsed.operation : undefined,
-            since: typeof parsed.since === 'number' ? parsed.since : undefined,
+        const operation = isOperationId(parsed.operation) ? parsed.operation : undefined
+        // Un témoin écrit par une version antérieure porte une phrase française
+        // sous la clé `label` : elle est ignorée, et l'état est relu comme
+        // anonyme. Afficher une étiquette non traduisible au milieu d'une
+        // interface traduite serait pire que ne rien nommer.
+        const since = typeof parsed.since === 'number' ? parsed.since : undefined
+        const pid = typeof parsed.pid === 'number' ? parsed.pid : undefined
+
+        // DISCRIMINANT entre « un appel est en vol en ce moment » et « un appel
+        // n'est jamais revenu » — le garde-fou confondait les deux jusqu'ici, sur
+        // la seule présence du fichier. Un témoin dont le processus qui l'a posé
+        // est encore vivant ET récent décrit un appel PLAUSIBLEMENT en cours
+        // ailleurs — typiquement une autre fenêtre Tabby démarrée au même
+        // instant — pas un appel définitivement gelé. Le confondre refusait à
+        // tort le trousseau à une troisième ou quatrième fenêtre pendant que les
+        // précédentes se déverrouillaient normalement dans la même seconde (D4,
+        // mesuré : trois fenêtres réussissent, une quatrième se voit refuser le
+        // trousseau en prétendant qu'une opération démarrée dans la même seconde
+        // n'est jamais revenue).
+        //
+        // Un processus mort qui a laissé son témoin, en revanche, n'est pas
+        // ambigu : il ne reviendra plus jamais — c'est exactement le cas que ce
+        // garde-fou existe pour couvrir (témoin survivant à un SIGKILL, mesuré).
+        // Le pid ait pu depuis être réutilisé par un autre processus n'y change
+        // rien : la seule question posée ici est « ce témoin décrit-il encore
+        // quelqu'un en train d'agir », et un pid mort y répond non sans appel.
+        //
+        // Résiduel, assumé : un pid vivant réutilisé par un processus SANS
+        // rapport, dans la fenêtre `STUCK_AGE_MS` qui suit la mort du vrai
+        // titulaire, ferait lire à tort « en vol ». Fenêtre courte, coïncidence
+        // requise sur le pid ET le moment — hors périmètre de ce correctif, qui
+        // vise la confusion mesurée et non une garantie absolue.
+        if (pid !== undefined && since !== undefined && Date.now() - since < STUCK_AGE_MS && processAlive(pid)) {
+            return { suspended: false, operation, since }
         }
+
+        return { suspended: true, operation, since }
     } catch {
         return { suspended: true }
     }
