@@ -563,7 +563,8 @@ Electron antérieurs à ce changement de comportement.</p>
   <strong>gèle au démarrage</strong> et n'atteint jamais sa pop-up native. Le repli n'est pas
   « tardif », il est <strong>inatteignable</strong>. Le <code>try/catch</code> n'y change rien : un
   appel bloquant n'est pas une exception. Détail, chaîne causale et correctif à concevoir :
-  <a href="ROADMAP.html#campagne-linux">Campagne de vérification indépendante</a>.</li>
+  <a href="annexes/REALISE.html#campagne-linux">Campagne de vérification indépendante</a>, dans le
+  registre des livrés.</li>
 <li>Sonde réutilisable, à coller dans la console des DevTools de Tabby (Réglages → Application →
   Debugging → <em>Open DevTools</em> ; aucun raccourci clavier n'est lié) :
   <code>(() =&gt; { const ss = require('@electron/remote').safeStorage; return { isEncryptionAvailable: ss.isEncryptionAvailable(), hasMethod: typeof ss.getSelectedStorageBackend, backend: ss.getSelectedStorageBackend ? String(ss.getSelectedStorageBackend()) : 'METHODE ABSENTE' } })()</code></li>

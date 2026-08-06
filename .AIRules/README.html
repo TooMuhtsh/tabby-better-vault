@@ -34,8 +34,8 @@ faire (<a href="ROADMAP.html#publication">§ Publication</a>). Plus aucune incon
 2026-07-29 : la seconde a validé les cinq revendications du plugin, mais a trouvé deux défauts nés
 des correctifs du matin. <strong>Les correctifs de ces deux défauts sont poussés et n'ont jamais été
 exercés</strong> — dont un qui n'est pas exerçable ailleurs que sous un trousseau réel. C'est ce que
-la <a href="ROADMAP.html#campagne-3">troisième campagne</a> doit lever, et c'est ce qui bloque la
-publication.</p>
+la <a href="annexes/REALISE.html#campagne-3">troisième campagne</a> a levé, et
+<a href="ROADMAP.html#correctifs-c3">ce qui bloque encore la publication</a> aujourd'hui.</p>
 </div>
 
 <p>Plugin Tabby indépendant : déverrouillage automatique du coffre-fort (mot de passe maître) via
@@ -60,18 +60,23 @@ plugins de l'utilisateur.</p>
 <tr><th>Fichier</th><th>Contenu</th></tr>
 <tr><td><a href="AI-CONTEXT.html">AI-CONTEXT.html</a></td>
     <td>Invariants : l'<a href="AI-CONTEXT.html#cat-vault">anatomie réelle du Vault de Tabby</a>
-    (pièges propres <code>#V1</code>–<code>#V18</code>, le prochain numéro libre est indiqué en tête
+    (pièges propres <code>#V1</code>–<code>#V29</code>, le prochain numéro libre est indiqué en tête
     du fichier) et les pièges <strong>hérités</strong> du projet frère, qui partage la même stack
     Tabby/Angular/Electron.</td></tr>
 <tr><td><a href="AI-HISTORY.html">AI-HISTORY.html</a></td>
-    <td>Journal chronologique par chantier, le plus récent en tête. <strong>En ajout seul</strong> :
-    une entrée écrite ne se réécrit jamais, une correction s'ajoute (A-4).</td></tr>
+    <td>Journal jusqu'au 2026-08-06, <strong>gelé</strong> depuis (option <code>journal-format</code>
+    tranchée hors du menu de la charte). En ajout seul tant qu'il a vécu : une entrée écrite ne se
+    réécrit jamais, une correction s'ajoute (A-4).</td></tr>
+<tr><td><a href="AI-HISTORY.log">AI-HISTORY.log</a></td>
+    <td>Journal actif depuis le 2026-08-06 — texte brut, une ligne par entrée
+    (<code>horodatage | CHANTIER | Commit/Hash | Explication</code>, 250 caractères max), la plus
+    récente en tête. Même règle d'ajout seul.</td></tr>
 <tr><td><a href="ROADMAP.html">ROADMAP.html</a></td>
-    <td>Statut et design des chantiers restants — au premier rang, la
-    <a href="ROADMAP.html#campagne-3">troisième campagne de vérification Linux</a>, qui conditionne
-    la publication.</td></tr>
+    <td>Statut et design des chantiers restants — au premier rang, les
+    <a href="ROADMAP.html#correctifs-c3">correctifs de la 3ᵉ campagne</a>, qui conditionnent
+    la publication (macOS non exercé).</td></tr>
 <tr><td><a href="PROFIL.md">PROFIL.md</a></td>
-    <td><strong>Réponses de cadrage propres à ce projet</strong> — les vingt-deux options de la
+    <td><strong>Réponses de cadrage propres à ce projet</strong> — les vingt-quatre options de la
     partie B de la charte. S'y reporter plutôt que de redécider une convention au coup par coup.</td></tr>
 <tr><td><a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a></td>
     <td>Copie conforme de la charte de gouvernance appliquée par ce projet (original dans le dépôt
@@ -118,9 +123,10 @@ réexports en cascade (<a href="AI-CONTEXT.html#piege-v1">#V1</a>).</p>
 <li>Lire <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les invariants et les pièges déjà
   rencontrés.</li>
 <li>Lire <a href="ROADMAP.html">ROADMAP.html</a> pour l'état des chantiers restants.</li>
-<li>Lire le haut d'<a href="AI-HISTORY.html">AI-HISTORY.html</a> pour l'état d'avancement réel.</li>
+<li>Lire le haut d'<a href="AI-HISTORY.log">AI-HISTORY.log</a> pour l'état d'avancement réel —
+  <a href="AI-HISTORY.html">AI-HISTORY.html</a> est gelé depuis le 2026-08-06.</li>
 <li>Ouvrir <a href="PROFIL.md">PROFIL.md</a> plutôt que de redécider une convention : il porte les
-  vingt-deux réponses de cadrage de ce projet.</li>
+  vingt-quatre réponses de cadrage de ce projet.</li>
 <li>Comparer l'identifiant de conformité du pied de page à celui du pied de page de
   <a href="GOUVERNANCE-IA.md">GOUVERNANCE-IA.md</a> — deux chaînes <code>AAAAMMJJ-HHMMSS</code>, donc
   une simple comparaison. S'il est antérieur, <strong>signaler l'écart et proposer</strong> une

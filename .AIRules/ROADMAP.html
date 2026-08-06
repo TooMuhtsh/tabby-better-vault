@@ -35,12 +35,8 @@
     <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; npm <strong>bloqué par les correctifs de la 3ᵉ campagne</strong></span></td><td>Après les correctifs</td></tr>
-<tr><td><a href="#campagne-linux">Correctifs issus de la campagne Linux</a></td>
-    <td><span class="pill progress">🚧 Les trois validés sur Linux le 2026-07-29 au matin, mais <strong>sur un code qui a changé le soir même</strong> (D1, D2) : la mesure ne porte plus sur ce que <code>master</code> contient — déclassé à l'audit du 2026-08-01</span></td><td>—</td></tr>
-<tr><td><a href="#campagne-2">Correctifs D1 / D2 de la deuxième campagne</a></td>
-    <td><span class="pill done">✅ <strong>Validés sur Linux le 2026-08-01</strong> par la 3ᵉ campagne — les deux tiennent, et la prémisse de D1 est prouvée par la mesure</span></td><td>—</td></tr>
-<tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
-    <td><span class="pill done">✅ Menée le 2026-08-01 — D1 et D2 conformes, <strong>dix défauts trouvés hors périmètre</strong>, dont D4 confirmé jusqu'en usage spontané</span></td><td>—</td></tr>
+<tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
+    <td><span class="pill done">✅ Closes — <strong>déplacées au registre des livrés</strong> le 2026-08-06 (option <code>registre-livrés</code>)</span></td><td>—</td></tr>
 <tr><td><a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
     <td><span class="pill done">✅ Quatre lots clos (2026-08-05) ; <code>configDir()</code> et garde-fou <strong>validés en conditions réelles</strong> par la campagne 5 (2026-08-06, VM Linux) — D4 par l'interface confirmé structurellement impossible sur Linux, un défaut trouvé en cours de mesure corrigé dans la foulée. <strong>Reste : le cas « deux fenêtres, un processus » sur macOS</strong>, jamais exercé</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#bruit-journal">Journal saturé par les déverrouillages répétés</a></td>
@@ -55,9 +51,9 @@
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
     <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
-    <td><span class="pill planned">📋 Décidé (2026-08-06), migration non commencée</span></td><td>—</td></tr>
+    <td><span class="pill progress">🚧 Amorcé (2026-08-06) — trois campagnes migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a>, le reste attend la clôture de correctifs-c3/i18n macOS</span></td><td>—</td></tr>
 <tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
-    <td><span class="pill planned">📋 Décidé (2026-08-06), migration non commencée</span></td><td>—</td></tr>
+    <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé</span></td><td>—</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -380,7 +376,8 @@ motif expliquant <code>basic_text</code> était inatteignable
 rien ne pouvait fonctionner (<a href="AI-CONTEXT.html#piege-v16">#V16</a>).</p>
 <p>Le cas du trousseau <em>verrouillé</em>, alors annoncé comme « non exercé, rattrapé par le repli
 natif », a depuis été couvert par une campagne indépendante — et l'annonce était fausse. Voir
-<a href="#campagne-linux">Campagne de vérification indépendante</a> ci-dessous.</p>
+<a href="annexes/REALISE.html#campagne-linux">Campagne de vérification indépendante</a>, dans le
+registre des livrés.</p>
 </div>
 
 <h2 id="reglages">Panneau de réglages et politique d'expiration</h2>
@@ -523,13 +520,15 @@ auprès d'inconnus, sur des configurations que nous ne maîtrisons pas. Le garde
 <strong>n'est plus un pari</strong> : il a été exercé dans les deux sens le 2026-07-29 (voir
 <a href="#linux">ci-dessus</a>), et les deux défauts que cette vérification a mis au jour sont
 corrigés. Le cas du trousseau verrouillé a reçu son correctif le même jour et
-<strong>a été validé sur Linux</strong> (<a href="#campagne-2">deuxième campagne</a>).</p>
+<strong>a été validé sur Linux</strong> (<a href="annexes/REALISE.html#campagne-2">deuxième
+campagne</a>).</p>
 <p><strong>Ce qui bloque encore la publication n'est plus le gel, c'est le rythme des découvertes.</strong>
 La journée du 2026-07-29 a produit trois défauts corrigés, puis deux défauts <em>nés de ces
 correctifs</em> — dont un de sévérité haute qui annulait la garantie centrale. Les correctifs de D1
 et D2 ne sont pas revalidés. Publier maintenant, ce serait diffuser à des inconnus un code dont la
 dernière révision n'a jamais été exercée sur la seule plateforme qui sait la mettre en défaut.</p>
-<p><strong>Condition de levée, explicite</strong> : la <a href="#campagne-3">troisième campagne</a>
+<p><strong>Condition de levée, explicite</strong> : la
+<a href="annexes/REALISE.html#campagne-3">troisième campagne</a>
 passée sans défaut nouveau de sévérité haute, D4 mesuré dans un sens ou dans l'autre. Si elle produit
 à nouveau des régressions issues de ses propres correctifs, ce n'est plus un correctif qui manque
 mais une revue de conception — et la publication attend d'autant plus.</p>
@@ -557,424 +556,19 @@ verrouillé de Linux, la question de savoir si un scénario comparable y existe 
 tranchée par son absence de mention ici.</p>
 </div>
 
-<h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
-<p>Une instance externe, sans accès à <code>.AIRules/</code>, à <code>CLAUDE.md</code> ni à
-l'historique Git, a mené une vérification adversariale sur Ubuntu 24.04 / GNOME / X11, Tabby 1.0.235,
-Electron 38.8.6. Périmètre imposé : stockage interne et garde-fou du trousseau.
-<strong>Rapport intégral, 516 lignes de mesures</strong> :
-<a href="annexes/RAPPORT-TEST-LINUX.md">annexes/RAPPORT-TEST-LINUX.md</a> — commandes reproduites,
-tableaux de résultats, et les six pistes de son § 8. Les conclusions sont ci-dessous ; l'annexe ne
-porte que le détail qui les étaye (A-8).</p>
-<p>Sa méthode mérite d'être notée pour être rejouée : plutôt que de raisonner sur le code, elle a
-<strong>compilé et exécuté</strong> les vrais <code>store.ts</code> et <code>osKeychain.ts</code>
-dans un banc Electron 38.8.6, en interceptant <code>@electron/remote</code> et en redirigeant
-<code>configDir()</code> vers un dossier jetable — puis a validé la causalité par une
-<strong>expérience de contrôle</strong> (plugin retiré, condition maintenue).</p>
-
-<div class="callout important">
-<span class="callout-title">Défaut #1 — gel du démarrage de Tabby, trousseau verrouillé (sévérité haute)</span>
-<p><strong>Le plugin fige Tabby au démarrage lorsque le trousseau est présent mais verrouillé — et
-il le fait même désactivé.</strong> Tabby n'atteint jamais sa propre pop-up de mot de passe ;
-l'écran de démarrage reste affiché indéfiniment. Vérifié par contrôle : plugin retiré, trousseau
-toujours verrouillé, Tabby atteint normalement sa pop-up.</p>
-<p>Chaîne causale, confirmée à la source :</p>
+<h2>Campagnes de vérification Linux — livrées</h2>
+<p>Les trois campagnes menées du 2026-07-29 au 2026-08-01 sont closes ; leur détail, repris tel
+quel, vit désormais dans le <a href="annexes/REALISE.html">registre des livrés</a>. Leurs dix
+défauts trouvés hors périmètre vivent comme chantier actif :
+<a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a>, ci-dessous.</p>
 <ul>
-<li><code>src/index.ts</code> appelle <code>install()</code> depuis le <strong>constructeur du
-  NgModule</strong> ;</li>
-<li><code>install()</code> appelle <code>keychainStatus()</code> <strong>inconditionnellement</strong>,
-  à seule fin de journaliser — le test de <code>enabled</code> vit dans <code>resolve()</code>,
-  bien plus tard ;</li>
-<li><code>keychainStatus()</code> est synchrone et passe par <code>@electron/remote</code>, dont
-  l'IPC est <strong>bloquant</strong> ;</li>
-<li>sur trousseau verrouillé, <code>isEncryptionAvailable()</code> <strong>ne revient jamais</strong>
-  (il tente de lire l'entrée témoin, ce qui demande un déverrouillage qui n'aboutit pas) — et
-  n'affiche aucun dialogue.</li>
-</ul>
-<p>Le <code>try/catch</code> de <code>keychainStatus()</code> n'attrape rien : <strong>un appel
-bloquant n'est pas une exception.</strong> Le « repli sur la méthode native » n'est jamais atteint,
-puisque le gel survient avant que <code>getPassphrase</code> ne soit invoqué.</p>
-<p><strong>Ce défaut contredit le principe fondateur du plugin</strong> — « ce plugin est un
-confort : il ne doit jamais empêcher d'ouvrir son coffre ni bloquer Tabby » — et la promesse
-publique du README (« the plugin never blocks access to your vault »).</p>
-<p><strong>Correctif écrit le 2026-07-29</strong>, les trois gestes et pas l'un des trois :
-<code>install()</code> ne touche plus au trousseau, le diagnostic vit dans <code>resolve()</code>
-donc après le test de <code>enabled</code>, et tout accès passe par <code>withSafeStorage()</code>
-sous le garde-fou de <code>src/keychainGuard.ts</code>. Le panneau de réglages, qui sondait à
-l'initialisation d'un champ — donc figeait le seul endroit d'où l'on peut désactiver le plugin —
-sonde désormais sur demande explicite ou sous <code>enabled</code>. Détail du mécanisme et de ce
-qu'il garantit : <a href="AI-CONTEXT.html#piege-v17">#V17</a>.</p>
-<p><strong>Le troisième geste n'a pas la forme prévue.</strong> « Rendre non bloquant » est
-impossible : <code>@electron/remote</code> fait de l'IPC synchrone, donc aucun délai d'attente ne
-peut expirer depuis le fil que l'appel arrête. Ce qui est fait à la place — un témoin sur disque
-écrit avant l'appel, relu au démarrage suivant — ne supprime pas le premier gel, il le rend
-<em>dernier</em>. <strong>C'est une garantie plus faible que celle envisagée, et le README dit
-exactement celle-là, pas davantage.</strong></p>
-<p><strong>Validé sur Linux le 2026-07-29</strong>, dans les deux régimes — voir
-<a href="#campagne-2">Deuxième campagne</a>. Plugin désactivé : zéro appel au Secret Service, et le
-contrôle « plugin retiré » est indiscernable. Plugin activé : un blocage, témoin survivant au
-<code>SIGKILL</code>, relance sur la pop-up native sans toucher au trousseau.</p>
-<p><strong>Mais ce correctif a engendré D1</strong>, de sévérité haute : le raccourci Linux qui
-retire <code>isEncryptionAvailable()</code> du chemin a du même coup vidé de sa substance la
-vérification du panneau de réglages, seul chemin de sortie offert à l'utilisateur. Corrigé le soir
-même par <code>keychainRoundTrip()</code>, <strong>non revalidé</strong>.</p>
-</div>
-
-<div class="callout warning">
-<span class="callout-title">Défaut #2 — <code>0600</code> n'est pas un invariant, et l'écriture n'est pas atomique</span>
-<p><code>fs.writeFileSync(path, data, { mode: 0o600 })</code> n'applique le mode qu'à la
-<strong>création</strong>. Mesuré sur le vrai <code>writeSettings</code> : création fraîche → 600 ;
-fichier préexistant en 644 ou 666 → <strong>mode inchangé</strong>, jamais re-serré. Le cas nominal
-est donc correct, mais l'invariant « lisible par le seul propriétaire » tombe dès qu'un fichier
-préexiste plus large — restauration de sauvegarde, copie manuelle, umask différent.</p>
-<p>Au même endroit, l'écriture est directe, sans fichier temporaire ni <code>rename</code> : une
-coupure en cours d'écriture tronque le fichier. Conséquence atténuée (la lecture défensive retombe
-sur les défauts, le jeton est perdu, l'utilisateur ressaisit), mais l'atomicité n'existe pas.</p>
-<p><strong>Correctif écrit le 2026-07-29</strong> : temporaire dans le <em>même</em> dossier (un
-<code>rename</code> entre volumes échoue en EXDEV) + <code>chmod</code> explicite +
-<code>rename</code>. Le fichier qui atterrit est donc toujours neuf, donc toujours créé en 600.</p>
-<p><strong>Un choix délibéré sur le chemin d'échec</strong> : <code>rename</code> sur une cible
-existante peut échouer en EPERM/EBUSY sous Windows (antivirus, client de synchronisation). Y
-renoncer perdrait l'écriture, donc le jeton que l'utilisateur vient de confier — pire que le
-comportement d'avant le correctif. On retombe sur l'écriture directe, qui rétablit l'ancien
-compromis plutôt que rien. L'écriture précède la journalisation, pour qu'un journal défaillant ne
-coûte pas le jeton non plus.</p>
-<p><strong>Vérifié, et ce qui ne l'est pas.</strong> Banc sur le <code>store.js</code> compilé,
-dossier jetable : JSON valide conservé, temporaire nettoyé, temporaire résiduel écrasé,
-<em>enchaînement</em> attesté par une trace <code>fs</code>
-(<code>write(tmp, mode=600) | chmod(tmp, 600) | rename</code>), écriture préservée avec
-<code>rename</code> <em>et</em> journal en panne.</p>
-<p><strong>Les bits POSIX ont été mesurés sur Linux le 2026-07-29</strong> : fichier préexistant en
-644 comme en 666 → 600 après écriture, et l'inode de la cible devient celui du temporaire, donc le
-fichier qui atterrit est bien neuf. La campagne a en outre <em>contrôlé le mécanisme hors plugin</em>
-— <code>writeFileSync(…, {mode: 0o600})</code> sur un fichier préexistant en 666 laisse bien 666 :
-le défaut que ce correctif prétend régler existe réellement. Seule la non-troncature sous coupure
-réelle reste déduite de <code>rename(2)</code>.</p>
-</div>
-
-<div class="callout note">
-<span class="callout-title">Défaut #3 — la documentation affirme deux choses fausses</span>
-<p>Le commentaire d'<code>osKeychain.ts</code> et le piège
-<a href="AI-CONTEXT.html#piege-v15">#V15</a> affirmaient tous deux que le repli natif rattrapait le
-trousseau verrouillé. C'est réfuté (défaut #1). Corrigé le 2026-07-29 dans les deux fichiers.</p>
-<p><strong>README corrigé le 2026-07-29</strong>, dans les deux langues, en même temps que le
-correctif #1 comme prévu. La ligne « <em>the plugin never blocks access to your vault</em> »
-<strong>n'a pas été restaurée</strong> : la rétablir telle quelle aurait réintroduit le défaut #3
-sous un commit de correction. Elle est remplacée par la garantie réellement tenue — désactivé,
-aucun contact avec le trousseau ; activé, un démarrage figé au plus, auto-réparé au suivant. Deux
-sections neuves : <em>When the keychain is locked</em> et <em>What storing the passphrase actually
-costs you</em>.</p>
-</div>
-
-<div class="callout note">
-<span class="callout-title">Exposition au repos — écrite dans le README le 2026-07-29</span>
-<p>La campagne a extrait la clé <code>safeStorage</code> depuis le trousseau <strong>par simple appel
-D-Bus</strong>, sans Electron ni Chromium, puis reconstitué le mot de passe maître hors ligne à
-partir de <code>better-vault.json</code>. Ce n'est <em>pas</em> un défaut du plugin : GNOME Keyring
-n'applique aucun contrôle d'accès par application, donc tout processus tournant sous le compte de
-l'utilisateur lit l'entrée. Le rapport l'attribue à un « KDF décoratif » (PBKDF2-SHA1, sel fixe, une
-itération) — l'analyse est inexacte sur ce point : avec <code>gnome_libsecret</code> l'entrée du KDF
-est un secret aléatoire de 24 octets, durcir le KDF n'apporterait rien.</p>
-<p>Le delta honnête, à écrire tel quel : <strong>sans le plugin, le mot de passe maître ne touche
-jamais le disque ; avec lui, il devient récupérable au repos, en l'absence de l'utilisateur, par
-n'importe quel processus de sa session.</strong> C'est un accroissement réel de l'exposition,
-structurel à <code>safeStorage</code> sous Linux. Le README l'admettait en creux (« cannot be more
-secure than the keychain it delegates to ») ; il le dit désormais franchement, sous
-<em>What storing the passphrase actually costs you</em>, en nommant l'extraction D-Bus et en
-étendant le constat à DPAPI sous Windows.</p>
-</div>
-
-<h3>Ce que la campagne n'a pas pu exercer</h3>
-<p>À reprendre dans une campagne ultérieure — ce sont des <em>non testés</em>, pas des conformes :</p>
-<ul>
-<li><strong>La capture du mot de passe depuis la pop-up native</strong> (<code>learnFromUser</code>),
-  de bout en bout. L'injection clavier XTEST n'atteint pas le moteur de rendu Chromium de Tabby (les
-  clics passent, les touches non) ; la campagne a contourné en fabriquant les jetons. Les briques
-  (<code>encrypt</code>, <code>writeToken</code>) sont vérifiées, l'enchaînement par l'interface ne
-  l'est pas.</li>
-<li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
-<li><strong>Windows (DPAPI) et macOS</strong> — hors plateforme ; c'est là que le chemin
-  <code>isEncryptionAvailable</code> seul est emprunté, <code>getSelectedStorageBackend</code>
-  n'existant pas.</li>
-<li><strong>La notification in-app</strong> — attestée par le journal, jamais observée à l'écran.</li>
-</ul>
-<p class="muted">Faux positif à ne pas reprendre : le rapport signale des renvois morts vers
-<code>.AIRules/</code> dans le code livré. C'est un artefact du dispositif de test — le dossier avait
-été retiré du clone pour préserver l'aveuglement. Dans le dépôt réel, ces renvois résolvent.</p>
-
-<h3 id="campagne-2">Deuxième campagne — résultats (2026-07-29)</h3>
-<p>Menée sur la VM remise au propre, avec un <strong>opérateur humain</strong> pour toute saisie
-GUI — c'est ce qui a permis d'exercer enfin <code>learnFromUser</code> de bout en bout, resté non
-testé la première fois faute d'injection clavier atteignant le renderer de Tabby. Banc Electron
-38.8.6 identique à celui de Tabby, <code>dbus-monitor</code> comme instrument indépendant du plugin,
-CDP en lecture seule pour <em>mesurer</em> le blocage du renderer plutôt que le constater à l'œil.</p>
-
-<h4>Les cinq revendications tiennent</h4>
-<table>
-<tr><th>Revendication</th><th>Verdict</th><th>Preuve décisive</th></tr>
-<tr><td>Plugin désactivé → Tabby démarre, zéro contact avec le trousseau</td><td><strong>CONFORME</strong></td>
-    <td>0 appel Secret Service au <code>dbus-monitor</code> ; le contrôle « plugin retiré » est <em>indiscernable</em> du plugin présent</td></tr>
-<tr><td>Plugin activé → un blocage, puis relance sur la pop-up native, état « suspendu » levable</td><td><strong>CONFORME</strong></td>
-    <td>Renderer muet à CDP de t=10 à 60 s, témoin <code>relecture du mot de passe</code> survivant au <code>SIGKILL</code>, relance sans aucun appel au trousseau</td></tr>
-<tr><td><code>encryptString</code>/<code>decryptString</code> bloquent comme <code>isEncryptionAvailable</code></td><td><strong>CONFIRMÉ</strong></td>
-    <td>Série entrelacée : 6/6 bloqués à 45 s sans réponse ; 3/3 rendus en 3,8–6,7 s avec réponse</td></tr>
-<tr><td><code>0600</code> sur fichier préexistant en 644 ou 666, et atomicité</td><td><strong>CONFORME</strong></td>
-    <td>L'inode de la cible devient celui du temporaire ; le comportement fautif de <code>writeFileSync</code> est contrôlé hors plugin</td></tr>
-<tr><td><code>learnFromUser</code> de bout en bout depuis la vraie pop-up</td><td><strong>CONFORME</strong></td>
-    <td>Saisie humaine → jeton en 600 → <code>jeton vérifié</code> + <code>coffre déverrouillé</code> à la relance</td></tr>
-</table>
-
-<div class="callout important">
-<span class="callout-title">Mais la justification du dispositif était fausse — et un correctif l'annulait</span>
-<p>Deux réfutations, toutes deux mesurées, et la seconde porte sur du code écrit le matin même.</p>
-</div>
-<ul>
-<li><strong>« L'appel ne revient jamais, sans afficher de dialogue » — RÉFUTÉ sur ses deux termes.</strong>
-  Le système affiche une invite d'authentification, et l'appel rend la main en 4 à 7 secondes dès
-  qu'on y répond. C'est une <em>invite bloquante</em>, pas un gel irrécupérable. Le garde-fou reste
-  nécessaire — un utilisateur absent bloque indéfiniment, et c'est le cas nominal d'un démarrage —
-  mais la nuance rend praticable une vérification réelle déclenchée par l'utilisateur. Corrigé
-  partout : <a href="AI-CONTEXT.html#piege-v17">#V17</a>, les deux README, les commentaires de
-  <code>keychainGuard.ts</code> et <code>osKeychain.ts</code>.</li>
-<li><strong>D1 — la vérification du panneau ne vérifiait rien, et réarmait le gel. Sévérité haute.</strong>
-  « Lever la suspension <em>et vérifier</em> » appelait <code>keychainStatus()</code>, qui sur Linux
-  ne lit que le nom du backend — l'appel dont la même campagne mesure qu'il ne touche jamais le
-  trousseau. Sur trousseau verrouillé, le bouton annonçait « disponible », effaçait le témoin, et le
-  démarrage suivant regelait à l'identique, <em>mesuré</em>. La garantie « le premier blocage est le
-  dernier » tenait face à un utilisateur passif et était annulée par le seul chemin de sortie que le
-  plugin lui-même désigne. <strong>Le raccourci Linux introduit le matin pour retirer un appel
-  bloquant du chemin de démarrage est exactement ce qui a vidé la vérification de sa substance</strong> —
-  une optimisation correcte à un endroit, ruineuse à un autre. Corrigé par
-  <code>keychainRoundTrip()</code> : aller-retour chiffrement/déchiffrement réel sur une valeur
-  jetable, réservé aux actions explicites de l'utilisateur.</li>
-<li><strong>D2 — enregistrement annoncé sans validation.</strong> Une phrase erronée était chiffrée,
-  écrite et annoncée « enregistrée » pendant que Tabby affichait <code>BAD_DECRYPT</code> pour la
-  même saisie. <code>passphraseOpensVault()</code> existait et servait déjà dans
-  <code>serveFromToken()</code> ; <code>learnFromUser()</code> ne l'appelait pas. Corrigé, voir
-  <a href="AI-CONTEXT.html#piege-v18">#V18</a>.</li>
-</ul>
-
-<h4>Signalé, non corrigé</h4>
-<ul>
-<li><strong>D3 — le jeton chiffré est déterministe.</strong> Deux chiffrements de la même phrase
-  donnent un résultat identique octet pour octet : l'OSCrypt de Chromium utilise une IV fixe.
-  Propriété de la plateforme, pas du plugin. Qui lit <code>better-vault.json</code> à deux dates sait
-  si le mot de passe maître a changé, sans rien déchiffrer. Le fichier est en 600, l'exposition est
-  faible : <strong>dit dans les README, pas corrigé côté plugin</strong> — il n'y a rien à y corriger.</li>
-<li><strong>D4 — le témoin est un verrou global, non réentrant entre processus. NON MESURÉ.</strong>
-  <code>guardState()</code> conclut à la suspension sur la seule présence du fichier, et
-  <code>depth</code> ne compte qu'au sein d'un processus. Deux fenêtres Tabby démarrant ensemble
-  verraient donc la seconde se refuser le trousseau et journaliser une suspension fictive. À
-  <strong>exercer avant de redessiner quoi que ce soit</strong> : c'est une piste issue du code, pas
-  un constat. Premier point de la <a href="#campagne-3">troisième campagne</a>.</li>
-</ul>
-
-<h4>Toujours non exercé</h4>
-<ul>
-<li><strong>Windows (DPAPI) et macOS</strong> — une seule machine Linux. C'est là que le chemin
-  <code>isEncryptionAvailable()</code> seul est emprunté, <code>getSelectedStorageBackend</code>
-  n'existant pas ; donc là où <code>keychainStatus()</code> engage davantage que sur Linux.</li>
-<li><strong>Le refus du backend <code>basic_text</code></strong> — non rejoué cette fois (exigerait
-  <code>--password-store=basic</code>). Vérifié lors de la première campagne.</li>
-<li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
-<li><strong>L'atomicité sous coupure réelle</strong> — déduite de <code>rename(2)</code>, jamais provoquée.</li>
-<li><strong>Le blocage en écriture</strong> (<code>learnFromUser</code> sur trousseau verrouillé) —
-  couvert par déduction depuis la mesure de <code>encryptString</code>, pas par une exécution Tabby
-  dédiée.</li>
-<li><strong>Expiration <code>sliding</code>/<code>never</code>, rétention du journal</strong> — hors
-  du périmètre imposé.</li>
-</ul>
-
-<div class="callout note">
-<span class="callout-title">Ce qu'une campagne avec opérateur humain impose au protocole</span>
-<p>Faire saisir un secret par un humain déplace la discipline de test : elle ne porte plus seulement
-sur les données que la machine manipule, mais sur <strong>ce que l'humain tape</strong>. Toute valeur
-qu'il devra fournir doit donc figurer dans le protocole AVANT la campagne — jamais improvisée devant
-une pop-up, où le premier réflexe est de taper un vrai mot de passe.</p>
-<p>Corollaire, sur la trace : les transcripts de l'agent conservent en clair tout ce qui a transité,
-et l'instance ne peut pas les purger elle-même après coup. Leur suppression appartient au protocole,
-pas au rattrapage.</p>
-</div>
-
-<h3 id="campagne-3">Troisième campagne — menée le 2026-08-01</h3>
-<div class="callout note">
-<span class="callout-title">Résultat : les deux correctifs tiennent, et dix défauts sortent du hors-périmètre</span>
-<p><strong>D1 et D2 sont conformes</strong>, mesurés sur Ubuntu / gnome-keyring / Tabby 1.0.235.
-Mieux que conformes : <strong>la prémisse de D1 est prouvée</strong>. Sur trousseau verrouillé, le
-motif rendu est <code>roundTripFailed</code>, qui n'est atteignable que si <code>keychainStatus()</code>
-a d'abord répondu <code>available: true</code> — l'ancien test se serait donc bien déclaré satisfait.
-C'est la première fois qu'une campagne de ce projet établit qu'un défaut corrigé <em>existait</em>,
-au lieu de constater que le correctif ne casse rien.</p>
-<p><strong>Mais la campagne a trouvé dix défauts qu'elle ne cherchait pas</strong>, dont deux qui
-touchent la raison d'être du plugin. Ils sont traités en <a href="#correctifs-c3">chantier propre</a>.
-Aucun n'est une régression des correctifs D1/D2 : ce sont des zones que les campagnes précédentes
-n'avaient jamais exercées.</p>
-<p>Rapport complet dans <code>.tempfiles/</code> avec le protocole — comme lui, hors dépôt : il cite
-les valeurs saisies et l'environnement de la VM.</p>
-</div>
-<div class="callout warning">
-<span class="callout-title">Ce que ce résultat ne vaut pas — l'aveuglement a été perdu en cours de route</span>
-<p>L'instance a reçu le document de protocole <strong>entier</strong>, § 5 et § 6 compris : hypothèses
-de défaut, identification du point 2 comme correctif de D1, et grille de dépouillement. Elle l'a
-signalé elle-même dans ses réserves de méthode.</p>
-<p>Ça n'entame pas les <strong>défauts</strong> — une mesure reste une mesure, et un défaut trouvé
-n'est pas un défaut suggéré. Ça affaiblit les <strong>verdicts de conformité</strong> : ils valent
-« tient sous l'angle prévu », un cran en dessous de ce que le protocole visait. Un résultat propre
-signifie « ces correctifs tiennent », pas « rien d'autre ne cloche ».</p>
-<p><strong>Correction structurelle pour la campagne 4</strong> : scinder le protocole en un fichier
-<em>prompt</em> et un fichier <em>dépouillement</em>, et ne transmettre que le premier. Aucune
-discipline de lecture ne remplace une séparation des fichiers — c'est la deuxième fois que
-l'aveuglement se perd par une omission de forme et non par une décision.</p>
-</div>
-<div class="callout warning">
-<span class="callout-title">Révisé le 2026-08-01 — le chantier i18n l'avait partiellement invalidé</span>
-<p><strong>Qui prépare le clone n'était écrit nulle part.</strong> Le protocole donnait les commandes
-sans dire à qui elles s'adressaient — omission du même genre que celle qu'il corrige pour les valeurs
-à saisir. Elle mettait l'instance auditrice en position de cloner elle-même, donc de lire
-<code>.AIRules/</code> et les messages de commit <em>avant</em> de les supprimer : l'aveuglement, qui
-faisait toute la valeur de la première campagne, aurait été perdu sans qu'aucun rapport puisse le
-signaler. La suppression ne rattrape pas la lecture. C'est désormais explicite : l'opérateur, ou une
-instance de préparation qui ne participe pas à l'audit, jamais l'auditrice.</p>
-<p><strong>La branche à cloner</strong>, ensuite. Le protocole faisait cloner le dépôt par défaut
-alors que <a href="#i18n">l'i18n</a> vivait sur <code>feat/i18n-ui</code> et touche
-<code>keychainGuard.ts</code> et <code>osKeychain.ts</code> — précisément les deux fichiers que cette
-campagne doit vérifier. La campagne aurait porté sur le code d'avant, et aurait été bonne à refaire
-sans que rien ne le signale. Depuis la fusion du même jour, le clone simple suffit ; la vérification
-reste au protocole, assortie d'un contrôle qui la rend factuelle plutôt que déclarative.</p>
-<p>Les quatre autres : la <strong>langue de l'interface est désormais fixée</strong> pour les points
-1 à 5 (citer un bouton sans fixer la locale fait chercher un texte absent de l'écran) ; les
-<strong>observables du journal passent en anglais</strong> — même contenu, autre langue, mais qui
-cherche « accès au trousseau suspendu » ne trouve plus rien ; le <strong>format du témoin</strong> a
-changé (<a href="AI-CONTEXT.html#piege-v22">#V22</a>), ce que le point qui l'inspecte doit savoir ;
-et un <strong>sixième point</strong> couvre la traduction elle-même, jamais exercée hors de Windows.</p>
-<p><strong>La mise en place de l'environnement revient à l'instance</strong>, pas à l'opérateur :
-installation de Tabby, construction et installation du plugin, fabrication du coffre de test, réglage
-de la langue. Ces étapes ne dé-aveuglent rien, et les faire soi-même vaut mieux que d'hériter d'un
-environnement qu'on n'a pas vu se monter. Deux garde-fous en découlent, tirés des campagnes
-précédentes : <strong>la version de Tabby est imposée</strong> (1.0.235, celle des mesures
-antérieures — une autre les rendrait incomparables sans que rien ne le signale), et <strong>le
-chargement effectif du plugin doit être constaté</strong>, faute de quoi la campagne produirait des
-faux négatifs parfaitement cohérents entre eux.</p>
-<p>Le recours à plusieurs agents y est explicitement autorisé, avec ses garde-fous : un seul
-interlocuteur pour l'opérateur humain, diffusion des phrases de test limitée au nécessaire, synthèse
-non déléguée.</p>
-</div>
-<div class="callout warning">
-<span class="callout-title">Révisé une seconde fois le 2026-08-01, après la campagne — deux consignes réfutées par leur propre exécution</span>
-<p><strong>L'effacement des traces ne peut pas être confié à l'instance.</strong> Le protocole lui
-faisait lancer <code>shred -u ~/.claude/history.jsonl ~/.claude/projects/*/*.jsonl</code> en vérifiant
-elle-même la couverture. Elle ne l'a pas fait, et elle a eu raison : la consigne était fausse sur
-trois plans indépendants, dont aucun ne se voyait à la lecture. Le glob ne couvrait pas le scratchpad,
-qui portait des copies de <code>better-vault.json</code> avec jeton et les scripts des agents
-auxiliaires — une énumération écrite d'avance ne peut pas suivre un agent qui choisit où il écrit,
-encore moins un agent qui délègue. <code>shred</code> ne garantit rien sur ext4 + NVMe, où journal du
-système de fichiers et nivellement d'usure conservent des copies hors d'atteinte des passes de
-réécriture : c'est une suppression de bonne foi, et l'écrire dans un protocole fait croire l'inverse.
-Enfin le classifieur de permissions de son environnement lui a <strong>refusé le listage de
-<code>~/.claude</code></strong> : elle ne pouvait pas constater la couverture qu'on lui demandait de
-vérifier.</p>
-<p>D'où le dispositif retenu : <strong>instantané de la VM avant l'exécution, restauration après</strong>.
-Il emporte ce que l'instance ne sait pas avoir écrit, ce qu'elle n'a pas le droit de lister, et ce que
-ses agents ont laissé. Elle ne détruit plus rien ; elle <em>déclare</em> au fil de l'eau les
-emplacements qu'elle utilise hors des deux dossiers attendus. <strong>Ne jamais confier à un acteur la
-certification de son propre effacement</strong>, a fortiori quand il tourne dans un environnement dont
-il ne maîtrise pas les permissions. Pour un secret réel et non une phrase jetable, c'est la
-destruction de la VM qui s'impose, pas la restauration.</p>
-<p><strong>Les phrases de test étaient trop longues</strong>, et c'est un défaut de méthode et non de
-confort. <code>PhraseDeTestJetable-2026!</code> était à retaper des dizaines de fois à la main : une
-phrase pénible à saisir décourage la répétition des scénarios, donc appauvrit la mesure — sur un
-plugin dont l'objet est précisément d'éviter cette saisie. Remplacées par <code>vault1</code> et
-<code>wrong2</code>, six caractères. Elles restent <strong>distinctes du mot de passe du compte</strong>,
-qui déverrouille le trousseau de session : les confondre effacerait la frontière entre invite du
-trousseau et pop-up de coffre, celle-là même que la campagne mesure.</p>
-</div>
-<div class="callout important">
-<span class="callout-title">Pourquoi elle est nécessaire, et pas seulement souhaitable</span>
-<p>La deuxième campagne a validé les trois correctifs du matin <em>et</em> trouvé deux défauts nés de
-ces correctifs, dont un de sévérité haute qui annulait la garantie centrale du plugin. Les correctifs
-de D1 et D2, écrits le soir même, <strong>n'ont jamais été exercés sur Linux</strong> — et D1 n'est
-pas exerçable ailleurs : il ne se manifeste que sur un trousseau qui répond à son nom sans répondre à
-un chiffrement, ce qui n'existe pas sous DPAPI.</p>
-<p>La leçon à ne pas perdre : <strong>ce projet a produit deux régressions en corrigeant trois
-défauts.</strong> Un correctif non exercé n'est pas une amélioration, c'est un pari.</p>
-</div>
-
-<h4>Changements de protocole — issus des deux campagnes précédentes</h4>
-<ul>
-<li><strong>Toute valeur que l'opérateur devra saisir est écrite dans le protocole AVANT la
-  campagne.</strong> Deux ici, et il en faut bien deux : la phrase maîtresse du coffre de test,
-  <code>vault1</code>, avec laquelle la fixture <code>config.yaml</code> est fabriquée ; et la phrase
-  volontairement fausse du scénario D2, <code>wrong2</code>. Déclarer la première sans la seconde
-  reviendrait à faire improviser la seconde. <strong>Courtes</strong> — voir la seconde révision
-  ci-dessus pour pourquoi c'est méthodologique.</li>
-<li><strong>L'opérateur ne saisit rien qui ne figure pas dans le protocole.</strong> Si une instance
-  lui demande une valeur non prévue, la réponse est de refuser et de le signaler — pas d'improviser.</li>
-<li><strong>L'effacement des traces se fait par instantané de VM, jamais par une purge que l'instance
-  lancerait elle-même</strong> — consigne inversée après la campagne 3, qui a réfuté la précédente.
-  L'instance se contente de déclarer où elle écrit.</li>
-<li><strong>L'opérateur humain reste dans la boucle pour toute saisie GUI.</strong> C'est ce qui a
-  permis d'exercer <code>learnFromUser</code> de bout en bout, resté non testé lors de la première
-  campagne. À reconduire tel quel.</li>
-<li><strong>Aveuglement maintenu</strong> : clone sans <code>.AIRules/</code>, <code>CLAUDE.md</code>,
-  <code>.tempfiles/</code> ni <code>.git</code>. Rappeler le faux positif attendu — des renvois vers
-  <code>.AIRules/</code> dans les commentaires, qui résolvent dans le dépôt réel.</li>
-</ul>
-
-<h4>Périmètre, par ordre de priorité</h4>
-<ol>
-<li><strong>D4 — le témoin comme verrou global entre processus. Jamais mesuré, à mesurer d'abord.</strong>
-  <code>guardState()</code> conclut à la suspension sur la seule présence du fichier, et
-  <code>depth</code> ne compte qu'au sein d'un processus. Deux fenêtres Tabby ouvertes en même temps
-  devraient donc voir la seconde se refuser le trousseau et journaliser une suspension fictive.
-  Observable attendu si le défaut est réel : une ligne <code>CRIT … accès au trousseau suspendu</code>
-  <em>sans</em> qu'aucun blocage réel n'ait eu lieu, et un déverrouillage automatique qui échoue dans
-  la seconde fenêtre alors que le trousseau est déverrouillé. <strong>Mesurer avant de redessiner</strong> :
-  c'est une piste tirée du code, pas un constat.
-  <br>Le dispositif lui-même n'est pas acquis : rien ne garantit qu'une seconde instance concurrente
-  soit atteignable, ni que le module du plugin s'instancie une fois par renderer. <strong>Si le banc
-  ne peut pas être monté, le verdict est « non testé », avec la raison</strong> — jamais « aucun
-  défaut trouvé ». Un dispositif qui ne tourne pas ne prouve rien.</li>
-<li><strong>Le correctif de D1, dans le scénario exact qui l'a révélé.</strong> Trousseau verrouillé,
-  plugin activé, jeton en place → blocage → fermeture forcée → relance → état « suspendu » →
-  <em>clic sur « Lever la suspension et vérifier »</em>. Trois issues à distinguer, et les trois
-  comptent :
-  <ul>
-  <li>l'opérateur <strong>répond</strong> à l'invite d'authentification → la vérification doit réussir,
-    le panneau afficher un trousseau vérifié, et le démarrage suivant se passer normalement ;</li>
-  <li>l'opérateur <strong>rejette</strong> l'invite → la vérification doit échouer <em>avec un motif
-    lisible</em>, sans laisser le plugin dans un état où il repartirait vers un blocage certain ;</li>
-  <li>l'opérateur <strong>ne répond pas du tout</strong> → Tabby bloque, le témoin doit avoir été posé,
-    et le démarrage suivant doit retrouver l'état « suspendu ». C'est le cas qui vérifie que
-    l'exception délibérée de <code>keychainRoundTrip()</code> ne rouvre pas le trou.</li>
-  </ul>
-  <strong>Le défaut à guetter</strong> : que le bouton annonce un succès sans que rien n'ait été
-  chiffré. C'était exactement D1.</li>
-<li><strong>Le correctif de D2.</strong> Saisir une phrase <em>erronée</em> dans la pop-up native, sur
-  un coffre dont la vraie phrase est connue. Attendu : aucun jeton écrit, aucune notification de
-  succès, et une ligne <code>WARN le mot de passe saisi n'ouvre pas le coffre — non enregistré</code>.
-  Puis saisir la bonne phrase et vérifier que le chemin nominal fonctionne toujours — le risque d'un
-  contrôle ajouté est qu'il refuse aussi le cas valide.</li>
-<li><strong>Non-régression des cinq revendications déjà validées.</strong> Le code a changé depuis :
-  <code>osKeychain.ts</code>, <code>vaultBridge.service.ts</code> et le panneau de réglages ont tous
-  été touchés. Rejouer les mesures de la deuxième campagne, pas les relire.</li>
-<li><strong>Le refus du backend <code>basic_text</code></strong>, non rejoué la deuxième fois. La
-  branche Linux de <code>keychainStatus()</code> a été modifiée depuis sa dernière vérification : le
-  garde-fou doit toujours refuser, avec son motif explicite.</li>
-</ol>
-
-<h4>Hors périmètre, et pourquoi</h4>
-<ul>
-<li><strong>Windows (DPAPI) et macOS</strong> — pas la bonne machine. Reste le plus gros angle mort du
-  projet : c'est là que <code>keychainStatus()</code> emprunte le chemin
-  <code>isEncryptionAvailable()</code> seul, donc là où il engage davantage que sur Linux.</li>
-<li><strong>La non-synchronisation du jeton</strong> — exige deux machines et la config sync active.</li>
-<li><strong>L'atomicité sous coupure réelle</strong> — déduite de <code>rename(2)</code>. La mesurer
-  supposerait de couper l'alimentation de la VM au bon moment ; le rapport coût/information est
-  mauvais tant que rien ne suggère un problème. <em>La campagne a ajouté un fait à ce sujet</em> :
-  <code>strace</code> compte <strong>zéro</strong> <code>fsync</code>. L'atomicité mesurée est celle
-  du <code>rename</code> face à un lecteur concurrent, pas face à une coupure — ce ne sont pas les
-  mêmes garanties, et le code n'en offre qu'une.</li>
-<li><strong>L'i18n</strong> — pas encore écrite au moment d'écrire ce périmètre. Elle l'a été le
-  2026-08-01 avant le lancement, et un sixième point a donc été ajouté au protocole.</li>
+<li id="campagne-linux">Campagne de vérification indépendante (2026-07-29) — trois défauts trouvés
+  et corrigés. <a href="annexes/REALISE.html#campagne-linux">Détail dans le registre</a>.</li>
+<li id="campagne-2">Deuxième campagne (2026-07-29) — les cinq revendications tiennent, deux défauts
+  nés des correctifs de la veille trouvés et corrigés.
+  <a href="annexes/REALISE.html#campagne-2">Détail dans le registre</a>.</li>
+<li id="campagne-3">Troisième campagne (2026-08-01) — D1/D2 conformes, dix défauts trouvés hors
+  périmètre. <a href="annexes/REALISE.html#campagne-3">Détail dans le registre</a>.</li>
 </ul>
 
 <h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
@@ -1381,8 +975,8 @@ passe en clair ne survit à aucun appel ». Il ne se négocie pas contre du conf
 2026-07-29 devant la granularité par profil, motif donné par l'utilisateur : « à l'usage c'est ce
 qui est le plus important maintenant, le reste c'est du bonus ». <strong>Validé en conditions
 réelles sur Windows 11</strong> le jour même, fusionné dans <code>master</code>, puis
-<strong>vérifié sur Linux</strong> par la <a href="#campagne-3">3ᵉ campagne</a>. Jamais exercé sur
-macOS.</p>
+<strong>vérifié sur Linux</strong> par la <a href="annexes/REALISE.html#campagne-3">3ᵉ campagne</a>.
+Jamais exercé sur macOS.</p>
 
 <div class="callout note">
 <span class="callout-title">Ce que la campagne a établi sur l'i18n, et les deux défauts qu'elle a trouvés</span>
@@ -1463,15 +1057,18 @@ de l'autre rouvre exactement le défaut que ce chantier a fermé.</p>
 </div>
 
 <h3>Reste à faire</h3>
+<div class="callout note">
+<span class="callout-title">Deux points de cette liste corrigés le 2026-08-06, devenus faux entre-temps</span>
+<p><code>feat/i18n-ui</code> est fusionnée dans <code>master</code> depuis le 2026-08-01 (<code>git
+branch --merged master</code> le confirme) — le premier point ci-dessous demandait une fusion déjà
+faite. Le Linux annoncé « rien n'y a été vérifié » l'a pourtant été, par la
+<a href="annexes/REALISE.html#campagne-3">3ᵉ campagne</a> du même jour (voir le paragraphe
+au-dessus). Seul macOS reste réellement non exercé.</p>
+</div>
 <ul>
-<li><strong>Fusionner <code>feat/i18n-ui</code> dans <code>master</code></strong>, sa documentation
-  l'accompagnant (option <code>branches</code>). Réserve à peser d'abord : le chantier touche
-  <code>keychainGuard.ts</code> et <code>osKeychain.ts</code>, c'est-à-dire le code même que la
-  <a href="#campagne-3">troisième campagne</a> doit valider. Fusionner signifie que la campagne
-  portera sur ce code-ci — ce qui est souhaitable, mais doit être un choix et non une conséquence.</li>
-<li><strong>Exercer sur Linux et macOS.</strong> Rien n'y a été vérifié. Le risque n'est pas la
-  traduction elle-même mais <a href="AI-CONTEXT.html#piege-v22">#V22</a> : le format du témoin du
-  garde-fou a changé, et c'est sur Linux qu'il se déclenche réellement.</li>
+<li><strong>Exercer sur macOS.</strong> Rien n'y a été vérifié. Le risque n'est pas la traduction
+  elle-même mais <a href="AI-CONTEXT.html#piege-v22">#V22</a> : le format du témoin du garde-fou a
+  changé, et c'est sur Linux qu'il s'est déclenché réellement — macOS reste une inconnue.</li>
 <li><strong>Une cinquième langue</strong>, si une donnée d'usage finit par exister. Le validateur
   refuse une table incomplète, donc l'ajout est mécanique.</li>
 </ul>
@@ -1704,7 +1301,7 @@ dernières sont des décisions de principe : leur migration reste à faire, voir
   <code>README</code> public, il était à un geste d'être supprimé à juste titre. Il n'était par
   ailleurs atteignable par <strong>aucun lien</strong> — deux mentions textuelles seulement, donc
   orphelin au sens d'A-8. Il porte désormais son lien de retour et est cité depuis la
-  <a href="#campagne-linux">campagne</a>.</li>
+  <a href="annexes/REALISE.html#campagne-linux">campagne</a>, dans le registre des livrés.</li>
 <li><strong>Le protocole de la 3ᵉ campagne, lui, reste dans <code>.tempfiles/</code></strong> et
   c'est délibéré : il porte les valeurs que l'opérateur doit saisir, qui n'ont pas leur place sur un
   dépôt public. Conséquence assumée : il n'existe que sur le poste de l'auteur, et une perte
@@ -1735,42 +1332,52 @@ ultérieure compare cette date <em>au lieu</em> de relire la charte, donc un mar
 étouffe la détection même qu'il sert à déclencher. Ne l'avancer qu'après avoir vérifié les éléments
 exigés, pas seulement la date.</p></div>
 
-<h2 id="registre-livres-migration">Registre des livrés — décision prise, migration à faire</h2>
+<h2 id="registre-livres-migration">Registre des livrés — amorcé le 2026-08-06</h2>
 <p>Option <code>registre-livrés</code> tranchée à <code>oui</code> à l'entretien de cadrage du
-2026-08-06 (<a href="PROFIL.md">PROFIL.md</a>) : cette roadmap dépasse 1700 lignes, en grande
+2026-08-06 (<a href="PROFIL.md">PROFIL.md</a>) : cette roadmap dépassait 1700 lignes, en grande
 partie des chantiers déjà <code>✅ Livré</code>/<code>Adopté</code> — exactement le cas que
 l'option cible.</p>
-<p><strong>Pas commencé.</strong> Il reste à créer <code>annexes/REALISE.html</code> (A-8, jamais
-<code>archive/</code>, A-9), y déplacer chaque chantier clos avec son design retenu, le renvoi vers
-l'entrée de journal qui l'a acté, ses évolutions post-livraison une ligne chacune, ses numéros de
-pièges sans les réexpliquer, et la liste de ses commits sur une seule ligne — puis ne garder dans
-cette roadmap active qu'une ligne et un lien vers le registre, le plus récent en tête. Un chantier
-<code>Écarté</code> n'y bascule jamais, il reste « Hors périmètre » ici. Candidats évidents à la
-première passe : <a href="#audit">Journal d'audit</a>, <a href="#reglages">Panneau de réglages</a>,
-les quatre lots de <a href="#correctifs-c3">correctifs de la 3ᵉ campagne</a>.</p>
+<p><strong><code>annexes/REALISE.html</code> créé le 2026-08-06</strong> (A-8, jamais
+<code>archive/</code>, A-9). Premier lot migré : les trois campagnes de vérification Linux
+(<a href="annexes/REALISE.html#campagne-linux">campagne indépendante</a>,
+<a href="annexes/REALISE.html#campagne-2">deuxième</a>,
+<a href="annexes/REALISE.html#campagne-3">troisième</a>) — reprises verbatim, chacune avec son
+renvoi vers l'entrée de journal qui l'a actée, ses évolutions post-livraison, ses pièges et ses
+commits. La roadmap active ne garde plus qu'une ligne et trois liens (voir plus haut).</p>
+<p><strong>La plupart des autres candidats évidents ne sont pas encore terminaux</strong> :
+<a href="#audit">Journal d'audit</a> et <a href="#reglages">Panneau de réglages</a> portent encore
+des points ouverts, et <a href="#correctifs-c3">correctifs de la 3ᵉ campagne</a> attend toujours le
+scénario macOS. Leur migration attend leur clôture réelle plutôt qu'une pastille ✅ optimiste — voir
+la mise en garde ci-dessus. Un chantier <code>Écarté</code> ne bascule jamais au registre, il reste
+« Hors périmètre » dans la roadmap active.</p>
 
-<h2 id="journal-log-migration">Journal en <code>.log</code> — décision prise, migration à faire</h2>
+<h2 id="journal-log-migration">Journal en <code>.log</code> — fait le 2026-08-06, sans conversion rétroactive</h2>
 <p>Option <code>journal-format</code> tranchée le 2026-08-06 <strong>hors du menu de la
-charte</strong> (<a href="PROFIL.md">PROFIL.md</a>) : <code>AI-HISTORY.html</code> devient un vrai
-fichier texte brut <code>AI-HISTORY.log</code>, pas le tableau plat HTML que l'option
-<code>journal-format=log</code> décrit. Colonnes retenues :
+charte</strong> (<a href="PROFIL.md">PROFIL.md</a>) : les nouvelles entrées vont désormais dans un
+vrai fichier texte brut, <a href="AI-HISTORY.log"><code>AI-HISTORY.log</code></a>, pas le tableau
+plat HTML que l'option <code>journal-format=log</code> décrit. Colonnes retenues :
 <code>horodatage | CHANTIER | Commit/Hash | Explication</code>, une ligne par entrée, Explication
-bornée à 250 caractères comme le prévoit la charte pour le format <code>log</code>.</p>
-<p><strong>Pas commencé.</strong> Rompt l'uniformité <code>format = html</code> sur les quatre
-documents, pour ce seul document. Reste à faire :</p>
-<ul>
-<li>Convertir les ~900 lignes existantes d'<code>AI-HISTORY.html</code> vers les nouvelles
-  colonnes, à contenu constant — sous l'exception nommée d'A-4 (conversion de format, décidée en
-  révision, en une fois, vérifiée par comparaison des textes extraits avant/après).</li>
-<li>Mettre à jour les liens de navbar de <code>README.html</code>, <code>AI-CONTEXT.html</code> et
-  <code>ROADMAP.html</code>, qui pointent tous vers <code>AI-HISTORY.html</code>.</li>
-<li><code>npm run lint:airules</code> ne valide que du HTML (<code>html-validate</code>) : il
-  faudra soit l'exclure de son périmètre, soit lui adjoindre un second validateur pour le nouveau
-  format (colonnes, borne de 250 caractères).</li>
-<li>Décider si la conversion se fait en une fois sur tout l'historique, ou si les entrées
-  antérieures restent en HTML dans un fichier archivé pendant que les nouvelles vont au
-  <code>.log</code> — la charte n'impose pas de bascule totale immédiate.</li>
-</ul>
+bornée à 250 caractères.</p>
+<div class="callout important">
+<span class="callout-title">Pas de conversion rétroactive — un conflit trouvé en préparant la migration</span>
+<p>Compresser les entrées existantes d'<code>AI-HISTORY.html</code> à 250 caractères aurait
+contredit la condition de <strong>contenu constant</strong> qu'exige l'exception nommée d'A-4 pour
+une conversion de format — plusieurs entrées dépassent 1000 caractères de récit qu'aucun résumé de
+250 caractères ne peut porter sans perte. Décision retenue à l'entretien : <strong>« log » ne vaut
+que pour l'avenir</strong>. <code>AI-HISTORY.html</code> est gelé tel quel (callout ajouté en tête),
+<code>AI-HISTORY.log</code> démarre vide et reçoit tout ce qui se journalise à partir de cette
+migration.</p>
+</div>
+<p><strong>Fait</strong> : <code>AI-HISTORY.log</code> créé avec son en-tête de format ;
+<code>AI-HISTORY.html</code> porte désormais un callout de gel avec renvoi ; la table
+<a href="README.html">README.html</a> § Structure documente les deux fichiers séparément.</p>
+<p><strong>Reste ouvert</strong> : <code>npm run lint:airules</code> ne valide que du HTML
+(<code>html-validate</code>) et ne couvre donc pas <code>AI-HISTORY.log</code> — pas de validateur
+dédié au nouveau format (colonnes, borne de 250 caractères) pour l'instant. La navbar HTML des
+quatre documents principaux n'a pas changé : elle continue de pointer vers
+<code>AI-HISTORY.html</code>, qui renvoie lui-même vers le <code>.log</code> — décision délibérée,
+pour ne pas toucher un élément identique sur quatre pages (§ 1 de <code>GABARITS.md</code>) pour un
+lien secondaire.</p>
 
 <footer>tabby-better-vault · voir <a href="../../tabby-ssh-sidebar/.AIRules/ROADMAP.html#vault">la section Vault du projet frère</a> pour l'historique de cette décision.</footer>
 </body>

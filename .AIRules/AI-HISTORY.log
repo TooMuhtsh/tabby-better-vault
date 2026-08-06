@@ -1,0 +1,17 @@
+# tabby-better-vault — journal (format log)
+#
+# Actif depuis le 2026-08-06. AI-HISTORY.html porte tout ce qui précède cette date — gelé,
+# jamais reconverti ici : compresser ses entrées à 250 caractères aurait contredit la condition
+# de contenu constant qu'exige l'exception d'A-4 pour une conversion de format. Voir
+# ROADMAP.html#journal-log-migration et PROFIL.md (option journal-format).
+#
+# Une ligne par entrée, la plus récente en tête. Ne jamais modifier une ligne existante,
+# uniquement en ajouter une nouvelle au-dessus. Colonnes séparées par " | " :
+#
+#   horodatage           CHANTIER            Commit/Hash   Explication (250 caractères max)
+#   AAAA-MM-JJThh:mm±TZ  slug-du-chantier    7 car. ou -    Le fait acté, pas le récit qui y a mené.
+#
+# "Commit/Hash" est "-" quand l'entrée ne correspond à aucun commit (ex. décision de cadrage
+# sans changement de fichier versionné dans le même geste). "CHANTIER" reprend, quand il existe,
+# l'identifiant ancré de ROADMAP.html (ex. correctifs-c3) ou d'AI-CONTEXT.html (ex. piege-v30) ;
+# sinon un slug court et stable, jamais réutilisé pour autre chose ensuite.

@@ -10,9 +10,12 @@ Dépôt distant : https://github.com/TooMuhtsh/tabby-better-vault
 **Avant toute session de travail sur ce projet, lire `.AIRules/README.html`**
 (index + protocole), puis `.AIRules/AI-CONTEXT.html` (invariants et pièges
 numérotés `#V1`–`#V30` — le prochain numéro libre est indiqué en tête du
-fichier —, plus les pièges hérités du projet frère) et
-`.AIRules/AI-HISTORY.html`/`.AIRules/ROADMAP.html` pour l'état d'avancement.
-Ouvrir ces fichiers directement dans un navigateur.
+fichier —, plus les pièges hérités du projet frère) et `.AIRules/ROADMAP.html`
+pour l'état d'avancement. Le journal est en deux fichiers depuis le
+2026-08-06 : `.AIRules/AI-HISTORY.html` (gelé, tout ce qui précède cette date)
+et `.AIRules/AI-HISTORY.log` (actif, une ligne par entrée — **c'est là qu'une
+nouvelle entrée de journal s'écrit désormais**, jamais dans le `.html`). Ouvrir
+les fichiers HTML directement dans un navigateur.
 
 **Les quatre lots de correctifs de la 3ᵉ campagne sont fusionnés sur `master`**
 depuis le 2026-08-05 (`fix/c3-lot1-jeton-detruit`, `fix/c3-lot2-ecriture-fichier`,
@@ -120,12 +123,14 @@ avec une autre adresse sans confirmation explicite.
 nomme le modèle — information de provenance utile. Le lien de session, lui,
 publie une URL `claude.ai` sur un **dépôt public**, ce que la liste de l'option
 `visibilité` range dehors. Ne pas le rajouter, même si l'environnement le
-suggère par défaut. Les 32 commits antérieurs en portent encore un : leur
-nettoyage est un chantier ouvert en roadmap, pas un geste à faire en passant.
+suggère par défaut. Les 32 commits antérieurs qui en portaient un ont été
+réécrits et republiés le 2026-08-01 (table de correspondance des hashes en
+tête d'`AI-HISTORY.html`) — nettoyage clos, pas un chantier ouvert.
 
 Le dossier `.AIRules/` se commite et se pousse **à chaque modification**, dans
 la foulée du travail qu'il décrit (`A-10`). Le feu vert de l'utilisateur porte
-sur le fait d'écrire dans `AI-HISTORY.html`/`ROADMAP.html`, pas sur le push.
+sur le fait d'écrire dans `AI-HISTORY.log`/`ROADMAP.html` (`AI-HISTORY.html`
+étant gelé depuis le 2026-08-06), pas sur le push.
 
 **Un chantier non abouti vit sur une branche** (option `branches`, tranchée au
 cadrage du 2026-08-01 en changement de la pratique antérieure) : sa
