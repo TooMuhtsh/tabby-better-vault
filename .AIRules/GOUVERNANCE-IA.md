@@ -620,6 +620,7 @@ Chaque défaut porte son motif : un défaut sans motif ne se conteste pas, il se
 | `format` | Format des documents | `html` · `markdown` · autre | `html` |
 | `documents` | Nombre de documents | `4` · `3` (journal et roadmap fusionnés) | `4` |
 | `registre-livrés` | Séparer la roadmap active du registre des chantiers livrés | `oui` · `non` | `oui` |
+| `journal-format` | Format des entrées du journal | `tableau` · `log` | `tableau` |
 | `fichier-instructions` | Nom du fichier d'instructions auto-chargé | `CLAUDE.md` · `AGENTS.md` · les deux · autre | `CLAUDE.md` |
 | `statuts` | Vocabulaire de statuts | `complet` · `réduit` | `complet` |
 | `outillage` | Le projet produit-il de l'outillage pour vous-même ? | `oui` · `non` | déduit au cadrage |
@@ -719,6 +720,38 @@ qu'une idée déjà tranchée soit reproposée six mois plus tard.
 quatre documents ou fusionnés en trois, le registre est une **annexe**, pas un cinquième
 document principal — il ne compte pas dans ce total et n'entre jamais dans la navbar
 (`GABARITS.md`, § 5).
+
+## `journal-format` — format des entrées du journal
+
+**`tableau`** (défaut) : une section par chantier, chacune avec son propre tableau
+`Date | Hash | Résumé` (`GABARITS.md`, § 3). **`log`** : un tableau unique et plat pour tout
+le journal, trié de la plus récente à la plus ancienne entrée, colonnes
+`Date | Hash | Chantier | Résumé` — `Chantier` devient un champ de chaque ligne plutôt qu'un
+regroupement en section.
+
+*Pourquoi `tableau` par défaut* : c'est la structure historique de la charte, et rien
+n'oblige un projet jeune ou à faible volume à basculer — le coût du format `log` se paie en
+discipline d'écriture (borne de caractères, renvois raccourcis), pas en simplicité de
+lecture.
+
+**Ce que change `log`** :
+
+- **`Résumé` borné à 250 caractères.** Se vérifie d'un `grep` sur la longueur de la cellule.
+  Un résumé qui dépasserait se réduit au fait acté, pas au récit qui y a mené.
+- **Le paragraphe de contexte de chantier n'a plus de place dans le journal.** Ce qu'il
+  portait — le pourquoi d'un chantier, qui l'a signalé, ce qui l'a déclenché — devient, s'il
+  compte encore, un **fait stable dans le contexte** (`AI-CONTEXT`) plutôt qu'un événement
+  daté : A-2 le range là dès qu'il cesse d'être ponctuel.
+- **Les liens d'ancre survivent, sous forme courte**, insérés dans le texte du résumé —
+  `[#N]` vers un piège du contexte, `[roadmap#slug]` vers un chantier de la roadmap —
+  comptés dans les 250 caractères comme le reste.
+- **Convertir un journal existant** du format `tableau` vers `log` est permis par la
+  deuxième exception nommée d'A-4 (conversion de format, à contenu constant, vérifiée) —
+  ce n'est jamais une obligation : un journal peut rester au format `tableau` indéfiniment,
+  y compris sur un projet qui adopte `log` pour ses entrées futures.
+
+Régime de cette option : purement additive — nouvelle option, aucun défaut existant ne
+change, un projet qui ne répond pas hérite de `tableau` sans rien changer à son journal.
 
 ## `fichier-instructions` — nom du fichier d'instructions
 
@@ -1155,7 +1188,7 @@ Quatre déclencheurs :
 
 ## Profils de départ
 
-Poser vingt-quatre questions à chaque SETUP garantit qu'il ne sera jamais mené jusqu'au bout.
+Poser vingt-cinq questions à chaque SETUP garantit qu'il ne sera jamais mené jusqu'au bout.
 L'entretien commence donc par **un mot**, puis se poursuit en écrasant les points qu'on veut.
 
 | Profil | Pour quel projet |
@@ -1252,6 +1285,7 @@ workspace
 
 | Version | Régime |
 |---|---|
+| `20260804-071239` | purement additive |
 | `20260804-064238` | touche le noyau |
 | `20260803-200821` | purement additive |
 | `20260803-182826` | purement additive |
@@ -1271,6 +1305,6 @@ se propose (A-7). Le récit détaillé, lui, ne se lit qu'au moment de réviser,
 révise.
 
 ---
-*Version de cette charte : **`20260804-064238`**. C'est cet identifiant que reprend la
+*Version de cette charte : **`20260804-071239`**. C'est cet identifiant que reprend la
 mention « Conforme à la charte de gouvernance, version {{id}} » dans le pied de page de
 l'index de gouvernance de chaque projet.*

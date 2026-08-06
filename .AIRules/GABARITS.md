@@ -187,7 +187,8 @@ Ordre après le `<h1>Contexte &amp; invariants</h1>` et la ligne de dernière re
    données ; VCS ; debug et workflow de dev ; publication et distribution.
 5. **Deux formats à l'intérieur d'une catégorie** :
    - **fait stable simple** : une puce, sans numéro (convention de nommage, version
-     verrouillée) ;
+     verrouillée, ou le pourquoi d'un chantier passé quand `journal-format = log` lui retire
+     sa place dans le journal — voir § suivant) ;
    - **piège documenté** : un titre `#N — {{titre court}}` suivi d'un paragraphe décrivant
      **le symptôme, la cause, puis la solution** — dans cet ordre, un futur lecteur devant
      pouvoir reconnaître le symptôme avant de lire la solution. Bloc de code si une commande
@@ -201,7 +202,9 @@ Ordre après le `<h1>Journal de bord</h1>` :
 1. **Ligne secondaire** rappelant l'ordre de tri : chantiers du plus récent au plus ancien ;
    à l'intérieur d'un chantier, entrées les plus récentes en tête.
 2. **Encadré `important`** répétant A-4 — ne jamais modifier une entrée existante, seulement
-   en ajouter en tête du chantier concerné — et le format de ligne : `Date | Hash | Résumé`.
+   en ajouter en tête du chantier concerné — et le format de ligne, selon l'option
+   `journal-format` : `Date | Hash | Résumé` (`tableau`) ou `Date | Hash | Chantier | Résumé`
+   (`log`).
 3. **Une section par chantier**, titre au format `{{Nom du chantier}} ({{date de la dernière
    entrée}})`, suivie **optionnellement** d'un paragraphe de contexte quand le chantier a
    besoin d'être resitué (signalé par qui, pourquoi il a démarré).
@@ -215,6 +218,19 @@ Ordre après le `<h1>Journal de bord</h1>` :
 Si `documents = 3`, le journal et la roadmap partagent un fichier : le journal occupe la
 première moitié, la roadmap la seconde, chacune gardant son plan ci-dessus et son propre
 titre de niveau 1.
+
+### Variante `log` (option `journal-format`)
+
+Remplace les points 3 et 4 ci-dessus — points 1, 2 (adapté) et 5 inchangés :
+
+- **Pas de section par chantier : un tableau unique** pour tout le journal, colonnes
+  `Date` / `Hash` / `Chantier` / `Résumé`, triées de la plus récente à la plus ancienne
+  entrée — `Chantier` est un champ de la ligne, pas un regroupement.
+- **`Résumé` ≤ 250 caractères.** Pas de gras, pas de sous-parties : le fait acté, pas le
+  récit. Un renvoi court entre crochets quand il compte vraiment — `[#N]` vers un piège du
+  contexte, `[roadmap#slug]` vers un chantier de la roadmap — compté dans la borne.
+- **Pas de paragraphe de contexte de chantier.** S'il compte encore, il vit comme fait
+  stable dans `AI-CONTEXT` (§ précédent), pas ici.
 
 ## `ROADMAP` — statut et design des chantiers restants
 
@@ -432,6 +448,7 @@ Réponses de cadrage de ce projet. La charte qui les rend nécessaires est
 | `format` | `html` | défaut appliqué, non tranché |
 | `documents` | `4` | défaut appliqué, non tranché |
 | `registre-livrés` | `oui` | défaut appliqué, non tranché |
+| `journal-format` | `tableau` | défaut appliqué, non tranché |
 | `fichier-instructions` | `CLAUDE.md` | défaut appliqué, non tranché |
 | `statuts` | `complet` | défaut appliqué, non tranché |
 | `outillage` | `oui` | le projet produit ses propres scripts de build et de publication |
@@ -475,6 +492,7 @@ Point de départ seulement — chaque ligne reste écrasable.
 | `format` | `markdown` | `html` | `html` |
 | `documents` | `3` | `4` | `4` |
 | `registre-livrés` | `non` | `oui` | `oui` |
+| `journal-format` | `tableau` | `tableau` | `log` |
 | `fichier-instructions` | `CLAUDE.md` | `CLAUDE.md` | `CLAUDE.md` |
 | `statuts` | `réduit` | `complet` | `complet` |
 | `outillage` | `non` | à demander | `oui` |
@@ -681,5 +699,5 @@ d'annexe du § 5 — pas de navbar, ligne de retour vers `ROADMAP.{{ext}}`.
 > d'y porter une table de correspondance, le même geste qu'A-4 prévoit pour le journal.
 
 ---
-*Version de ce fichier : **`20260804-064238`**. Il suit l'identifiant de
+*Version de ce fichier : **`20260804-071239`**. Il suit l'identifiant de
 [`GOUVERNANCE-IA.md`](./GOUVERNANCE-IA.md) et se propage avec elle.*
