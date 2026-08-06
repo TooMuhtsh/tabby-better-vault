@@ -28,6 +28,71 @@ entrées les plus récentes en tête.</p>
 
 <table>
 <tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-06</td><td><code>2c15b1e</code></td>
+<td><strong>Campagne 5 — le garde-fou validé en conditions réelles, un défaut trouvé et corrigé le
+jour même.</strong> Menée en deux temps, tous deux autonomes, à la demande explicite de l'utilisateur.
+<br><br>
+<strong>Temps 1, depuis l'hôte (VMware <code>vmrun</code> + <code>open-vm-tools</code>, sans clavier ni
+souris réels)</strong> : VM <code>Campagne A</code> pilotée en ligne de commande — snapshot restaurée,
+Tabby 1.0.235 installé et lancé pour de vrai, plugin construit depuis <code>master</code>. Trois
+mesures réelles obtenues sans accès GUI : <code>configDir()</code> confirmé une seconde fois (après
+Windows) en respectant <code>--user-data-dir</code> sur Linux ; le verrou single-instance d'Electron
+confirmé (relancer <code>tabby</code> sur le même profil ne crée ni second processus ni seconde
+fenêtre) ; et une découverte inédite — verrouiller le trousseau <em>avant</em> le premier lancement de
+Tabby produit un repli <code>basic_text</code> propre, sans blocage, à distinguer du verrouillage
+<em>en cours de session</em> que les campagnes de juillet avaient mesuré. Reproduire ce second cas
+exigeait de répondre à une vraie invite d'authentification système — hors de portée du pilotage
+distant, d'où le temps 2.
+<br><br>
+<strong>Temps 2, une instance Claude Code lancée par l'utilisateur DANS la VM</strong> (prompt préparé
+par l'instance du temps 1, déposé sur le bureau — <code>.tempfiles/CAMPAGNE-5-PROMPT.md</code>, hors
+dépôt), avec accès à la vraie session graphique. Rapport intégral :
+<code>~/CAMPAGNE-5-RAPPORT.md</code> sur la VM (non rapatrié dans le dépôt), 38 captures d'écran à
+l'appui, chaque constat étiqueté <strong>[MESURÉ]</strong> ou <strong>[DÉDUIT]</strong>.
+<br><br>
+<strong>Le blocage réel a été reproduit</strong> — trousseau verrouillé en cours de session, après
+négociation du vrai backend <code>gnome_libsecret</code> — avec une vraie invite d'authentification
+système GTK, distincte d'une fenêtre Tabby (<code>shot-14-blocked.png</code>). Le discriminant a été
+mesuré contre de vrais témoins produits par ce vrai blocage : pid vivant à 4 s / 12 s / 59,7 s →
+autorisé ; même pid vivant à 71,8 s → suspendu, au franchissement exact de
+<code>STUCK_AGE_MS</code> ; pid tué (<code>SIGKILL</code>) à âge constant (21,5 s / 25,6 s) → suspendu
+immédiatement, prouvant que c'est la vivacité seule qui tranche. Le témoin survit au
+<code>SIGKILL</code>, comme prévu. Cycle complet parcouru : blocage → gel → mort du processus →
+consignation → démarrage suivant non gelé (~6 s) → repli manuel → levée explicite depuis les réglages
+→ vérification réelle réussie → retour à la normale.
+<br><br>
+<strong>D4 par l'interface Tabby, code à l'appui, est structurellement impossible sur Linux</strong> :
+verrou single-instance dur dans <code>app.asar</code>
+(<code>c.app.requestSingleInstanceLock()||(c.app.quit(),c.app.exit(0))</code>), « New window »
+conditionné à <code>"darwin"===process.platform</code>, zone de notification désactivée sur Linux,
+palette de commandes muette sur le sujet. Le seul chemin vers <code>newWindow()</code> passe par
+l'IPC <code>app:new-window</code>, qui empile une <code>BrowserWindow</code> de plus dans le
+<strong>même</strong> processus principal — un second renderer, pas un second processus — donc
+inatteignable sur Linux tel quel.
+<br><br>
+<strong>Un défaut réel trouvé sur du vrai code multi-processus, corrigé le jour même</strong> : deux
+processus OS réels (obtenus via deux profils <code>--user-data-dir</code> distincts, faute de pouvoir
+en obtenir deux sur un même profil) partageant un témoin fabriqué pour l'occasion ont montré que le
+<code>finally</code> de <code>runGuarded()</code> effaçait le témoin sans vérifier qu'il portait
+encore son propre <code>pid</code>/<code>since</code> — un concurrent qui repose son témoin pendant
+qu'un autre appel est encore gelé se le faisait effacer par erreur. <code>clearOwnWitness()</code>
+corrige : le témoin n'est effacé que s'il correspond exactement à ce qui a été écrit (fenêtre TOCTOU
+résiduelle documentée, assumée). Reachability mesurée : nulle sur Linux (les deux garde-fous
+ci-dessus s'y opposent déjà), atteignable sur macOS via « New window » (deux renderers, un seul
+processus principal, un seul <code>configDir</code>, un témoin partagé) — jamais exercée faute de
+machine, seul point du chantier <a href="ROADMAP.html#correctifs-c3">« Deux sujets de conception »</a>
+qui reste ouvert. Un cas reproduisant exactement ce défaut a été ajouté à la suite de test isolée de
+<code>keychainGuard.ts</code> (hors dépôt, comme les autres scripts de test de ce projet).
+<br><br>
+<strong>Deux constats annexes</strong> : un <code>config.yaml</code> réduit à un saut de ligne fait
+planter Tabby au démarrage (bug de Tabby, hors périmètre, non corrigé) ; et le bouton de vérification
+du panneau (<code>keychainRoundTrip()</code>) est caché dès que le plugin est activé
+(<code>settingsTab.component.pug</code>, <code>*ngIf="!suspended &amp;&amp; !keychain"</code>) — a
+compliqué la mesure elle-même, pas un chantier ouvert.
+<br><br>
+<strong>État laissé sur la VM par le temps 2</strong> : non éteinte, non redémarrée, Tabby resté
+ouvert — restaurée à la snapshot <code>Snapshot 1</code> par le temps 1 dès le rapport rapatrié.
+Aucun commit ni push depuis la VM, conformément à la consigne du prompt.</td></tr>
 <tr><td>2026-08-06</td><td><code>5f60364</code></td>
 <td><strong>Validation, en autonomie, du correctif ci-dessous</strong> — sans VM, à la demande
 explicite de l'utilisateur (« piloté à 100% par l'agent »).

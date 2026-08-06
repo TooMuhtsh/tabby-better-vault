@@ -21,6 +21,15 @@ réelles — voir `.AIRules/ROADMAP.html#correctifs-c3` et `.AIRules/AI-HISTORY.
 Les branches elles-mêmes peuvent être supprimées une fois la publication npm
 faite.
 
+**`configDir()` (`--user-data-dir`) et le garde-fou (discriminant pid vivant +
+ancienneté) sont fusionnés sur `master` depuis le 2026-08-06**, et **validés en
+conditions réelles** par la campagne 5 le jour même — vrai blocage reproduit sur
+VM Linux, D4 par l'interface confirmé structurellement impossible sur Linux, un
+défaut trouvé en cours de mesure (témoin effacé sans vérification par
+`runGuarded()`) corrigé dans la foulée. Reste ouvert : le cas « deux fenêtres, un
+processus principal », exposé sur macOS via « New window », jamais exercé faute
+de machine — voir `.AIRules/ROADMAP.html#correctifs-c3`.
+
 La charte qui régit ce projet est `.AIRules/GOUVERNANCE-IA.md`, version
 `20260803-182826` ; **les réponses de cadrage propres à ce projet sont dans
 `.AIRules/PROFIL.md`** — s'y reporter plutôt que de redécider une convention au

@@ -42,7 +42,7 @@
 <tr><td><a href="#campagne-3">Troisième campagne de vérification</a></td>
     <td><span class="pill done">✅ Menée le 2026-08-01 — D1 et D2 conformes, <strong>dix défauts trouvés hors périmètre</strong>, dont D4 confirmé jusqu'en usage spontané</span></td><td>—</td></tr>
 <tr><td><a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
-    <td><span class="pill progress">🚧 Quatre lots <strong>clos</strong> (2026-08-05) ; <code>configDir()</code> <strong>livré</strong> (validé en conditions réelles le 2026-08-06) ; garde-fou logique validée en isolation le 2026-08-06, <strong>déclencheur réel (VM Linux) toujours en attente</strong></span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill done">✅ Quatre lots clos (2026-08-05) ; <code>configDir()</code> et garde-fou <strong>validés en conditions réelles</strong> par la campagne 5 (2026-08-06, VM Linux) — D4 par l'interface confirmé structurellement impossible sur Linux, un défaut trouvé en cours de mesure corrigé dans la foulée. <strong>Reste : le cas « deux fenêtres, un processus » sur macOS</strong>, jamais exercé</span></td><td><strong>Priorité absolue</strong></td></tr>
 <tr><td><a href="#bruit-journal">Journal saturé par les déverrouillages répétés</a></td>
     <td><span class="pill progress">🚧 Constaté le 2026-08-03 — mécanisme validé à l'exhaustif en isolation le 2026-08-06, <strong>déclencheur réel (rafale authentique) toujours en attente</strong></span></td><td><strong>Haute</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
@@ -536,6 +536,21 @@ où elle était écrite. Elle se déclenche pour une autre raison : <a href="#co
 confirmé jusqu'en usage spontané</a> et la destruction du jeton sur annulation d'invite touche la
 raison d'être du plugin. La publication attend donc les quatre lots de correctifs et le sort des deux
 sujets de conception.</p>
+<p><strong>Verdict au 2026-08-06 : la condition explicite est désormais remplie, sur une plateforme.</strong>
+D4 est mesuré, cette fois pour de vrai : <a href="#correctifs-c3">structurellement impossible par
+l'interface de Tabby sur Linux</a>, code à l'appui, et le seul autre vecteur connu (profils partagés)
+supprimé par <code>configDir()</code>. La mesure a fait remonter un défaut réel — le témoin effacé
+sans vérification — et il a été corrigé le jour même (<code>2c15b1e</code>), pas laissé pour plus
+tard. C'est la première fois qu'une campagne de ce projet ferme la boucle jusque-là : mesure, défaut
+trouvé, correctif, sans report.</p>
+<p><strong>Ce qui manque encore avant de considérer la condition remplie pour toutes les plateformes
+visées</strong> : le scénario « deux fenêtres, un processus principal » — le seul chemin restant vers
+le défaut du témoin, exposé sur macOS via « New window », jamais exercé faute de machine. Le correctif
+lui-même s'applique à toutes les plateformes, sans code spécifique à Linux ; ce qui manque n'est donc
+pas un correctif à écrire mais une mesure à faire. Windows n'a validé que <code>configDir()</code> en
+conditions réelles, jamais le garde-fou lui-même — DPAPI n'ayant pas d'équivalent au trousseau
+verrouillé de Linux, la question de savoir si un scénario comparable y existe reste ouverte, pas
+tranchée par son absence de mention ici.</p>
 </div>
 
 <h2 id="campagne-linux">Campagne de vérification indépendante (2026-07-29)</h2>
@@ -1105,26 +1120,64 @@ le vrai <code>%APPDATA%\tabby</code> : la preuve que le calcul figé aurait prod
 celle que ce correctif devait éliminer. Rien ne reste ouvert sur ce point.</p>
 </div>
 
-<div class="callout note">
-<span class="callout-title">Garde-fou — logique validée à l'exhaustif en isolation (2026-08-06), déclencheur réel toujours en attente</span>
+<div class="callout important">
+<span class="callout-title">Garde-fou — validé en conditions réelles par la campagne 5 (2026-08-06)</span>
 <p>Le garde-fou discrimine désormais par <em>pid vivant + ancienneté</em> :
 <code>guardState()</code> ne lit plus la seule présence du témoin comme suspension définitive.
 Un témoin récent (<code>STUCK_AGE_MS</code>, 60 s — marge au-delà des 45 s mesurés) posé par un
 processus dont <code>process.kill(pid, 0)</code> confirme qu'il est encore vivant est désormais lu
 comme un appel plausiblement en vol ailleurs, pas comme un appel jamais revenu.</p>
-<p><strong>Validé par test isolé</strong>, module réel compilé et exécuté hors Electron (aucune
-dépendance dans <code>keychainGuard.ts</code> ne l'exige), <code>APPDATA</code> redirigé vers un
-dossier jetable avant le premier <code>require</code> pour ne jamais toucher au vrai témoin de
-l'utilisateur. Neuf cas, tous conformes : témoin frais + pid vivant → <strong>non suspendu</strong>
-(exactement le scénario D4, refusé à tort avant ce correctif) ; témoin vieux (&gt;60 s) + pid vivant,
-témoin frais + pid mort, témoin corrompu → suspendu dans les trois cas ; <code>runGuarded()</code>
-refuse quand suspendu, exécute et nettoie son témoin sinon.</p>
-<p>Ce que ce test ne couvre PAS, et c'est la nuance à ne pas perdre : il vérifie le
-<strong>discriminant</strong> à l'exhaustif, pas le <strong>déclencheur réel</strong> du bug D4 —
-plusieurs fenêtres Tabby accédant vraiment en même temps à un trousseau Linux verrouillé, avec le
-blocage <code>safeStorage</code> effectif que seule cette plateforme a mesuré. Ça reste au même point
-qu'avant : la VM Ubuntu restée hors d'atteinte, exactement comme pour la quatrième campagne
-ci-dessous. Une prochaine campagne devra faire porter sa mesure précisément sur ce point.</p>
+<p><strong>Ce qui n'était que testé en isolation l'a été pour de vrai</strong> — VM Linux, trousseau
+réellement verrouillé <em>en cours de session</em> (après négociation du vrai backend
+<code>gnome_libsecret</code>, condition qui s'est révélée décisive : verrouiller <em>avant</em> le
+premier lancement ne produit qu'un repli <code>basic_text</code> propre, sans blocage — deux
+scénarios distincts, tous deux désormais mesurés). Résultat : une vraie invite d'authentification
+système (GTK, pas une fenêtre Tabby), un vrai blocage, un témoin réel relu par le vrai
+<code>guardState()</code> compilé — et le discriminant fait exactement ce qu'il promet : pid vivant à
+4 s / 12 s / 59,7 s → autorisé ; même pid vivant à 71,8 s → suspendu, pile au franchissement de
+<code>STUCK_AGE_MS</code> ; pid tué à âge constant (21,5 s vs 25,6 s) → suspendu immédiatement. Le
+cycle complet — blocage, <code>SIGKILL</code>, témoin qui survit, démarrage suivant non gelé (~6 s),
+repli manuel, levée explicite, vérification réelle réussie — a été parcouru de bout en bout. Détail :
+<a href="AI-HISTORY.html">AI-HISTORY.html</a>, entrée du 2026-08-06.</p>
+<p><strong>D4 par l'interface de Tabby est structurellement impossible sur Linux</strong>, code à
+l'appui : verrou single-instance dur (<code>requestSingleInstanceLock()</code>), l'entrée « New
+window » n'existe que sur macOS, la zone de notification est désactivée sur Linux, la palette de
+commandes ne propose rien pour une fenêtre. Le correctif <code>configDir()</code> supprime en plus le
+seul autre vecteur connu (témoin partagé entre profils) : deux profils distincts ont désormais deux
+témoins distincts. Il ne reste donc plus rien à discriminer dans les scénarios atteignables sur cette
+plateforme.</p>
+<p><strong>Un défaut réel trouvé, mesuré sur du vrai code multi-processus, et corrigé</strong> : le
+<code>finally</code> de <code>runGuarded()</code> effaçait le témoin sans vérifier qu'il portait
+encore notre <code>pid</code> et notre <code>since</code> — un appel concurrent qui repose son propre
+témoin pendant que le nôtre est encore gelé (exactement ce que le discriminant autorise) se le
+faisait effacer par erreur, ce qui aurait pu laisser un blocage sans protection au démarrage suivant
+si ce concurrent mourait à cet instant précis. Corrigé par <code>clearOwnWitness()</code>
+(<code>2c15b1e</code>) : le témoin n'est effacé que s'il correspond encore exactement à ce qui a été
+écrit. <strong>Reachability mesurée</strong> : nulle sur Linux (les deux garde-fous ci-dessus s'y
+opposent déjà), mais atteignable sur macOS via « New window » — deux <code>BrowserWindow</code>, un
+seul processus principal, un seul <code>configDir</code>, donc un témoin partagé entre deux
+renderers.</p>
+<p><strong>Ce qui reste ouvert</strong> : le scénario « deux fenêtres, un seul processus principal »
+— le seul chemin restant vers le défaut ci-dessus, et le dernier vrai vecteur de D4 — n'a pas pu être
+exercé, faute de machine macOS. Le chemin <code>decrypt()</code>/<code>operation: "read"</code> sous
+trousseau verrouillé n'a pas non plus été mesuré directement (seuls <code>store</code> et
+<code>verify</code> l'ont été) ; la structure de <code>withSafeStorage()</code> et <code>#V23</code>
+rendent son comportement déductible, pas mesuré.</p>
+</div>
+
+<div class="callout note">
+<span class="callout-title">Deux constats annexes, campagne 5</span>
+<p>Sans rapport avec ce plugin, relevés en passant : un <code>config.yaml</code> réduit à un saut de
+ligne fait planter Tabby au démarrage avant toute fenêtre (<code>TypeError: Cannot read properties of
+undefined (reading 'appearance')</code>) — bug de Tabby, non corrigé, hors périmètre.</p>
+<p>Propre au plugin, mais sans code à changer : tant que le plugin est activé et le trousseau
+disponible et non consigné, le panneau de réglages n'offre <strong>aucun</strong> moyen de déclencher
+<code>keychainRoundTrip()</code> — <code>settingsTab.component.pug</code> conditionne l'encadré de
+vérification à <code>!keychain</code>, renseigné dès que <code>settings.enabled</code> est vrai.
+Cohérent avec l'intention (ne pas sonder sans consentement), mais l'effet de bord est que le seul
+contrôle qui vérifie vraiment est cachée précisément dans l'état où l'utilisateur s'appuie sur le
+plugin — et ça a rendu la mesure elle-même plus difficile à mener. Pas un chantier ouvert à ce stade,
+juste à garder en tête.</p>
 </div>
 
 <h2 id="campagne-4">Quatrième campagne — préparée le 2026-08-02, non menée telle quelle</h2>
