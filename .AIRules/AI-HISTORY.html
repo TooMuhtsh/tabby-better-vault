@@ -24,6 +24,37 @@ entrées les plus récentes en tête.</p>
 <code>Date | Hash | Résumé</code>.</p>
 </div>
 
+<h2>Entretien de cadrage — fusion de la charte <code>20260804-071239</code> (2026-08-06)</h2>
+
+<table>
+<tr><th>Date</th><th>Hash</th><th>Résumé</th></tr>
+<tr><td>2026-08-06</td><td><code>01bf9a6</code></td>
+<td><strong>Deux branches <code>governance-sync</code> en attente depuis le 2026-08-04 fusionnées,
+puis entretien de cadrage relancé (mot-clé <code>GOUVERNANCE</code>).</strong> Les deux branches
+partaient du même point (<code>0ccad87</code>) : la seconde (<code>20260804-071239</code>, révision
+cumulative) est entrée en conflit avec la première sur <code>GOUVERNANCE-IA.md</code> et
+<code>GABARITS.md</code> — résolu en retenant la version de la seconde, vérifiée par empreinte Git
+contre le dépôt canonique avant de committer (<code>e0f7591</code> puis <code>01bf9a6</code>).</td></tr>
+<tr><td>2026-08-06</td><td><code>01bf9a6</code></td>
+<td><strong>Vingt-deux options de <a href="PROFIL.md">PROFIL.md</a> repassées en revue, deux
+nouvelles tranchées.</strong> <code>support-test</code> confirmé à <code>8</code> après relecture
+des cinq campagnes menées sur ce projet. Une note d'<code>attribution</code> devenue fausse
+corrigée (le nettoyage des 32 commits <code>Claude-Session</code> était déjà fait le 2026-08-01,
+la note disait encore l'inverse). <code>registre-livrés</code> tranché à <code>oui</code> — la
+roadmap dépasse 1700 lignes, majoritairement des chantiers clos. <code>journal-format</code>
+tranché hors du menu de la charte, après clarification explicite : pas le tableau plat HTML que
+l'option décrit, mais un vrai <code>AI-HISTORY.log</code> en texte brut (colonnes
+<code>horodatage | CHANTIER | Commit/Hash | Explication</code>, 250 caractères max). Les deux
+décisions sont des choix de principe ; leur migration reste à faire, consignée en
+<a href="ROADMAP.html#gouvernance">roadmap</a>.</td></tr>
+<tr><td>2026-08-06</td><td><code>01bf9a6</code></td>
+<td>Table de correspondance <code>Règle N</code> → <code>A-x</code>, retirée de la charte à la
+révision <code>20260803-200821</code>, recréée localement dans
+<a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les seules références que porte encore ce
+journal (Règle 7 Cas B, Règle 1, Règle 3) — décision de l'entretien, la charte ne la portant plus
+pour personne.</td></tr>
+</table>
+
 <h2><code>configDir()</code>, garde-fou multi-processus, journal saturé (2026-08-06)</h2>
 
 <table>

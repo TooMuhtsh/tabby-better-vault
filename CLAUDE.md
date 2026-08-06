@@ -31,7 +31,7 @@ processus principal », exposé sur macOS via « New window », jamais exercé f
 de machine — voir `.AIRules/ROADMAP.html#correctifs-c3`.
 
 La charte qui régit ce projet est `.AIRules/GOUVERNANCE-IA.md`, version
-`20260803-182826` ; **les réponses de cadrage propres à ce projet sont dans
+`20260804-071239` ; **les réponses de cadrage propres à ce projet sont dans
 `.AIRules/PROFIL.md`** — s'y reporter plutôt que de redécider une convention au
 coup par coup. `.AIRules/GABARITS.md` ne s'ouvre qu'au moment de créer ou de
 restructurer un document.

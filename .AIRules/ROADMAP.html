@@ -53,7 +53,11 @@
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
     <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
-    <td><span class="pill done">✅ Revue faite (2026-08-01) — cadrage complet, deux items ouverts</span></td><td>Entretien récurrent</td></tr>
+    <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
+<tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
+    <td><span class="pill planned">📋 Décidé (2026-08-06), migration non commencée</span></td><td>—</td></tr>
+<tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
+    <td><span class="pill planned">📋 Décidé (2026-08-06), migration non commencée</span></td><td>—</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -1644,6 +1648,45 @@ dans le même geste : deux emplacements pour le même fait divergent (A-2, A-7).
 </ul>
 </div>
 
+<h3>Revue du 2026-08-06 — fusion de la charte <code>20260804-071239</code></h3>
+<p>Deux branches de propagation automatique (<code>governance-sync-20260804-064238</code>,
+<code>governance-sync-20260804-071239</code>) attendaient depuis le 2026-08-04, déclenchées par
+`GOUVERNANCE` en entretien de cadrage. Fusionnées l'une après l'autre sur <code>master</code> ;
+la seconde entrait en conflit avec la première sur <code>GOUVERNANCE-IA.md</code> et
+<code>GABARITS.md</code> (les deux branches partaient du même point, la première ne portant pas
+la révision de la seconde) — résolu en retenant la version de la seconde, cumulative, **vérifiée
+par empreinte Git** contre le dépôt canonique avant de committer.</p>
+
+<p>Ce que les trois révisions apportent (<code>20260803-200821</code>, <code>20260804-064238</code>,
+<code>20260804-071239</code>) :</p>
+<ul>
+<li>Retrait de la table de correspondance <code>Règle N</code> → <code>A-x</code>, devenue une
+  condition de retrait inatteignable côté charte, et ajout du prochain numéro d'invariant libre
+  (<code>A-16</code>).</li>
+<li>Deuxième exception nommée d'A-4 : la <strong>conversion de format</strong> d'un journal
+  existant (tableau → lignes de log, HTML → Markdown) est permise sous quatre conditions
+  cumulatives — décidée en révision, en une fois, à contenu constant, vérifiée par comparaison des
+  textes extraits avant/après. Ne concerne ce projet que si <code>AI-HISTORY.html</code> change un
+  jour de support.</li>
+<li>Nouvelle option <code>registre-livrés</code> (A-8) : sépare, si activée, la roadmap active du
+  registre des chantiers déjà livrés.</li>
+<li>Nouvelle option <code>journal-format</code> (<code>tableau</code>/<code>log</code>), qui
+  clôture la réforme d'amaigrissement de la roadmap du dépôt canonique.</li>
+</ul>
+
+<div class="callout note">
+<span class="callout-title">Ce que l'entretien du même jour a tranché</span>
+<p>Les trois points ci-dessus sont réglés par l'entretien de cadrage relancé dans la foulée
+(mot-clé <code>GOUVERNANCE</code>), détail dans <a href="PROFIL.md">PROFIL.md</a> et
+<a href="AI-HISTORY.html">AI-HISTORY.html</a> : la table <code>Règle N</code> → <code>A-x</code>
+est recréée localement dans <a href="AI-CONTEXT.html">AI-CONTEXT.html</a> pour les seules
+références que porte ce journal ; <code>registre-livrés</code> est tranché à <code>oui</code> ;
+<code>journal-format</code> est tranché <strong>hors du menu de la charte</strong> — un vrai
+fichier <code>AI-HISTORY.log</code> plutôt que le tableau plat HTML que l'option décrit. Les deux
+dernières sont des décisions de principe : leur migration reste à faire, voir
+<a href="#registre-livres-migration">ci-dessous</a> et <a href="#journal-log-migration">ci-dessous</a>.</p>
+</div>
+
 <h3>Ce qui reste ouvert</h3>
 <ul>
 <li><strong>Trailers <code>Claude-Session</code> de l'historique public — <em>fait</em> le
@@ -1691,6 +1734,43 @@ auquel il manquait les deux callouts obligatoires. C'est le pire cas de figure :
 ultérieure compare cette date <em>au lieu</em> de relire la charte, donc un marqueur trop généreux
 étouffe la détection même qu'il sert à déclencher. Ne l'avancer qu'après avoir vérifié les éléments
 exigés, pas seulement la date.</p></div>
+
+<h2 id="registre-livres-migration">Registre des livrés — décision prise, migration à faire</h2>
+<p>Option <code>registre-livrés</code> tranchée à <code>oui</code> à l'entretien de cadrage du
+2026-08-06 (<a href="PROFIL.md">PROFIL.md</a>) : cette roadmap dépasse 1700 lignes, en grande
+partie des chantiers déjà <code>✅ Livré</code>/<code>Adopté</code> — exactement le cas que
+l'option cible.</p>
+<p><strong>Pas commencé.</strong> Il reste à créer <code>annexes/REALISE.html</code> (A-8, jamais
+<code>archive/</code>, A-9), y déplacer chaque chantier clos avec son design retenu, le renvoi vers
+l'entrée de journal qui l'a acté, ses évolutions post-livraison une ligne chacune, ses numéros de
+pièges sans les réexpliquer, et la liste de ses commits sur une seule ligne — puis ne garder dans
+cette roadmap active qu'une ligne et un lien vers le registre, le plus récent en tête. Un chantier
+<code>Écarté</code> n'y bascule jamais, il reste « Hors périmètre » ici. Candidats évidents à la
+première passe : <a href="#audit">Journal d'audit</a>, <a href="#reglages">Panneau de réglages</a>,
+les quatre lots de <a href="#correctifs-c3">correctifs de la 3ᵉ campagne</a>.</p>
+
+<h2 id="journal-log-migration">Journal en <code>.log</code> — décision prise, migration à faire</h2>
+<p>Option <code>journal-format</code> tranchée le 2026-08-06 <strong>hors du menu de la
+charte</strong> (<a href="PROFIL.md">PROFIL.md</a>) : <code>AI-HISTORY.html</code> devient un vrai
+fichier texte brut <code>AI-HISTORY.log</code>, pas le tableau plat HTML que l'option
+<code>journal-format=log</code> décrit. Colonnes retenues :
+<code>horodatage | CHANTIER | Commit/Hash | Explication</code>, une ligne par entrée, Explication
+bornée à 250 caractères comme le prévoit la charte pour le format <code>log</code>.</p>
+<p><strong>Pas commencé.</strong> Rompt l'uniformité <code>format = html</code> sur les quatre
+documents, pour ce seul document. Reste à faire :</p>
+<ul>
+<li>Convertir les ~900 lignes existantes d'<code>AI-HISTORY.html</code> vers les nouvelles
+  colonnes, à contenu constant — sous l'exception nommée d'A-4 (conversion de format, décidée en
+  révision, en une fois, vérifiée par comparaison des textes extraits avant/après).</li>
+<li>Mettre à jour les liens de navbar de <code>README.html</code>, <code>AI-CONTEXT.html</code> et
+  <code>ROADMAP.html</code>, qui pointent tous vers <code>AI-HISTORY.html</code>.</li>
+<li><code>npm run lint:airules</code> ne valide que du HTML (<code>html-validate</code>) : il
+  faudra soit l'exclure de son périmètre, soit lui adjoindre un second validateur pour le nouveau
+  format (colonnes, borne de 250 caractères).</li>
+<li>Décider si la conversion se fait en une fois sur tout l'historique, ou si les entrées
+  antérieures restent en HTML dans un fichier archivé pendant que les nouvelles vont au
+  <code>.log</code> — la charte n'impose pas de bascule totale immédiate.</li>
+</ul>
 
 <footer>tabby-better-vault · voir <a href="../../tabby-ssh-sidebar/.AIRules/ROADMAP.html#vault">la section Vault du projet frère</a> pour l'historique de cette décision.</footer>
 </body>
