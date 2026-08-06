@@ -34,11 +34,11 @@
 <tr><td><a href="#audit">Journal d'audit et notifications</a></td>
     <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
-    <td><span class="pill progress">🚧 Dépôt public en ligne ; npm <strong>bloqué par les correctifs de la 3ᵉ campagne</strong></span></td><td>Après les correctifs</td></tr>
+    <td><span class="pill progress">🚧 Dépôt public en ligne ; npm <strong>condition de sécurité remplie</strong> (2026-08-06, macOS accepté comme non testable) — reste la mécanique npm (version, vérifs package.json)</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
     <td><span class="pill done">✅ Closes — <strong>déplacées au registre des livrés</strong> le 2026-08-06 (option <code>registre-livrés</code>)</span></td><td>—</td></tr>
 <tr><td><a href="#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
-    <td><span class="pill done">✅ Quatre lots clos (2026-08-05) ; <code>configDir()</code> et garde-fou <strong>validés en conditions réelles</strong> par la campagne 5 (2026-08-06, VM Linux) — D4 par l'interface confirmé structurellement impossible sur Linux, un défaut trouvé en cours de mesure corrigé dans la foulée. <strong>Reste : le cas « deux fenêtres, un processus » sur macOS</strong>, jamais exercé</span></td><td><strong>Priorité absolue</strong></td></tr>
+    <td><span class="pill done">✅ Testé sur Windows &amp; Linux — quatre lots clos (2026-08-05), <code>configDir()</code> et garde-fou <strong>validés en conditions réelles</strong> par la campagne 5 (2026-08-06). <strong>macOS accepté comme non testable</strong> (2026-08-06) : le cas « deux fenêtres, un processus » y reste non vérifié, risque assumé plutôt que bloquant</span></td><td>—</td></tr>
 <tr><td><a href="#bruit-journal">Journal saturé par les déverrouillages répétés</a></td>
     <td><span class="pill progress">🚧 Constaté le 2026-08-03 — mécanisme validé à l'exhaustif en isolation le 2026-08-06, <strong>déclencheur réel (rafale authentique) toujours en attente</strong></span></td><td><strong>Haute</strong></td></tr>
 <tr><td><a href="#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
@@ -51,7 +51,7 @@
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
     <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
-    <td><span class="pill progress">🚧 Amorcé (2026-08-06) — trois campagnes migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a>, le reste attend la clôture de correctifs-c3/i18n macOS</span></td><td>—</td></tr>
+    <td><span class="pill progress">🚧 Amorcé (2026-08-06) — trois campagnes migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a> ; correctifs-c3 et i18n désormais terminaux (macOS accepté) mais pas encore basculés, audit/réglages restent ouverts</span></td><td>—</td></tr>
 <tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
     <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé</span></td><td>—</td></tr>
 </table>
@@ -546,14 +546,21 @@ supprimé par <code>configDir()</code>. La mesure a fait remonter un défaut ré
 sans vérification — et il a été corrigé le jour même (<code>2c15b1e</code>), pas laissé pour plus
 tard. C'est la première fois qu'une campagne de ce projet ferme la boucle jusque-là : mesure, défaut
 trouvé, correctif, sans report.</p>
-<p><strong>Ce qui manque encore avant de considérer la condition remplie pour toutes les plateformes
-visées</strong> : le scénario « deux fenêtres, un processus principal » — le seul chemin restant vers
-le défaut du témoin, exposé sur macOS via « New window », jamais exercé faute de machine. Le correctif
-lui-même s'applique à toutes les plateformes, sans code spécifique à Linux ; ce qui manque n'est donc
-pas un correctif à écrire mais une mesure à faire. Windows n'a validé que <code>configDir()</code> en
-conditions réelles, jamais le garde-fou lui-même — DPAPI n'ayant pas d'équivalent au trousseau
-verrouillé de Linux, la question de savoir si un scénario comparable y existe reste ouverte, pas
-tranchée par son absence de mention ici.</p>
+<p>Restait, à cette date, le scénario « deux fenêtres, un processus principal » — le seul chemin
+restant vers le défaut du témoin, exposé sur macOS via « New window », jamais exercé faute de
+machine. Le correctif lui-même s'applique à toutes les plateformes, sans code spécifique à Linux ;
+ce qui manquait n'était donc pas un correctif à écrire mais une mesure à faire. Windows n'a validé
+que <code>configDir()</code> en conditions réelles, jamais le garde-fou lui-même — DPAPI n'ayant pas
+d'équivalent au trousseau verrouillé de Linux, la question de savoir si un scénario comparable y
+existe reste ouverte, pas tranchée par son absence de mention ici.</p>
+<p><strong>Verdict au 2026-08-06 (second) : la condition est considérée remplie — macOS accepté comme
+non testable, pas comme validé.</strong> Décision de l'utilisateur : ce projet n'a jamais eu accès à
+une machine macOS, sur aucune campagne, et attendre cette mesure revenait à bloquer la publication
+sur une inconnue permanente plutôt que temporaire. <strong>Le plugin est publié comme testé sur
+Windows et Linux</strong> — le README doit le dire dans ces termes, pas prétendre à une couverture
+macOS qui n'a jamais été vérifiée. Si le scénario « deux fenêtres, un processus » se confirme un jour
+sur macOS, c'est un défaut réel à corriger, pas une remise en cause de cette décision : l'acceptation
+porte sur l'absence de preuve, pas sur une conviction que le risque n'existe pas.</p>
 </div>
 
 <h2>Campagnes de vérification Linux — livrées</h2>
@@ -755,12 +762,22 @@ si ce concurrent mourait à cet instant précis. Corrigé par <code>clearOwnWitn
 opposent déjà), mais atteignable sur macOS via « New window » — deux <code>BrowserWindow</code>, un
 seul processus principal, un seul <code>configDir</code>, donc un témoin partagé entre deux
 renderers.</p>
-<p><strong>Ce qui reste ouvert</strong> : le scénario « deux fenêtres, un seul processus principal »
-— le seul chemin restant vers le défaut ci-dessus, et le dernier vrai vecteur de D4 — n'a pas pu être
-exercé, faute de machine macOS. Le chemin <code>decrypt()</code>/<code>operation: "read"</code> sous
-trousseau verrouillé n'a pas non plus été mesuré directement (seuls <code>store</code> et
-<code>verify</code> l'ont été) ; la structure de <code>withSafeStorage()</code> et <code>#V23</code>
-rendent son comportement déductible, pas mesuré.</p>
+<p><strong>Le scénario « deux fenêtres, un seul processus principal »</strong> — le seul chemin
+restant vers le défaut ci-dessus, et le dernier vrai vecteur de D4 — n'a pas pu être exercé, faute
+de machine macOS. Le chemin <code>decrypt()</code>/<code>operation: "read"</code> sous trousseau
+verrouillé n'a pas non plus été mesuré directement (seuls <code>store</code> et <code>verify</code>
+l'ont été) ; la structure de <code>withSafeStorage()</code> et <code>#V23</code> rendent son
+comportement déductible, pas mesuré.</p>
+<p><strong>Risque accepté le 2026-08-06 : macOS n'est pas testable sur ce poste, et ne le sera pas.</strong>
+Décision de l'utilisateur — pas une déduction. Ce projet n'a jamais eu de machine macOS, à aucune
+campagne ; le garder « en attente de mesure » indéfiniment revenait à bloquer la publication sur une
+inconnue qui ne se lèvera pas. Le correctif s'applique à toutes les plateformes, sans code
+spécifique à Linux — ce n'est donc pas un trou dans le code, seulement dans sa vérification.
+<strong>Le plugin est testé sur Windows et Linux ; macOS reste non vérifié</strong>, à le dire
+explicitement partout où la portée « toutes plateformes » était sous-entendue (README, § Publication
+ci-dessous). Si un utilisateur ou un contributeur macOS mesure un jour ce scénario, la trouvaille
+prend le pas sur cette acceptation — elle est un choix par défaut de preuve, pas une conviction que
+le défaut n'existe pas.</p>
 </div>
 
 <div class="callout note">
@@ -976,7 +993,8 @@ passe en clair ne survit à aucun appel ». Il ne se négocie pas contre du conf
 qui est le plus important maintenant, le reste c'est du bonus ». <strong>Validé en conditions
 réelles sur Windows 11</strong> le jour même, fusionné dans <code>master</code>, puis
 <strong>vérifié sur Linux</strong> par la <a href="annexes/REALISE.html#campagne-3">3ᵉ campagne</a>.
-Jamais exercé sur macOS.</p>
+Testé sur Windows &amp; Linux ; macOS accepté comme non testable le 2026-08-06 (voir
+<a href="#correctifs-c3">correctifs-c3</a>), même règle ici.</p>
 
 <div class="callout note">
 <span class="callout-title">Ce que la campagne a établi sur l'i18n, et les deux défauts qu'elle a trouvés</span>
@@ -1063,12 +1081,10 @@ de l'autre rouvre exactement le défaut que ce chantier a fermé.</p>
 branch --merged master</code> le confirme) — le premier point ci-dessous demandait une fusion déjà
 faite. Le Linux annoncé « rien n'y a été vérifié » l'a pourtant été, par la
 <a href="annexes/REALISE.html#campagne-3">3ᵉ campagne</a> du même jour (voir le paragraphe
-au-dessus). Seul macOS reste réellement non exercé.</p>
+au-dessus). macOS, resté réellement non exercé, n'est plus un point d'action : accepté comme non
+testable le même jour (voir <a href="#correctifs-c3">correctifs-c3</a>).</p>
 </div>
 <ul>
-<li><strong>Exercer sur macOS.</strong> Rien n'y a été vérifié. Le risque n'est pas la traduction
-  elle-même mais <a href="AI-CONTEXT.html#piege-v22">#V22</a> : le format du témoin du garde-fou a
-  changé, et c'est sur Linux qu'il s'est déclenché réellement — macOS reste une inconnue.</li>
 <li><strong>Une cinquième langue</strong>, si une donnée d'usage finit par exister. Le validateur
   refuse une table incomplète, donc l'ajout est mécanique.</li>
 </ul>
@@ -1344,12 +1360,14 @@ l'option cible.</p>
 <a href="annexes/REALISE.html#campagne-3">troisième</a>) — reprises verbatim, chacune avec son
 renvoi vers l'entrée de journal qui l'a actée, ses évolutions post-livraison, ses pièges et ses
 commits. La roadmap active ne garde plus qu'une ligne et trois liens (voir plus haut).</p>
-<p><strong>La plupart des autres candidats évidents ne sont pas encore terminaux</strong> :
-<a href="#audit">Journal d'audit</a> et <a href="#reglages">Panneau de réglages</a> portent encore
-des points ouverts, et <a href="#correctifs-c3">correctifs de la 3ᵉ campagne</a> attend toujours le
-scénario macOS. Leur migration attend leur clôture réelle plutôt qu'une pastille ✅ optimiste — voir
-la mise en garde ci-dessus. Un chantier <code>Écarté</code> ne bascule jamais au registre, il reste
-« Hors périmètre » dans la roadmap active.</p>
+<p><strong>Deux candidats restent non terminaux</strong> : <a href="#audit">Journal d'audit</a> et
+<a href="#reglages">Panneau de réglages</a> portent encore des points ouverts listés dans leur
+propre section. <strong><a href="#correctifs-c3">Correctifs de la 3ᵉ campagne</a> a changé de
+statut le 2026-08-06</strong> — macOS accepté comme non testable plutôt qu'attendu, ce chantier est
+désormais terminal au sens de l'option — « testé sur les plateformes visées », pas « aucune
+inconnue nulle part ». Pas encore migré : la bascule reste à faire dans une prochaine passe, pour ne pas
+mélanger deux décisions dans le même geste. Un chantier <code>Écarté</code> ne bascule jamais au
+registre, il reste « Hors périmètre » dans la roadmap active.</p>
 
 <h2 id="journal-log-migration">Journal en <code>.log</code> — fait le 2026-08-06, sans conversion rétroactive</h2>
 <p>Option <code>journal-format</code> tranchée le 2026-08-06 <strong>hors du menu de la
