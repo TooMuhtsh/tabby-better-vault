@@ -45,7 +45,7 @@
 <tr><td><a href="annexes/REALISE.html#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
     <td><span class="pill done">✅ Livrée — <strong>déplacée au registre des livrés</strong> le 2026-08-06 (testée Windows &amp; Linux, macOS accepté comme non testable)</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
-    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code. <strong>Confirmé prochain chantier après la publication npm (2026-08-07)</strong></span></td><td>Prochain chantier</td></tr>
+    <td><span class="pill planned">📋 Idée notée le 2026-07-29 ; <strong>faisabilité vérifiée et fiche réécrite le 2026-08-07</strong> (paresseux abandonné, voie médiane via <code>PasswordStorageService</code>) — arbitrages restants avant tout code. <strong>Confirmé prochain chantier après la publication npm (2026-08-07)</strong></span></td><td>Prochain chantier</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td>
     <td><span class="pill done">✅ Le cas concret (onglets de réglages) réalisé via le <a href="annexes/REALISE.html#panneau-unifie">panneau unifié</a> (2026-08-07) — jugé suffisant par l'utilisateur. Le pattern général pour <code>VaultBridgeService</code> reste lié à <a href="#granularite">Granularité par profil/groupe</a></span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#panneau-unifie">Panneau de réglages unifié « Better Tabby »</a></td>
@@ -739,45 +739,98 @@ quel, dans le <a href="annexes/REALISE.html#i18n">registre des livrés</a>.</p>
 <p>Demandé par l'utilisateur le 2026-07-29 : pouvoir désactiver le plugin sur un profil ou un
 groupe donné, via les réglages, et si possible depuis le menu contextuel de
 <code>tabby-better-sidebar</code> — l'occasion de resserrer l'intégration entre les deux plugins.
-<strong>Confirmé le 2026-08-07 : prochain gros chantier, mais après la publication npm.</strong></p>
+<strong>Confirmé le 2026-08-07 : prochain gros chantier, mais après la publication npm.</strong>
+Fiche réécrite le 2026-08-07 après une passe de faisabilité en lecture seule (quatre vérifications
+croisées : bundle installé de Tabby <code>1.0.231-nightly.0</code> aux deux niveaux — typings et
+compilé —, code du plugin, store réel, code de la sidebar) : l'alternative initiale
+(a)&nbsp;organisationnelle / (b)&nbsp;paresseuse était périmée par rapport au code réel.</p>
 
 <div class="callout important">
-<span class="callout-title">Difficulté centrale — à trancher avant d'écrire la moindre ligne</span>
-<p><strong>Le coffre de Tabby est un blob chiffré unique.</strong> <code>getPassphrase()</code> sert
-à le déchiffrer <em>en entier</em>, pas connexion par connexion — et ce plugin le déverrouille
-<strong>au démarrage</strong>, avant même qu'un onglet existe (cf. #V13). Une fois ouvert, tous les
-secrets sont en mémoire, pour tous les profils.</p>
-<p>Donc « désactiver l'auto-déverrouillage pour le profil X » <strong>ne peut pas</strong> vouloir
-dire « les secrets de X restent protégés ». Livrer cette lecture-là serait un faux sentiment de
-sécurité — exactement ce qu'un plugin qui manipule le secret le plus sensible de l'utilisateur ne
-doit jamais faire. Deux lectures à faire arbitrer :</p>
+<span class="callout-title">Ce que la faisabilité a tranché — le « paresseux » est mort, une voie médiane existe</span>
+<p><strong>Le plugin n'initie jamais de déverrouillage : il est purement réactif.</strong> C'est
+Tabby qui appelle <code>getPassphrase()</code>, et le moment dépend du régime de la config :</p>
 <ul>
-<li><strong>(a) Organisationnelle</strong> — le réglage n'est qu'un marquage, sans effet sur
-  l'accessibilité réelle des secrets. Peu coûteux, mais il faut alors le dire explicitement dans
-  l'interface, sans quoi il ment.</li>
-<li><strong>(b) Réelle</strong> — rendre le déverrouillage <strong>paresseux</strong> : ne plus
-  ouvrir le coffre au démarrage, mais à la première connexion à un profil non exclu. Cela répond
-  vraiment à la demande, au prix d'une refonte du cœur du plugin et de la perte du confort actuel
-  (coffre prêt avant le premier onglet). Se combine mal avec le re-verrouillage : rien ne referme
-  le coffre entre deux connexions.</li>
+<li><strong>Config chiffrée</strong> — appel au démarrage depuis <code>maybeDecryptConfig()</code>,
+  avant que la config (donc la liste des profils) soit lisible, avant tout onglet (#V13) ; les
+  seules sorties sont fournir la passphrase ou quitter Tabby. Le déverrouillage paresseux y est
+  <strong>structurellement impossible</strong> : différer jusqu'à la première connexion n'a pas de
+  sens quand les profils eux-mêmes sont dans le blob.</li>
+<li><strong>Config en clair</strong> — aucun appel au démarrage : Tabby ne sollicite le coffre qu'à
+  la première demande de secret (connexion SSH). Le paresseux existe <strong>déjà
+  nativement</strong> ; il n'y a rien à différer.</li>
+</ul>
+<p>L'ancienne lecture (b) est donc abandonnée dans les deux régimes. La voie réellement faisable
+est médiane : <strong>« ne pas servir la passphrase automatiquement quand le déclencheur est un
+profil/groupe exclu »</strong>. <code>getPassphrase()</code> est aveugle (aucun paramètre,
+l'identité du profil est détruite en amont), mais elle transite encore un cran plus haut :
+<code>PasswordStorageService.loadPassword(profile, username)</code> de <code>tabby-ssh</code> —
+service exporté publiquement, atteignable par l'injecteur, patchable sur instance comme l'actuel
+<code>getPassphrase</code>. Profil exclu → laisser la pop-up native de Tabby demander le mot de
+passe pour cette connexion. Effet réel (la saisie redevient manuelle pour ce profil), mais
+<strong>pas un cloisonnement des secrets</strong> : le coffre reste un blob chiffré unique, et
+n'importe quel profil non exclu redéclenche le service automatique. L'interface devra le dire,
+sans quoi elle ment.</p>
+</div>
+
+<div class="callout warning">
+<span class="callout-title">Limites mesurées de la voie médiane — à afficher, pas à cacher</span>
+<ul>
+<li><strong>Démarrage en config chiffrée</strong> : cette sollicitation-là n'a pas de profil (elle
+  précède l'existence de tout onglet) — le déverrouillage au boot reste automatique, l'exclusion ne
+  joue qu'aux connexions.</li>
+<li><strong>Jump hosts</strong> : le coffre est sollicité pour le profil <em>jump</em>, pas pour
+  celui que l'utilisateur voit s'ouvrir.</li>
+<li><strong>Passphrases de clés privées</strong> : indexées par hash du fichier de clé
+  (<code>loadPrivateKeyPassword</code>), pas par profil — une clé partagée entre plusieurs profils
+  est indistinguable.</li>
+<li><strong>Pattern non contractuel</strong>, au même titre que #V2 : vérifié sur
+  <code>1.0.231-nightly.0</code> uniquement, à revérifier à chaque mise à jour de Tabby.</li>
 </ul>
 </div>
 
-<h3>Contrainte de stockage</h3>
-<p>Rappel de #V11 : <strong>aucun réglage de ce plugin ne peut vivre dans <code>config.yaml</code></strong>.
-La liste des profils/groupes exclus ira donc dans <code>%APPDATA%\tabby\better-vault.json</code> et
-devra référencer des <strong>identifiants</strong> de profil/groupe. Conséquence à prévoir dès le
-départ : des entrées orphelines dès qu'un profil est supprimé — et côté sidebar, le re-parentage
-d'un groupe passe par recréation puis migration (piège hérité #12), donc l'identifiant change sans
-que l'utilisateur ait le sentiment d'avoir supprimé quoi que ce soit. Prévoir un nettoyage, et ne
-jamais faire échouer un déverrouillage à cause d'une entrée périmée.</p>
+<h3>Étapes</h3>
+<ol>
+<li><strong>Arbitrages</strong> — les éléments à trancher ci-dessous, avant toute ligne de code.</li>
+<li><strong>Store</strong> — étendre <code>better-vault.json</code> (#V11 : jamais
+  <code>config.yaml</code>) avec la liste d'exclusion par identifiants. Point dur à corriger
+  d'abord : <code>writeSettings()</code> réécrit le fichier depuis l'objet <code>Settings</code>
+  connu, donc <strong>une version antérieure du plugin effacerait la liste à sa première
+  écriture</strong> — préserver les clés inconnues (ou versionner le schéma) fait partie du
+  chantier. Prévoir le nettoyage des entrées orphelines : fenêtre fiable <em>après</em> le
+  chargement de la config seulement, jamais sur le chemin du déverrouillage, et avec le référentiel
+  complet (<code>getProfiles()</code> + groupes synthétiques — <code>config.store</code> ne
+  contient ni les profils des providers ni <code>built-in</code>/<code>ungrouped</code>).</li>
+<li><strong>Interception</strong> — patch d'instance de
+  <code>PasswordStorageService.loadPassword</code>, vérifié aux deux niveaux (typings et bundle)
+  au moment de l'écrire. Repli natif à la moindre anomalie : une entrée d'exclusion périmée ou un
+  fichier illisible ne doit jamais faire échouer un déverrouillage.</li>
+<li><strong>Réglages</strong> — section dans l'onglet Better Vault du panneau unifié, libellés qui
+  disent la limite (voir le callout ci-dessus).</li>
+<li><strong>Pont inter-plugins</strong> — même pattern que le panneau unifié : token de chaîne,
+  contrat dupliqué dans chaque dépôt, <code>injector.get(token, null)</code>, jamais d'import npm.
+  Attention : <strong>le nom <code>VaultBridgeService</code> est déjà pris</strong> par le pont
+  interne vers le <code>VaultService</code> de Tabby (<code>src/vaultBridge.service.ts</code>) —
+  en choisir un autre. L'entrée du menu contextuel côté sidebar (le moule y existe déjà : bascules
+  favoris, entrées conditionnelles) est un chantier sidebar séparé, hors de ce dépôt.</li>
+<li><strong>Tests</strong> — sur données jetables, les deux régimes de config, jump host, et une
+  version antérieure du plugin relisant puis réécrivant le fichier enrichi.</li>
+</ol>
 
-<h3>Intégration au menu contextuel de la sidebar</h3>
-<p>C'est précisément le cas d'usage que la section <a href="#interfacage">Interfaçage</a> anticipait :
-<code>VaultBridgeService</code> exposerait la bascule, <code>tabby-better-sidebar</code>
-l'appellerait depuis son menu contextuel Profil/Groupe — qui existe déjà et porte déjà des bascules
-du même genre (favoris). L'optionalité reste la règle : sans <code>tabby-better-vault</code>
-installé, l'entrée de menu disparaît, sans erreur ni dépendance dure.</p>
+<h3>Éléments à trancher</h3>
+<ul>
+<li><strong>La lecture retenue</strong> : la voie médiane ci-dessus, ou repli sur un simple
+  marquage organisationnel si même elle paraît survendre ce qu'elle protège.</li>
+<li><strong>Le périmètre groupe</strong> : les identifiants de profil sont stables (un renommage ne
+  les change pas) ; ceux de groupe ne le sont pas — le re-parentage côté sidebar recrée le groupe
+  sous un nouvel uuid (piège hérité #12), l'exclusion se perd silencieusement et l'entrée orpheline
+  n'est pas raccordable à son successeur depuis ce plugin seul. Par profil d'abord ? Par groupe en
+  assumant la perte ? En coordonnant une migration côté sidebar (chantier sidebar) ?</li>
+<li><strong>Les profils built-in</strong> : couverts ou non ? Leurs identifiants sont stables par
+  machine mais fabriqués par les providers, absents de <code>config.store.profiles</code>.</li>
+<li><strong>Les passphrases de clés privées</strong> : dans le périmètre (avec l'ambiguïté de la
+  clé partagée) ou explicitement hors périmètre ?</li>
+<li><strong>Le libellé du réglage</strong> et <strong>le nom du pont inter-plugins</strong>.</li>
+</ul>
 
 <h2 id="panneau-unifie">Panneau de réglages unifié « Better Tabby » — livré le 2026-08-07</h2>
 <p>Conçu, codé et validé le même jour (cinq vagues de tests, 25/25, y compris poids inversés — ce
