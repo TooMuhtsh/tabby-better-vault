@@ -51,7 +51,7 @@
 <tr><td><a href="annexes/REALISE.html#panneau-unifie">Panneau de réglages unifié « Better Tabby »</a></td>
     <td><span class="pill done">✅ Livré le 2026-08-07 — conçu, codé et validé 25/25 le même jour, <strong>déplacé au registre des livrés</strong></span></td><td>—</td></tr>
 <tr><td><a href="#reliquat-config">Reliquat <code>betterVault:</code> dans <code>config.yaml</code></a></td>
-    <td><span class="pill planned">📋 Vérifié le 2026-08-07 : aucun code de <code>src/</code> ne lit ni n'écrit cette clé — confirmé par l'utilisateur. Retrait manuel de sa config, jamais d'office</span></td><td>Mineur</td></tr>
+    <td><span class="pill done">✅ Retiré par l'utilisateur de sa config le 2026-08-07, après vérification qu'aucun code de <code>src/</code> n'y touchait</span></td><td>—</td></tr>
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
     <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
@@ -786,13 +786,13 @@ plugin sait héberger la famille). L'état du chantier tel que livré vit au
 (<code>src/betterPanel.ts</code>, contrat dupliqué dans chaque dépôt, jamais d'import npm entre
 plugins) est documentée dans le <code>CLAUDE.md</code> des deux projets.</p>
 
-<h2 id="reliquat-config">Reliquat <code>betterVault: enabled: true</code> dans <code>config.yaml</code></h2>
+<h2 id="reliquat-config">Reliquat <code>betterVault: enabled: true</code> dans <code>config.yaml</code> — clos</h2>
 <p>Repéré le 2026-08-07 dans la config réelle de l'utilisateur (déchiffrée le temps d'une passe de
-test) : une clé <code>betterVault:</code> y subsiste, alors que la règle #V11 interdit tout réglage
+test) : une clé <code>betterVault:</code> y subsistait, alors que la règle #V11 interdit tout réglage
 de ce plugin dans <code>config.yaml</code> — l'état vit dans <code>better-vault.json</code>.
-Probablement le reliquat d'une version ancienne. À examiner : vérifier qu'aucun code n'y lit ou
-écrit encore, puis décider du retrait — c'est une édition du fichier de l'utilisateur, geste à sa
-main, jamais d'office.</p>
+Reliquat d'une version ancienne. Vérifié le jour même : aucun code de <code>src/</code> n'y lisait ni
+n'y écrivait. <strong>Retiré par l'utilisateur de sa propre config le 2026-08-07</strong>, geste
+resté à sa main comme prévu, jamais fait d'office.</p>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
 <div class="callout note">

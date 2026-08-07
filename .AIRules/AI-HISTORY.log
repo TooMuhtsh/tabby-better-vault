@@ -23,6 +23,9 @@
 #   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
 #   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-07T16:21:00+02:00 | reliquat-config | - | Cloture : l'utilisateur a retire la cle betterVault: de sa config.yaml a la main, apres verification qu'aucun code de src/ n'y touchait. ROADMAP.html passe de "planned" a "done".
+2026-08-07T16:16:25+02:00 | architecture | 9ae162c | docs/ARCHITECTURE.md rendu autonome sur le panneau partage (structure a deux niveaux, jeton BetterPanelEmbedded, hotkey fantome assume) : le renvoi vers CLAUDE.md pointait dans le vide depuis le nettoyage du depot public.
+2026-08-07T16:11:07+02:00 | readme | 5132718 | README.md/README.fr.md reecrits haut niveau et visuels (badges, diagramme SVG du panneau partage, section dediee a tabby-better-sidebar). Detail technique deplace dans docs/ARCHITECTURE.md (nouveau).
 2026-08-07T15:49:00+02:00 | publication | - | ROADMAP.html corrige : 4 hash de commit rendus caducs par la reecriture d'historique remplaces, statuts bruit-journal/interfacage/reliquat-config/granularite mis a jour suite aux decisions utilisateur du jour.
 2026-08-07T15:30:00+02:00 | publication | 615100a | Nettoyage du depot public avant npm publish : CLAUDE.md/tools//.htmlvalidate.json desindexes (restent locaux via .gitignore), ISSUE-titlebar-overlay.md supprime (bug Tabby resolu, hors sujet plugin).
 2026-08-07T15:10:00+02:00 | publication | - | Reecriture d'historique : 118 trailers Co-Authored-By/Claude-Session retires de master (filter-branch + force-push), 10 branches deja fusionnees supprimees (locales et origin). Sauvegarde tag local backup-pre-rewrite-20260807, non pousse.
