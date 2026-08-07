@@ -113,6 +113,53 @@ What the plugin guarantees now:
   the name, so it reported success on a locked keyring and the next start
   blocked again.
 
+## Per-profile exclusions
+
+You can exclude individual SSH profiles from automatic unlocking: an excluded
+profile gets Tabby's own passphrase prompt at every connection, everything
+else keeps unlocking automatically. Groups in the settings tab are one-click
+shortcuts — excluding a group applies to the profiles it holds *at that
+moment*, and nothing is ever stored per group.
+
+**How it works.** `VaultService.getPassphrase()` takes no arguments: by the
+time it runs, the identity of the profile that triggered it has already been
+reduced to `{user, host, port}`. The last place the full profile exists is
+`PasswordStorageService.loadPassword(profile, username)` in `tabby-ssh`, so
+that is what the plugin wraps — obtained through the shared Angular injector
+(via `tabby-core`'s `ProfileProvider` registry, never by requiring
+`tabby-ssh`, which would load a second copy of the module and patch a twin
+nobody uses). For an excluded profile, the wrapper opens a short *delegation
+window* during which the plugin's `getPassphrase` bridge steps aside and
+Tabby's native prompt does its usual job. Like the rest of the mechanism,
+this is not a documented extension point and is re-verified on Tabby updates.
+
+**What it protects — and deliberately does not.** Stated in the settings tab
+as well, because an exclusion that oversold itself would be worse than none:
+
+- The vault stays a **single encrypted store**. Excluding a profile makes its
+  password *prompted for*, not compartmentalised — any non-excluded profile
+  still opens the whole vault automatically.
+- With configuration encryption on, the **startup unlock has no profile to
+  ask about** (it happens before the profile list is even readable), so it
+  stays automatic regardless of exclusions.
+- **Private-key passphrases are out of scope** — Tabby keys them by key-file
+  hash, not by profile, and a key shared between profiles would make the
+  exclusion ambiguous.
+- On a **jump-host chain**, the vault is queried for the jump profile, not
+  the one you clicked.
+
+Exclusions are stored as **profile ids** in `better-vault.json` (never group
+ids: Tabby group ids change when a group is re-parented, so a group-keyed
+exclusion could silently die — a profile-keyed one cannot). Stale ids left by
+deleted profiles are ignored and cleaned up when the settings tab opens,
+never on the unlock path. A malformed or unreadable exclusion list is treated
+as "nobody excluded": a comfort feature must never block an unlock.
+
+For `tabby-better-sidebar` (or any other plugin), the exclusion toggle is
+exposed under the string token `BetterVaultExclusions:v1` — same
+duplicated-contract convention as the shared settings panel, defined and
+documented in `src/exclusionsBridge.ts`.
+
 ## Audit log
 
 The plugin keeps a log of lifecycle events in `better-vault.log`, next to

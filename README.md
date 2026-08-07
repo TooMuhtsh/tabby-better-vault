@@ -21,9 +21,8 @@ asked for **on every single launch**. This plugin hands it to your OS
 keychain once — Windows Credential Manager, macOS Keychain, or Linux Secret
 Service — and answers on your behalf from then on.
 
-> **Status: working, not yet on npm.** Install from source — see
-> [Installation](#-installation). This plugin relies on an undocumented part
-> of Tabby; see [how it works](docs/ARCHITECTURE.md#how-it-works).
+> **Note:** this plugin relies on an undocumented part of Tabby; see
+> [how it works](docs/ARCHITECTURE.md#how-it-works).
 
 ## 🧩 Better Tabby, the plugin family
 
@@ -54,6 +53,9 @@ in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#the-better-tabby-shared-setting
 - ⏱️ **Configurable expiry** — a fixed weekly slot, a sliding delay, or never
 - 💻 **Per-machine settings** — enable it on your desktop, leave it off on a
   laptop
+- 🚫 **Per-profile exclusions** — keep automatic unlocking for most SSH
+  profiles, get Tabby's own prompt for the ones you exclude; a group acts as
+  a one-click shortcut over its members
 - ✋ **Revoke at any time** from the settings tab, with a notification stating
   where the passphrase went and how to revoke it
 - 📜 **Audit log** of vault openings, expiries and revocations — never
@@ -73,7 +75,11 @@ costs you security-wise, the audit log format, per-platform notes — lives in
 
 ## 📦 Installation
 
-Not published yet, so build it from source:
+In Tabby, open **Settings → Plugins**, search for `better-vault` and install
+it, then restart Tabby completely.
+
+<details>
+<summary>From source (for development)</summary>
 
 ```bash
 git clone https://github.com/TooMuhtsh/tabby-better-vault
@@ -96,6 +102,8 @@ ln -s "<path-to-this-folder>" ~/.config/tabby/plugins/node_modules/tabby-better-
 
 Restart Tabby completely — reloading the window is not enough.
 
+</details>
+
 ## 🚀 Usage
 
 Open **Settings → Better Vault** (or **Better Tabby → 🔐 Vault** if
@@ -105,6 +113,14 @@ machine*.
 The next time Tabby asks for your master passphrase, type it as usual: that
 one is captured and handed to your OS keychain. From then on, the vault opens
 on its own until the passphrase expires or you revoke it.
+
+Want one profile to keep asking? The **Excluded profiles** tab of the same
+page lists your SSH profiles by group: an excluded profile gets Tabby's own
+passphrase prompt at every connection, everything else keeps unlocking
+automatically. Excluding a group is a one-click shortcut applied to its
+current members. What this does — and deliberately does not — protect is
+stated plainly in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#per-profile-exclusions).
 
 ## 🔒 Security, in short
 

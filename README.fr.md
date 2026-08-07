@@ -23,9 +23,7 @@ le confie une fois au trousseau de votre système — gestionnaire d'identifiant
 Windows, trousseau macOS, ou Secret Service sous Linux — puis répond à votre
 place.
 
-> **État : fonctionnel, pas encore publié sur npm.** Installation depuis les
-> sources — voir [Installation](#-installation). Ce plugin s'appuie sur une
-> partie non documentée de Tabby ; voir
+> **Note :** ce plugin s'appuie sur une partie non documentée de Tabby ; voir
 > [son fonctionnement](docs/ARCHITECTURE.md#how-it-works) (en anglais).
 
 ## 🧩 Better Tabby, la famille de plugins
@@ -62,6 +60,9 @@ Détail dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#the-better-tabby-shar
   ou jamais
 - 💻 **Réglages par machine** — actif sur le poste fixe, inactif sur le
   portable
+- 🚫 **Exclusions par profil** — le déverrouillage automatique pour la
+  plupart des profils SSH, la fenêtre native de Tabby pour ceux que vous
+  excluez ; un groupe sert de raccourci en un clic sur ses membres
 - ✋ **Révocation à tout moment** depuis l'onglet de réglages, avec
   notification indiquant où le mot de passe est stocké et comment le révoquer
 - 📜 **Journal d'audit** des ouvertures du coffre, des expirations et des
@@ -83,7 +84,11 @@ notes par plateforme — vit dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## 📦 Installation
 
-Pas encore publié, donc à compiler depuis les sources :
+Dans Tabby, ouvrir **Réglages → Plugins**, chercher `better-vault` et
+l'installer, puis redémarrer complètement Tabby.
+
+<details>
+<summary>Depuis les sources (pour le développement)</summary>
 
 ```bash
 git clone https://github.com/TooMuhtsh/tabby-better-vault
@@ -106,6 +111,8 @@ ln -s "<chemin-vers-ce-dossier>" ~/.config/tabby/plugins/node_modules/tabby-bett
 
 Redémarrer complètement Tabby — recharger la fenêtre ne suffit pas.
 
+</details>
+
 ## 🚀 Utilisation
 
 Ouvrir **Réglages → Better Vault** (ou **Better Tabby → 🔐 Vault** si
@@ -115,6 +122,15 @@ machine*.
 La prochaine fois que Tabby demande le mot de passe maître, le saisir
 normalement : celui-là est capturé et confié au trousseau du système. Ensuite,
 le coffre s'ouvre tout seul jusqu'à expiration du mot de passe ou révocation.
+
+Un profil doit continuer à demander ? L'onglet **Profils exclus** de la même
+page liste vos profils SSH par groupe : un profil exclu retrouve la fenêtre
+native de Tabby à chaque connexion, tout le reste continue de se déverrouiller
+automatiquement. Exclure un groupe est un raccourci en un clic, appliqué à ses
+membres du moment. Ce que cela protège — et ne protège délibérément pas — est
+dit sans détour dans
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#per-profile-exclusions) (en
+anglais).
 
 ## 🔒 Sécurité, en bref
 
