@@ -3,3 +3,8 @@ dist/
 *.log
 !.AIRules/AI-HISTORY.log
 .tempfiles/
+
+# Outillage de développement interne : utile en local, sans intérêt sur le dépôt public.
+CLAUDE.md
+.htmlvalidate.json
+tools/
