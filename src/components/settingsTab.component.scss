@@ -45,4 +45,69 @@
         font-size: 0.8em;
         opacity: 0.7;
     }
+
+    // Section « profils exclus ». Le texte qui dit les limites reste lisible
+    // sans capter l'œil : c'est une mise en garde, pas une alerte — l'encadrer
+    // en `alert-warning` ferait croire à un incident.
+    .exclusions-note {
+        font-size: 0.85em;
+        margin-bottom: 0.75rem;
+        opacity: 0.75;
+    }
+
+    .exclusions-empty {
+        font-size: 0.85em;
+        opacity: 0.7;
+    }
+
+    // Chaque groupe est un bloc fermé : sans cadre, une liste de profils suivie
+    // d'un autre en-tête de groupe se lit comme une seule liste.
+    .exclusion-group {
+        border: 1px solid rgba(128, 128, 128, 0.25);
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+    }
+
+    .exclusion-group-header {
+        align-items: center;
+        background: rgba(128, 128, 128, 0.12);
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .exclusion-group-name {
+        font-weight: 500;
+    }
+
+    // Pousse le bouton d'action à droite tout en portant le compteur.
+    .exclusion-group-count {
+        flex: 1;
+        font-size: 0.8em;
+        opacity: 0.7;
+    }
+
+    .exclusion-profile {
+        align-items: center;
+        border-top: 1px solid rgba(128, 128, 128, 0.18);
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    // Un nom de profil très long ne doit pas repousser la bascule hors de la
+    // ligne : c'est le nom qui se tronque, jamais le contrôle qui disparaît.
+    .exclusion-profile-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    // Un profil exclu se repère d'un coup d'œil, sans avoir à interpréter la
+    // position de chaque bascule.
+    .exclusion-profile.is-excluded .exclusion-profile-name {
+        opacity: 0.6;
+    }
 }

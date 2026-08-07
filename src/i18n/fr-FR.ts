@@ -63,6 +63,18 @@ export default {
     'It will be saved at the next manual entry, if the plugin is enabled.': 'Il sera enregistré à la prochaine saisie manuelle, si le plugin est activé.',
     'Forget now': 'Oublier maintenant',
 
+    // Panneau de réglages — profils exclus
+    'Excluded profiles': 'Profils exclus',
+    'An excluded profile gets its password asked again at every connection, and that is all it does: the vault remains a single encrypted store, any profile that is not excluded still opens it automatically, and private key passphrases are outside this scope.': 'Un profil exclu voit son mot de passe redemandé à chaque connexion, et rien de plus : le coffre reste un magasin chiffré unique, tout profil non exclu l\'ouvre encore automatiquement, et les phrases secrètes des clés privées sont hors de ce périmètre.',
+    'With an encrypted configuration, unlocking at startup also stays automatic — it happens before any profile exists. Excluding a group applies to the profiles it holds at that moment; one added afterwards is not excluded.': 'En configuration chiffrée, le déverrouillage au démarrage reste lui aussi automatique — il a lieu avant que le moindre profil existe. Exclure un groupe s\'applique aux profils qu\'il contient à cet instant ; un profil ajouté ensuite n\'est pas exclu.',
+    'No SSH profile is defined in this configuration.': 'Aucun profil SSH n\'est défini dans cette configuration.',
+    // Même libellé que la liste de profils de Tabby, qui traduit déjà ce msgid :
+    // deux mots différents pour le même panier dérouteraient.
+    'Ungrouped': 'Sans groupe',
+    '{excluded} of {total} excluded': '{excluded} exclus sur {total}',
+    'Exclude all': 'Tout exclure',
+    'Include all': 'Tout réintégrer',
+
     // Panneau de réglages — journal
     'Log': 'Journal',
     'Observation mode': 'Mode observation',

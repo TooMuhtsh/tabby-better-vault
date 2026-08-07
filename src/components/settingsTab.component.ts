@@ -1,5 +1,5 @@
 import { Component, HostBinding, Inject, Optional } from '@angular/core'
-import { PlatformService } from 'tabby-core'
+import { ConfigService, PlatformService } from 'tabby-core'
 
 // Import en side-effect : `styleUrls` ne fonctionne pas pour un plugin tiers
 // (piège hérité #3), les styles sont injectés en CSS globale.
@@ -9,7 +9,7 @@ import { BETTER_PANEL_EMBEDDED } from '../betterPanel'
 import { I18nService } from '../i18n'
 import { guardState, describeState, rearm } from '../keychainGuard'
 import { log, warn, purge, LOG_PATH } from '../logger'
-import { english } from '../messages'
+import { briefError, english } from '../messages'
 import { keychainStatus, keychainRoundTrip, KeychainStatus } from '../osKeychain'
 import {
     Settings,
@@ -17,7 +17,38 @@ import {
     writeSettings,
     computeExpiry,
     deleteToken,
+    setProfilesExcluded,
+    pruneExcludedProfiles,
 } from '../store'
+
+/** Un profil SSH de la config, avec son état d'exclusion au moment du calcul. */
+interface ExclusionEntry {
+    id: string
+    /** Nom affiché — celui de la config, jamais traduit. */
+    name: string
+    excluded: boolean
+}
+
+/**
+ * Un groupe de la config, ou le panier « sans groupe », avec ses membres.
+ *
+ * `name` et `source` s'excluent l'un l'autre : un vrai groupe porte le nom saisi
+ * par l'utilisateur (`name`), qui ne se traduit pas ; le panier porte une chaîne
+ * source anglaise (`source`), que le gabarit passe au pipe `translate` — même
+ * convention que `weekdays` plus bas, et pour la même raison (traduire ici
+ * figerait le libellé dans la langue active à l'ouverture de l'onglet).
+ */
+interface ExclusionGroup {
+    /** Id du groupe dans la config, `null` pour le panier « sans groupe ». */
+    id: string | null
+    name: string | null
+    source: string | null
+    profiles: ExclusionEntry[]
+    /** Ids des membres, tels que le raccourci de groupe les passe au store. */
+    memberIds: string[]
+    excludedCount: number
+    allExcluded: boolean
+}
 
 /** @hidden */
 @Component({
@@ -67,6 +98,19 @@ export class BetterVaultSettingsTabComponent {
     suspended = false
     suspendedDetail = ''
 
+    /**
+     * Groupes et profils SSH avec leur état d'exclusion, RECALCULÉS à chaque
+     * bascule par `buildExclusions()`.
+     *
+     * Modèle de vue précalculé, et non accesseurs, pour la raison donnée
+     * ci-dessus à propos de `suspended` : le gabarit le parcourt, et Angular
+     * réévalue une expression de gabarit à chaque cycle de détection. Dériver
+     * « tous exclus / certains / aucun » derrière un `get` recompterait la liste
+     * entière à chaque frappe et à chaque mouvement de souris, et une lecture de
+     * `better-vault.json` avec.
+     */
+    exclusionGroups: ExclusionGroup[] = []
+
     logPath = LOG_PATH
 
     /**
@@ -87,6 +131,17 @@ export class BetterVaultSettingsTabComponent {
 
     readonly hours = Array.from({ length: 24 }, (_, h) => h)
 
+    /**
+     * Libellé du panier « sans groupe » de la section des exclusions.
+     *
+     * Même forme `{ source }` que `weekdays` et `retentions`, et pour les deux
+     * mêmes raisons : la chaîne source anglaise voyage jusqu'au gabarit qui la
+     * traduit (un changement de langue suit sans rouvrir l'onglet), et c'est
+     * cette forme que `tools/lint-i18n.js` sait relever — un littéral posé au
+     * milieu du code lui échapperait, et la traduction serait signalée morte.
+     */
+    readonly ungrouped = { source: 'Ungrouped' }
+
     readonly retentions = [
         { value: 30, source: '30 days' },
         { value: 90, source: '90 days' },
@@ -96,12 +151,17 @@ export class BetterVaultSettingsTabComponent {
 
     constructor (
         private platform: PlatformService,
+        private config: ConfigService,
         private i18n: I18nService,
         @Optional() @Inject(BETTER_PANEL_EMBEDDED) embedded: unknown,
     ) {
         this.contentBox = !embedded
         this.settings = readSettings()
         this.refreshGuard()
+        // La purge avant la construction du modèle : sans cela, l'affichage
+        // décrirait un fichier que l'on vient de réécrire.
+        this.pruneExclusions()
+        this.buildExclusions()
         if (this.settings.enabled) {
             this.probeKeychain()
         }
@@ -253,6 +313,184 @@ export class BetterVaultSettingsTabComponent {
         // significatif du cycle de vie, il doit laisser une trace.
         log('manual revocation from the settings — token deleted')
         this.settings = readSettings()
+    }
+
+    /**
+     * Profils de `config.store`, TOUS TYPES confondus.
+     *
+     * `ConfigService.store` est typé `any` par Tabby et la clé peut manquer sur
+     * une config neuve — d'où la vérification plutôt qu'un accès direct.
+     */
+    private configProfiles (): any[] {
+        const profiles = this.config.store?.profiles
+        return Array.isArray(profiles) ? profiles : []
+    }
+
+    /**
+     * Retire les exclusions dont plus aucun profil ne porte l'id.
+     *
+     * ICI ET NULLE PART AILLEURS. La purge a besoin du référentiel COMPLET des
+     * profils, donc d'une config chargée. Sur le chemin du déverrouillage, en
+     * config chiffrée, la liste des profils est encore dans le blob (#V13) : le
+     * référentiel y serait vide et la purge effacerait TOUTES les exclusions.
+     * L'ouverture de ce panneau, elle, suppose Tabby démarré et la config lue.
+     *
+     * Le référentiel prend tous les types, alors que l'affichage ne montre que
+     * les profils SSH : il sert à décider ce qui est ORPHELIN, pas ce qui est
+     * montrable. Le restreindre à `ssh` supprimerait sans le dire l'exclusion
+     * d'un profil dont le type aurait changé.
+     */
+    private pruneExclusions (): void {
+        try {
+            const ids = new Set(
+                this.configProfiles()
+                    .map(p => p?.id)
+                    .filter((id): id is string => typeof id === 'string' && !!id),
+            )
+            const removed = pruneExcludedProfiles(ids)
+            if (removed > 0) {
+                log(`${removed} stale exclusion(s) dropped — no matching profile in the configuration`)
+            }
+        } catch (e) {
+            // L'écriture peut échouer (disque plein, fichier tenu par un tiers).
+            // Une entrée orpheline qui subsiste est sans effet — aucun profil ne
+            // porte plus son id, `isProfileExcluded` ne la rencontre jamais. Rien
+            // ici ne justifie d'empêcher l'onglet de s'ouvrir.
+            warn(`could not prune stale exclusions — ${briefError(e)}`)
+        }
+    }
+
+    /**
+     * (Re)construit le modèle de vue des exclusions depuis la config et le
+     * fichier de réglages.
+     *
+     * PÉRIMÈTRE : les profils `ssh` de `config.store.profiles`. Les profils
+     * fabriqués par les providers (`built-in`) n'y figurent pas et sont hors
+     * périmètre — décision de l'utilisateur, pas une limite technique.
+     *
+     * RIEN N'EST STOCKÉ PAR GROUPE, et c'est structurel : le fichier ne connaît
+     * que des ids de PROFIL (voir `Settings.excludedProfiles`). Le groupe n'est
+     * ici qu'un regroupement d'affichage doublé d'un raccourci d'action. Un
+     * groupe re-parenté côté sidebar renaît sous un nouvel uuid (piège hérité
+     * #12) : s'il portait l'exclusion, elle se perdrait sans un mot.
+     */
+    private buildExclusions (): void {
+        const excluded = new Set(readSettings().excludedProfiles)
+
+        // Noms de groupe par id : `profile.group` ne porte que l'id.
+        const groupNames = new Map<string, string>()
+        const groups = this.config.store?.groups
+        if (Array.isArray(groups)) {
+            for (const g of groups) {
+                if (g?.id) {
+                    groupNames.set(g.id, typeof g.name === 'string' && g.name ? g.name : g.id)
+                }
+            }
+        }
+
+        const buckets = new Map<string | null, ExclusionEntry[]>()
+        for (const p of this.configProfiles()) {
+            if (p?.type !== 'ssh' || typeof p.id !== 'string' || !p.id) {
+                continue
+            }
+            // Un `group` qui ne désigne aucun groupe connu retombe dans le
+            // panier : mieux vaut un profil rangé ailleurs qu'un profil
+            // introuvable dans la liste.
+            const key = typeof p.group === 'string' && groupNames.has(p.group) ? p.group : null
+            const entry: ExclusionEntry = {
+                id: p.id,
+                name: typeof p.name === 'string' && p.name ? p.name : p.id,
+                excluded: excluded.has(p.id),
+            }
+            const bucket = buckets.get(key)
+            if (bucket) {
+                bucket.push(entry)
+            } else {
+                buckets.set(key, [entry])
+            }
+        }
+
+        const result: ExclusionGroup[] = []
+        const push = (id: string | null, name: string | null, source: string | null): void => {
+            const profiles = buckets.get(id)
+            // Un groupe sans aucun profil SSH n'a rien à montrer : l'afficher
+            // vide donnerait une ligne sur laquelle il n'y a rien à faire.
+            if (!profiles?.length) {
+                return
+            }
+            // Tri par nom : la liste sert à retrouver un profil, pas à refléter
+            // l'ordre d'écriture de config.yaml.
+            profiles.sort((a, b) => a.name.localeCompare(b.name))
+            const excludedCount = profiles.filter(p => p.excluded).length
+            result.push({
+                id,
+                name,
+                source,
+                profiles,
+                memberIds: profiles.map(p => p.id),
+                excludedCount,
+                allExcluded: excludedCount === profiles.length,
+            })
+        }
+        if (Array.isArray(groups)) {
+            for (const g of groups) {
+                if (g?.id) {
+                    push(g.id, groupNames.get(g.id) ?? g.id, null)
+                }
+            }
+        }
+        // Le panier en dernier, comme dans la liste de profils de Tabby.
+        push(null, null, this.ungrouped.source)
+
+        this.exclusionGroups = result
+    }
+
+    /**
+     * Bascule un profil.
+     *
+     * La cible vient du contrôle (`$event`) et non de `!entry.excluded` : le
+     * modèle est un instantané, et il est reconstruit juste après depuis le
+     * fichier — seule source de vérité, que le pont écrit aussi de son côté.
+     */
+    toggleProfile (entry: ExclusionEntry, excluded: boolean): void {
+        setProfilesExcluded([entry.id], excluded)
+        // Tracé comme les autres changements de comportement (voir `persist()`),
+        // en anglais comme tout le journal. L'id de profil y est admis : il ne
+        // dit rien du contenu du coffre.
+        log(`profile ${entry.id} ${excluded ? 'excluded from' : 'included back into'} automatic unlocking`)
+        this.buildExclusions()
+    }
+
+    /**
+     * Raccourci de groupe : tous les membres exclus → tout réintégrer, sinon
+     * tout exclure.
+     *
+     * L'action s'applique aux membres TELS QU'ILS SONT À CET INSTANT, et rien
+     * n'en garde la trace : un profil ajouté au groupe ensuite ne sera pas
+     * exclu. C'est la conséquence directe du choix de ne stocker que des ids de
+     * profil, et le gabarit le dit à l'utilisateur.
+     */
+    toggleGroup (group: ExclusionGroup): void {
+        const excluded = !group.allExcluded
+        setProfilesExcluded(group.memberIds, excluded)
+        log(`group ${group.id ?? 'ungrouped'} — ${group.memberIds.length} profile(s) ${excluded ? 'excluded from' : 'included back into'} automatic unlocking (${group.memberIds.join(', ')})`)
+        this.buildExclusions()
+    }
+
+    /**
+     * `trackBy` des deux listes : `buildExclusions()` remplace les objets à
+     * chaque bascule, et sans cela Angular détruirait puis recréerait toutes les
+     * lignes — donc les bascules elles-mêmes, en pleine animation.
+     *
+     * Fonctions sans `this` : Angular appelle un `trackBy` détaché de son
+     * composant.
+     */
+    trackGroup (_index: number, group: ExclusionGroup): string {
+        return group.id ?? ''
+    }
+
+    trackProfile (_index: number, entry: ExclusionEntry): string {
+        return entry.id
     }
 
     /**

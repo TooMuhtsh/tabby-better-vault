@@ -140,6 +140,45 @@
         i.fas.fa-trash.mr-2
         | {{ 'Forget now' | translate }}
 
+  //- Exclusions. Masquées quand le plugin est éteint : exclure un profil du
+      déverrouillage automatique ne veut rien dire quand il n'y a pas de
+      déverrouillage automatique — la section n'aurait rien à décrire.
+  ng-container(*ngIf='settings.enabled')
+    h4.mt-4.mb-2 {{ 'Excluded profiles' | translate }}
+
+    //- CE TEXTE DIT LES LIMITES MESURÉES, IL NE LES ADOUCIT PAS. L'exclusion
+        agit sur la SAISIE du mot de passe d'un profil, pas sur le contenu du
+        coffre : le laisser croire ferait passer un confort pour un
+        cloisonnement (ROADMAP.html#granularite, callout « Limites mesurées »).
+    .exclusions-note
+      div {{ 'An excluded profile gets its password asked again at every connection, and that is all it does: the vault remains a single encrypted store, any profile that is not excluded still opens it automatically, and private key passphrases are outside this scope.' | translate }}
+      .mt-1 {{ 'With an encrypted configuration, unlocking at startup also stays automatic — it happens before any profile exists. Excluding a group applies to the profiles it holds at that moment; one added afterwards is not excluded.' | translate }}
+
+    .exclusions-empty(*ngIf='!exclusionGroups.length') {{ 'No SSH profile is defined in this configuration.' | translate }}
+
+    .exclusion-group(*ngFor='let g of exclusionGroups; trackBy: trackGroup')
+      .exclusion-group-header
+        //- Nom saisi par l'utilisateur d'un côté, libellé traduit du panier
+            « sans groupe » de l'autre — voir `ExclusionGroup`.
+        .exclusion-group-name(*ngIf='!g.source') {{ g.name }}
+        .exclusion-group-name(*ngIf='g.source') {{ g.source | translate }}
+        .exclusion-group-count {{ '{excluded} of {total} excluded' | translate:{ excluded: g.excludedCount, total: g.profiles.length } }}
+        //- Un seul bouton, dont la règle vit dans `toggleGroup()` : deux libellés
+            plutôt que deux boutons, pour qu'il n'y ait qu'un endroit où l'action
+            est décidée.
+        button.btn.btn-sm.btn-secondary((click)='toggleGroup(g)')
+          span(*ngIf='!g.allExcluded') {{ 'Exclude all' | translate }}
+          span(*ngIf='g.allExcluded') {{ 'Include all' | translate }}
+
+      //- Bascule active = profil EXCLU, dans le sens du titre de la section et
+          du bouton de groupe. Le compteur au-dessus lève l'ambiguïté.
+      .exclusion-profile(
+        *ngFor='let p of g.profiles; trackBy: trackProfile',
+        [ngClass]="{ 'is-excluded': p.excluded }",
+      )
+        .exclusion-profile-name {{ p.name }}
+        toggle([ngModel]='p.excluded', (ngModelChange)='toggleProfile(p, $event)')
+
   h4.mt-4.mb-2 {{ 'Log' | translate }}
 
   //- Le mode observation vit ici, et non sous « Mot de passe enregistré » comme

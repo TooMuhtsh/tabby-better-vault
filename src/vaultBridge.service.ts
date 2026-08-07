@@ -47,6 +47,14 @@ export class VaultBridgeService {
      * elle cesserait d'informer pour devenir une nuisance.
      */
     private unlockAnnounced = false
+    /**
+     * Profondeur de la délégation ponctuelle à la pop-up native — voir
+     * `runWithNativePrompt()`. Un COMPTEUR et non un booléen : deux connexions
+     * exclues peuvent se chevaucher, et un booléen remis à faux par la première
+     * qui se termine rouvrirait le service automatique alors que la seconde est
+     * encore en vol.
+     */
+    private nativeDelegations = 0
 
     constructor (
         private injector: Injector,
@@ -127,7 +135,59 @@ export class VaultBridgeService {
         return this.original()
     }
 
+    /**
+     * Exécute `fn` en s'interdisant, le temps de cet appel, de servir la
+     * passphrase automatiquement : `resolve()` s'efface et laisse la pop-up
+     * native de Tabby faire son travail.
+     *
+     * POURQUOI PAR UNE FENÊTRE ET NON PAR UN PARAMÈTRE. `getPassphrase()` est
+     * aveugle — aucun argument, et l'identité du profil est détruite bien en
+     * amont (voir `profileExclusions.service.ts`). Le seul appelant qui sache
+     * quel profil déclenche la demande est `ProfileExclusionsService`, un cran
+     * au-dessus ; il ne peut transmettre cette connaissance que par le contexte
+     * d'exécution, pas par la signature.
+     *
+     * DEUX CAS LIMITES ASSUMÉS, tous deux conséquences du single-flight
+     * `this.pending` — qui partage une résolution en cours entre tous les
+     * appelants simultanés, sans savoir lequel l'a ouverte :
+     *
+     *   1. Un appel EXCLU qui arrive alors qu'une résolution automatique est
+     *      déjà en vol reçoit le résultat de celle-ci — donc servi
+     *      automatiquement, sans pop-up, malgré l'exclusion.
+     *   2. Symétriquement, un appel ORDINAIRE qui tombe dans la fenêtre de
+     *      délégation partage la résolution déléguée — donc voit la pop-up
+     *      native alors qu'il aurait pu être servi.
+     *
+     * Les deux supposent deux demandes de secret dans le même instant, ce que
+     * l'usage réel ne produit pratiquement pas : le coffre n'est sollicité qu'à
+     * la connexion. Aucun des deux n'est dangereux — le pire cas est une saisie
+     * manuelle de trop, ou une commodité rendue là où elle n'était pas demandée ;
+     * le secret, lui, ne fuit ni ne s'écrit dans aucun des deux cas. Les
+     * supprimer imposerait de renoncer au single-flight, donc de rouvrir les
+     * déchiffrements concurrents qu'il existe précisément pour éviter.
+     */
+    async runWithNativePrompt<T> (fn: () => Promise<T>): Promise<T> {
+        this.nativeDelegations++
+        try {
+            return await fn()
+        } finally {
+            // Dans un `finally` : une connexion qui échoue ou qu'on annule doit
+            // refermer la fenêtre comme une autre, sans quoi une seule erreur
+            // désactiverait le déverrouillage automatique jusqu'au redémarrage.
+            this.nativeDelegations--
+        }
+    }
+
     private async resolve (): Promise<string> {
+        // AVANT TOUT LE RESTE, mode observation compris : la fenêtre de
+        // délégation est une décision de l'appelant, pas un état du plugin. Rien
+        // de ce qui suit ne doit pouvoir la contredire, et rien n'a besoin
+        // d'être lu — ni les réglages, ni le trousseau — pour la respecter.
+        if (this.nativeDelegations > 0) {
+            log('excluded profile — delegating to the native prompt')
+            return this.callOriginal()
+        }
+
         const { enabled, debug } = this.settings
 
         if (debug) {
