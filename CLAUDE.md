@@ -126,6 +126,33 @@ puis relancer entièrement `Tabby.exe` — un rechargement de fenêtre ne suffit
   pré-cache et sert sa propre instance, #V8) ; il n'est en devDependency que
   pour ses typages.
 
+## Panneau de réglages unifié Better Tabby
+
+Les plugins « Better » partagent un onglet de réglages unique. La convention :
+chaque plugin expose sa contribution sous une clé de chaîne
+`BetterPanelContribution:<id>` — le contrat (`src/betterPanel.ts`) est
+**dupliqué** dans chaque dépôt, jamais d'import npm entre plugins. La liste des
+tokens connus y est codée en dur : un futur plugin « Better X » doit y être
+ajouté. L'hôte est la contribution de `hostWeight` minimal (égalité départagée
+par id alphabétique) ; poids actuels : sidebar 10, vault 20, espacés de 10.
+
+Le non-hôte se retire par `getComponentType() → null` — le mécanisme officiel,
+filtré par le constructeur de `SettingsTabComponent` de Tabby ; le provider,
+lui, reste toujours enregistré (`SettingsHotkeyProvider` planterait sur une
+entrée `null` du multi-provider). Conséquence assumée : un hotkey fantôme
+« Open settings tab: Better Vault » subsiste quand ce plugin n'est pas hôte.
+
+L'hôte élu d'une famille de plusieurs rend son
+`src/components/hostPanel.component.ts` : **un onglet par plugin**, sa propre
+page comprise, chaque page montée par `ngComponentOutlet` avec un injecteur
+portant le jeton `BetterPanelEmbedded` — les pages embarquées s'en servent pour
+ne pas appliquer `content-box` (mise en page portée par l'hôte), et une page
+embarquée ne monte jamais les autres. Seul de sa famille, l'hôte rend son
+panneau plat tel quel, sans habillage. Le deep-link d'un plugin vers son propre
+onglet du panneau partagé passe par `openRequested = true` sur sa contribution
+(objet partagé tel quel via l'injecteur) — le panneau hôte le lit et l'efface à
+sa construction, quel que soit le plugin qui le porte.
+
 ## Git
 
 Identité configurée **localement** pour ce dépôt (pas globalement) :
