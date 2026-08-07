@@ -16,6 +16,63 @@ moment de la bascule, repris ici sans être réécrit. Ce qui reste à faire vit
 <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, que cette page renvoie sans répéter. Le plus
 récent chantier livré est en tête — l'inverse de l'ordre du journal.</p>
 
+<h2 id="granularite">Granularité par profil — livré le 2026-08-07</h2>
+<p>Exclure des profils SSH du déverrouillage automatique : pour un profil exclu, le plugin ne sert
+pas la passphrase et laisse la pop-up native de Tabby demander le mot de passe, pour cette
+connexion-là seulement. La « voie médiane » retenue à l'arbitrage du 2026-08-07, après que la passe
+de faisabilité a montré que le « déverrouillage paresseux » de la fiche d'origine était
+structurellement impossible en config chiffrée et déjà natif en config claire. Conçu, codé (trois
+lots parallèles + fondation), testé et validé le même jour.</p>
+<h3>Les arbitrages, tels que tranchés par l'utilisateur</h3>
+<ul>
+<li><strong>Ids de PROFIL uniquement, jamais de groupe</strong> — le groupe n'est qu'un raccourci
+  d'interface qui applique l'exclusion à ses membres au moment du clic. Le re-parentage côté
+  sidebar (nouvel uuid, piège hérité #12) ne peut donc rien invalider, par construction.</li>
+<li><strong>Profils built-in hors périmètre</strong> — seuls les profils SSH de
+  <code>config.store.profiles</code> sont excluables ; le nettoyage des orphelines reste synchrone.</li>
+<li><strong>Passphrases de clés privées hors périmètre</strong> — indexées par hash de fichier, une
+  clé partagée serait indistinguable.</li>
+</ul>
+<h3>Le mécanisme, tel que livré</h3>
+<ul>
+<li><strong>Store</strong> — <code>excludedProfiles</code> dans <code>better-vault.json</code>
+  (#V11), helpers <code>isProfileExcluded</code> / <code>setProfilesExcluded</code> (lot = raccourci
+  groupe) / <code>pruneExcludedProfiles</code>. <code>writeSettings()</code> préserve désormais les
+  clés inconnues : une version antérieure du plugin n'efface plus les champs qu'elle ignore.</li>
+<li><strong>Interception</strong> — <code>ProfileExclusionsService</code> enveloppe
+  <code>loadPassword(profile, username)</code> de <code>PasswordStorageService</code>, dernier point
+  où l'identité du profil existe (elle est réduite à <code>{user, host, port}</code> juste après).
+  Profil exclu → fenêtre de délégation <code>runWithNativePrompt()</code> du pont, compteur et non
+  booléen, cas limites du single-flight documentés dans le code. Toute anomalie vaut « non exclu » :
+  une entrée illisible n'empêche jamais un déverrouillage.</li>
+<li><strong>Acquisition par l'injecteur seul</strong> — multi-provider <code>ProfileProvider</code>
+  de <code>tabby-core</code>, entrée <code>ssh</code>, champ <code>passwordStorage</code>. Jamais de
+  <code>require('tabby-ssh')</code> : voir <a href="../AI-CONTEXT.html#piege-v30">#V30</a>, le bug
+  critique que la première passe de test a attrapé (patch posé sur un singleton jumeau, jamais
+  déclenché). Plus aucune dépendance de chargement sur <code>tabby-ssh</code>.</li>
+<li><strong>Réglages</strong> — sous-onglets internes « Général / Profils exclus » (motif de la
+  sidebar), l'onglet des exclusions disparaît avec l'interrupteur du plugin. Profils groupés,
+  bascule par profil, bouton de groupe unique (« Tout exclure / Tout réintégrer ») dérivé de l'état
+  des membres, groupes pliables à état mémorisé (<code>localStorage</code>,
+  <code>betterVaultExclusionsCollapsed</code>). Texte des limites sans adoucissement : pas un
+  cloisonnement des secrets, boot en config chiffrée toujours automatique, clés privées non
+  couvertes, groupe = instantané. Purge des orphelines à l'ouverture du panneau — seul endroit où
+  la config fait référentiel, jamais sur le chemin du déverrouillage.</li>
+<li><strong>Pont inter-plugins</strong> — contrat <code>BetterVaultExclusions:v1</code> sous clé de
+  chaîne (<code>src/exclusionsBridge.ts</code>) : <code>isExcluded</code> / <code>setExcluded</code>
+  (lot) / <code>excludedIds</code>, implémentation <code>useValue</code> à replis sûrs. Seuls le
+  jeton et l'interface se dupliquent côté sidebar ; l'entrée de menu contextuel est un chantier
+  sidebar, non commencé.</li>
+</ul>
+<h3>Validation du 2026-08-07</h3>
+<p>Passe pilotée par l'injecteur (CDP), données jetables <code>grp-zzz-test-*</code> nettoyées
+après coup : chargement, pont, écriture/persistance à travers un redémarrage, préservation d'un
+champ inconnu, profil non exclu servi par jeton (56–111 ms, zéro modale), profil exclu → pop-up
+native + deux lignes de journal attendues, annulation propagée nativement, fenêtre de délégation
+refermée derrière elle. Passe visuelle validée par l'utilisateur (onglets, liste, pliage). La
+première passe a levé le défaut critique consigné en #V30, corrigé et revalidé dans la même
+session.</p>
+
 <h2 id="panneau-unifie">Panneau de réglages unifié « Better Tabby » — livré le 2026-08-07</h2>
 <p>Quand plusieurs plugins de la famille « Better * » sont installés, un seul onglet
 <strong>Better Tabby</strong> apparaît dans les réglages Tabby, à deux niveaux : un onglet par

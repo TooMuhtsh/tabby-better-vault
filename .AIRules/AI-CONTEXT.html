@@ -25,7 +25,7 @@ Angular 15, Electron, TypeScript, webpack) — à confirmer plutôt qu'à redéc
 
 <div class="callout note">
 <span class="callout-title">Compteur de numérotation</span>
-<p><strong>Prochain numéro libre : <code>#V30</code></strong> — <code>#V1</code> à <code>#V29</code>
+<p><strong>Prochain numéro libre : <code>#V31</code></strong> — <code>#V1</code> à <code>#V30</code>
 sont attribués, sans trou. Celui qui ajoute un piège incrémente ce compteur dans le même geste
 (A-6) : l'ordre d'affichage ne suit pas la numérotation, donc aucune lecture partielle ne donne
 cette information.</p>
@@ -935,6 +935,40 @@ l'outillage.</p>
 s'installerait correctement et ne se chargerait jamais. La leçon générale est celle du champ
 facultatif : <em>facultatif pour npm</em> ne veut pas dire <em>facultatif pour le consommateur</em>,
 et c'est le consommateur qui décide.</p>
+</div>
+
+<h3 id="piege-v30">#V30 — <code>require('tabby-ssh')</code> charge une seconde copie : le patch se pose sur un jumeau que personne n'utilise</h3>
+<p>Le chargeur de plugins de Tabby n'intercepte les <code>require</code> <strong>par nom</strong> que
+pour une liste close : <code>@angular/*</code>, <code>rxjs</code>, <code>ngx-toastr</code>,
+<code>zone.js</code>, et quatre modules Tabby seulement — <code>tabby-core</code>,
+<code>tabby-local</code>, <code>tabby-settings</code>, <code>tabby-terminal</code>
+(<code>cachedBuiltinModules</code> + <code>builtinModules</code> de son <code>initModuleLookup</code>,
+lu dans <code>app.asar</code>). <strong><code>tabby-ssh</code> n'en fait pas partie</strong> : depuis
+ce plugin, Node le résout alors normalement — c'est-à-dire dans le <code>node_modules</code> du
+plugin d'abord, visible à l'exécution à travers la jonction NTFS (et livré tel quel dans un paquet
+npm installé). Une <strong>seconde copie</strong> du module se charge, avec des classes homonymes
+mais distinctes.</p>
+<p>Le symptôme est parfaitement silencieux : <code>PasswordStorageService</code> étant
+<code>providedIn: 'root'</code>, <code>injector.get(classeDupliquée)</code> ne lève rien — Angular
+<strong>fabrique un jumeau du singleton</strong>, vierge, que personne d'autre ne consulte. Un patch
+d'instance posé dessus compile, s'installe, se journalise… et ne se déclenche jamais : les vrais
+appelants (<code>SSHService</code>, les sessions) tiennent l'autre instance. Mesuré le 2026-08-07,
+première passe de test du chantier granularité — l'appel « exclu » était servi automatiquement, et
+l'énumération des <code>records</code> de l'injecteur montrait deux singletons homonymes, le vrai
+non patché.</p>
+<div class="callout warning">
+<span class="callout-title">Les deux règles qui en sortent</span>
+<p><strong>1. <code>tabby-ssh</code> ne va jamais dans les <code>devDependencies</code></strong> —
+même piège que le #34 du projet frère, sous une autre forme ; la sidebar vendorise ses typings, ce
+plugin n'en a simplement plus besoin. <strong>2. L'instance réelle s'obtient par l'injecteur
+seul</strong> : multi-provider <code>ProfileProvider</code> de <code>tabby-core</code> (intercepté
+par nom, donc toujours le vrai), entrée <code>id === 'ssh'</code>, champ <code>passwordStorage</code>
+— voir <code>src/profileExclusions.service.ts</code>. Bénéfice collatéral : plus aucune dépendance
+de chargement sur <code>tabby-ssh</code>.</p>
+<p>Le piège vaut aussi pour un harnais de test : un <code>require('tabby-ssh')</code> tapé dans la
+console CDP résout selon les chemins du <em>renderer</em> (la vraie copie, ici), pas selon ceux du
+plugin — deux <code>require</code> du même nom, deux réponses. En cas de doute, énumérer
+<code>injector.records</code> et compter les singletons homonymes.</p>
 </div>
 
 <h2 id="cat-securite">Invariant propre à ce projet — sécurité du secret</h2>
