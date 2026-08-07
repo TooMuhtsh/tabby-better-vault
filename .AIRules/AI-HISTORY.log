@@ -15,7 +15,21 @@
 # sans changement de fichier versionné dans le même geste). "CHANTIER" reprend, quand il existe,
 # l'identifiant ancré de ROADMAP.html (ex. correctifs-c3) ou d'AI-CONTEXT.html (ex. piege-v30) ;
 # sinon un slug court et stable, jamais réutilisé pour autre chose ensuite.
+#
+# Correspondance ancien -> nouveau hash (reecriture d'historique du 2026-08-07, voir entree du
+# meme jour) : les hash "Commit/Hash" des entrees ci-dessous datees d'avant cette reecriture ont
+# tous change.
+#   3d8f366 -> de02f4a   cca325e -> f489a43   beed87c -> 63a2945   2d88996 -> 0add5c0
+#   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
+#   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-07T15:49:00+02:00 | publication | - | ROADMAP.html corrige : 4 hash de commit rendus caducs par la reecriture d'historique remplaces, statuts bruit-journal/interfacage/reliquat-config/granularite mis a jour suite aux decisions utilisateur du jour.
+2026-08-07T15:30:00+02:00 | publication | 615100a | Nettoyage du depot public avant npm publish : CLAUDE.md/tools//.htmlvalidate.json desindexes (restent locaux via .gitignore), ISSUE-titlebar-overlay.md supprime (bug Tabby resolu, hors sujet plugin).
+2026-08-07T15:10:00+02:00 | publication | - | Reecriture d'historique : 118 trailers Co-Authored-By/Claude-Session retires de master (filter-branch + force-push), 10 branches deja fusionnees supprimees (locales et origin). Sauvegarde tag local backup-pre-rewrite-20260807, non pousse.
+2026-08-07T14:50:00+02:00 | granularite | - | Confirme par l'utilisateur : prochain gros chantier, mais apres la publication npm. Priorite inchangee (Prochain chantier).
+2026-08-07T14:50:00+02:00 | interfacage | - | Interfacage avec tabby-better-sidebar juge realise via le panneau unifie Better Tabby (livre le jour meme) - decision utilisateur. Le pattern general reste lie a granularite (VaultBridgeService).
+2026-08-07T14:50:00+02:00 | reliquat-config | - | Verifie : aucun code de src/ ne lit ni n'ecrit betterVault: dans config.yaml (grep exhaustif sur src/). Confirme par l'utilisateur. Retrait reste une edition manuelle de sa config, jamais d'office.
+2026-08-07T14:50:00+02:00 | bruit-journal | - | Confirme par l'utilisateur en usage reel : bruit du journal invisible depuis le correctif du 2026-08-06. Chantier considere clos, mesure protocolaire (rafale authentique capturee) non faite.
 2026-08-07T09:56:00+02:00 | attribution | 3d8f366 | Option attribution passe de "Co-Authored-By seul" a "non" (aucune mention IA), sur instruction explicite de l'utilisateur, alignee sur tabby-better-sidebar. PROFIL.md et CLAUDE.md corriges.
 2026-08-07T09:54:44+02:00 | registre-livres-migration | cca325e | #audit/#reglages etaient deja livres (10ad983), doc perimee : migres vers annexes/REALISE.html, 7 entrees. Conception "Better Tabby" (panneau unifie, election par hostWeight) consignee, pret a faire, aucun code.
 2026-08-06T16:06:10+02:00 | publication | beed87c | package.json passe a 1.0.0. Semver fixe : correctif mineur = patch (x.x.1), ajout mineur = mineur (x.1.x), majeur non predecide. READMEs publics corriges : Windows & Linux verifies, macOS explicitement non verifie. npm publish non declenche.

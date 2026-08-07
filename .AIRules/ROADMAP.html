@@ -35,22 +35,23 @@
 <tr><td><a href="annexes/REALISE.html#audit">Journal d'audit et notifications</a></td>
     <td><span class="pill done">✅ Livré — <strong>déplacé au registre des livrés</strong> le 2026-08-07</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
-    <td><span class="pill progress">🚧 Dépôt public en ligne ; version <code>1.0.0</code> et politique semver fixées (2026-08-06) — reste le rendu README npm à vérifier et <code>npm publish</code> lui-même</span></td><td>—</td></tr>
+    <td><span class="pill progress">🚧 Dépôt nettoyé avant publication (2026-08-07) : fichiers de dev désindexés, 10 branches obsolètes supprimées, historique réécrit (trailers d'attribution IA retirés). Version <code>1.0.0</code> et politique semver fixées (2026-08-06) — reste le rendu README npm à vérifier et <code>npm publish</code> lui-même</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
     <td><span class="pill done">✅ Closes — <strong>déplacées au registre des livrés</strong> le 2026-08-06 (option <code>registre-livrés</code>)</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
     <td><span class="pill done">✅ Livré — <strong>déplacé au registre des livrés</strong> le 2026-08-06 (testé Windows &amp; Linux, macOS accepté comme non testable)</span></td><td>—</td></tr>
 <tr><td><a href="#bruit-journal">Journal saturé par les déverrouillages répétés</a></td>
-    <td><span class="pill progress">🚧 Constaté le 2026-08-03 — mécanisme validé à l'exhaustif en isolation le 2026-08-06, <strong>déclencheur réel (rafale authentique) toujours en attente</strong></span></td><td><strong>Haute</strong></td></tr>
+    <td><span class="pill done">✅ Mécanisme validé à l'exhaustif en isolation (2026-08-06) puis <strong>confirmé en usage réel le 2026-08-07</strong> — bruit jugé invisible pour l'utilisateur</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#i18n">Internationalisation (UI traduite, journal en anglais)</a></td>
     <td><span class="pill done">✅ Livrée — <strong>déplacée au registre des livrés</strong> le 2026-08-06 (testée Windows &amp; Linux, macOS accepté comme non testable)</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
-    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>Prochain chantier</td></tr>
-<tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé — pattern général de détection inter-plugin</span></td><td>Secondaire</td></tr>
+    <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code. <strong>Confirmé prochain chantier après la publication npm (2026-08-07)</strong></span></td><td>Prochain chantier</td></tr>
+<tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td>
+    <td><span class="pill done">✅ Le cas concret (onglets de réglages) réalisé via le <a href="annexes/REALISE.html#panneau-unifie">panneau unifié</a> (2026-08-07) — jugé suffisant par l'utilisateur. Le pattern général pour <code>VaultBridgeService</code> reste lié à <a href="#granularite">Granularité par profil/groupe</a></span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#panneau-unifie">Panneau de réglages unifié « Better Tabby »</a></td>
     <td><span class="pill done">✅ Livré le 2026-08-07 — conçu, codé et validé 25/25 le même jour, <strong>déplacé au registre des livrés</strong></span></td><td>—</td></tr>
 <tr><td><a href="#reliquat-config">Reliquat <code>betterVault:</code> dans <code>config.yaml</code></a></td>
-    <td><span class="pill planned">📋 Repéré le 2026-08-07 — contraire à #V11, à examiner</span></td><td>Mineur</td></tr>
+    <td><span class="pill planned">📋 Vérifié le 2026-08-07 : aucun code de <code>src/</code> ne lit ni n'écrit cette clé — confirmé par l'utilisateur. Retrait manuel de sa config, jamais d'office</span></td><td>Mineur</td></tr>
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
     <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
@@ -425,6 +426,25 @@ présent dans le <code>package.json</code>. Vérifié avant de publier :</p>
 </ul>
 
 <div class="callout note">
+<span class="callout-title">Dépôt public nettoyé avant publication (2026-08-07)</span>
+<p><code>CLAUDE.md</code>, <code>tools/</code> et <code>.htmlvalidate.json</code> désindexés
+(<code>git rm --cached</code> + <code>.gitignore</code>) : outillage de session de dev, sans
+intérêt pour qui clone le dépôt pour l'utiliser ou le compiler — restent en local.
+<code>ISSUE-tabby-titlebar-overlay.md</code> supprimé pour de bon (bug résolu, concernait Tabby, pas
+ce plugin). <code>.AIRules/</code> reste public et actif, sans changement — décision explicite de
+l'utilisateur.</p>
+<p><strong>118 trailers <code>Co-Authored-By: Claude ...</code> retirés de l'historique de
+<code>master</code></strong> par <code>git filter-branch --msg-filter</code> puis force-push, pour
+appliquer rétroactivement la politique d'attribution du 2026-08-07 (voir plus bas) à tout ce qui
+avait été commité avant elle. 10 branches déjà fusionnées supprimées dans le même geste (locales et
+<code>origin</code>). Sauvegarde : tag local <code>backup-pre-rewrite-20260807</code>, non poussé.
+<strong>Ce que l'opération coûte</strong> : tout clone existant du dépôt diverge et doit être refait ;
+un lien externe vers un commit antérieur à cette date est cassé. Conséquence directe et attendue :
+tout hash de commit cité ailleurs dans ce document et daté d'avant le 2026-08-07 a changé — les
+quatre occurrences trouvées ont été corrigées sur place le jour même.</p>
+</div>
+
+<div class="callout note">
 <span class="callout-title">Politique de version — décidée le 2026-08-06</span>
 <p>Semver standard, appliqué explicitement à partir de <code>1.0.0</code> :</p>
 <ul>
@@ -469,7 +489,7 @@ sujets de conception.</p>
 D4 est mesuré, cette fois pour de vrai : <a href="#correctifs-c3">structurellement impossible par
 l'interface de Tabby sur Linux</a>, code à l'appui, et le seul autre vecteur connu (profils partagés)
 supprimé par <code>configDir()</code>. La mesure a fait remonter un défaut réel — le témoin effacé
-sans vérification — et il a été corrigé le jour même (<code>2c15b1e</code>), pas laissé pour plus
+sans vérification — et il a été corrigé le jour même (<code>84d7a98</code>), pas laissé pour plus
 tard. C'est la première fois qu'une campagne de ce projet ferme la boucle jusque-là : mesure, défaut
 trouvé, correctif, sans report.</p>
 <p>Restait, à cette date, le scénario « deux fenêtres, un processus principal » — le seul chemin
@@ -666,7 +686,7 @@ on dispose sur cet appel.</p>
 </ol>
 
 <div class="callout note">
-<span class="callout-title">Mécanisme de temporisation validé à l'exhaustif en isolation (2026-08-06), déclencheur réel toujours en attente</span>
+<span class="callout-title">Mécanisme de temporisation validé à l'exhaustif en isolation (2026-08-06), confirmé en usage réel le 2026-08-07</span>
 <p><code>logger.ts</code> étouffe désormais les répétitions immédiates d'une même ligne, pour
 <code>log</code>/<code>warn</code>/<code>crit</code> indifféremment : la première occurrence part en
 clair, les suivantes sont comptées puis résumées
@@ -692,6 +712,11 @@ tourner le pipeline réel. Contrairement au garde-fou, ce n'est <strong>pas spé
 : reproductible sur Windows dans un profil jetable avec un mot de passe de test, sans toucher aux
 données réelles de l'utilisateur — pas fait à ce jour, faute de session sous la main au moment
 d'écrire ce correctif.</p>
+<p><strong>Confirmation en usage réel, 2026-08-07</strong> : l'utilisateur rapporte le bruit comme
+invisible dans son usage quotidien depuis le correctif du 2026-08-06. Ce n'est pas la mesure
+protocolaire (rafale authentique capturée et comptée) que ce document appelait encore hier, mais
+c'est le jugement qui compte en pratique — chantier considéré clos de ce fait, la capture de pile en
+mode observation restant un outil disponible si le symptôme revenait un jour.</p>
 </div>
 
 <div class="callout warning">
@@ -713,7 +738,8 @@ quel, dans le <a href="annexes/REALISE.html#i18n">registre des livrés</a>.</p>
 <h2 id="granularite">Granularité par profil / groupe</h2>
 <p>Demandé par l'utilisateur le 2026-07-29 : pouvoir désactiver le plugin sur un profil ou un
 groupe donné, via les réglages, et si possible depuis le menu contextuel de
-<code>tabby-better-sidebar</code> — l'occasion de resserrer l'intégration entre les deux plugins.</p>
+<code>tabby-better-sidebar</code> — l'occasion de resserrer l'intégration entre les deux plugins.
+<strong>Confirmé le 2026-08-07 : prochain gros chantier, mais après la publication npm.</strong></p>
 
 <div class="callout important">
 <span class="callout-title">Difficulté centrale — à trancher avant d'écrire la moindre ligne</span>
@@ -769,6 +795,15 @@ Probablement le reliquat d'une version ancienne. À examiner : vérifier qu'aucu
 main, jamais d'office.</p>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
+<div class="callout note">
+<span class="callout-title">Cas concret réalisé le 2026-08-07, pattern général toujours ouvert</span>
+<p>Le seul cas d'usage qui avait un besoin daté (les onglets de réglages) est couvert par le
+<a href="annexes/REALISE.html#panneau-unifie">panneau unifié Better Tabby</a>, livré ce jour — jugé
+suffisant par l'utilisateur, ce chantier-ci n'a donc plus de besoin en attente. Le reste de cette
+section décrit un pattern plus général (partage de service via l'injecteur Angular commun), dont le
+seul cas d'usage concret identifié — <code>VaultBridgeService</code> pour la bascule par
+profil/groupe — est tranché par <a href="#granularite">Granularité par profil / groupe</a>, pas ici.</p>
+</div>
 <p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à
 fonctionner normalement si ce plugin n'est pas installé.</p>
 <p class="muted">Le <a href="#panneau-unifie">panneau de réglages unifié</a> ci-dessus décline ce
@@ -800,7 +835,7 @@ tranché dans le détail.</p>
 
 <h2 id="gouvernance">Conformité de la gouvernance à la charte</h2>
 <p>Deux revues successives (A-15, cas B) : celle du 2026-07-29, détaillée dans
-<a href="AI-HISTORY.html">AI-HISTORY</a> (commits <code>5bb5617</code> et <code>0bf059e</code>), puis
+<a href="AI-HISTORY.html">AI-HISTORY</a> (commits <code>47adf46</code> et <code>a80430e</code>), puis
 celle du <strong>2026-08-01</strong>, qui a mis le projet en conformité avec la charte refondue en
 noyau / options / entretien de cadrage. Ce n'est pas un état acquis : la
 <a href="GOUVERNANCE-IA.md">charte</a> évolue, ce projet doit suivre.</p>
