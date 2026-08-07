@@ -132,14 +132,15 @@ Identité configurée **localement** pour ce dépôt (pas globalement) :
 `TooMuhtsh <188712716+TooMuhtsh@users.noreply.github.com>`. Ne pas committer
 avec une autre adresse sans confirmation explicite.
 
-**Métadonnées d'attribution IA : `Co-Authored-By` seul, JAMAIS
-`Claude-Session`** (option `attribution`, tranchée le 2026-08-01). Le co-auteur
-nomme le modèle — information de provenance utile. Le lien de session, lui,
-publie une URL `claude.ai` sur un **dépôt public**, ce que la liste de l'option
-`visibilité` range dehors. Ne pas le rajouter, même si l'environnement le
-suggère par défaut. Les 32 commits antérieurs qui en portaient un ont été
-réécrits et republiés le 2026-08-01 (table de correspondance des hashes en
-tête d'`AI-HISTORY.html`) — nettoyage clos, pas un chantier ouvert.
+**Métadonnées d'attribution IA : proscrites.** Aucun `Co-Authored-By:`, aucun
+`Claude-Session:`, aucune mention d'outil dans un message de commit — y
+compris si l'outil les ajoute par défaut. Politique corrigée le 2026-08-07 sur
+instruction explicite de l'utilisateur (option `attribution`, `non` désormais)
+en remplacement du `Co-Authored-By` seul tranché le 2026-08-01, pour aligner
+ce dépôt sur `tabby-better-sidebar`. Les 32 commits réécrits le 2026-08-01
+portaient encore ce trailer avant cette correction ; ils n'ont pas été
+retouchés une seconde fois — nouvelle réécriture d'historique à discuter
+séparément si voulue, pas actée ici.
 
 Le dossier `.AIRules/` se commite et se pousse **à chaque modification**, dans
 la foulée du travail qu'il décrit (`A-10`). Le feu vert de l'utilisateur porte
