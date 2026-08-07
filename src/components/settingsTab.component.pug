@@ -202,10 +202,17 @@
 
     .exclusion-group(*ngFor='let g of exclusionGroups; trackBy: trackGroup')
       .exclusion-group-header
+        //- Le chevron et le nom plient/déplient tous les deux : la cible du
+            clic est toute la partie gauche de l'en-tête, pas un glyphe de
+            quelques pixels. Replié, l'en-tête reste entier — compteur et
+            action de groupe compris : on peut agir sur un groupe sans le
+            déplier. État mémorisé en localStorage (`toggleCollapsed`).
+        .exclusion-group-caret((click)='toggleCollapsed(g)')
+          i.fas([ngClass]="g.collapsed ? 'fa-chevron-right' : 'fa-chevron-down'")
         //- Nom saisi par l'utilisateur d'un côté, libellé traduit du panier
             « sans groupe » de l'autre — voir `ExclusionGroup`.
-        .exclusion-group-name(*ngIf='!g.source') {{ g.name }}
-        .exclusion-group-name(*ngIf='g.source') {{ g.source | translate }}
+        .exclusion-group-name(*ngIf='!g.source', (click)='toggleCollapsed(g)') {{ g.name }}
+        .exclusion-group-name(*ngIf='g.source', (click)='toggleCollapsed(g)') {{ g.source | translate }}
         .exclusion-group-count {{ '{excluded} of {total} excluded' | translate:{ excluded: g.excludedCount, total: g.profiles.length } }}
         //- Un seul bouton, dont la règle vit dans `toggleGroup()` : deux libellés
             plutôt que deux boutons, pour qu'il n'y ait qu'un endroit où l'action
@@ -216,9 +223,10 @@
 
       //- Bascule active = profil EXCLU, dans le sens du titre de l'onglet et
           du bouton de groupe. Le compteur au-dessus lève l'ambiguïté.
-      .exclusion-profile(
-        *ngFor='let p of g.profiles; trackBy: trackProfile',
-        [ngClass]="{ 'is-excluded': p.excluded }",
-      )
-        .exclusion-profile-name {{ p.name }}
-        toggle([ngModel]='p.excluded', (ngModelChange)='toggleProfile(p, $event)')
+      ng-container(*ngIf='!g.collapsed')
+        .exclusion-profile(
+          *ngFor='let p of g.profiles; trackBy: trackProfile',
+          [ngClass]="{ 'is-excluded': p.excluded }",
+        )
+          .exclusion-profile-name {{ p.name }}
+          toggle([ngModel]='p.excluded', (ngModelChange)='toggleProfile(p, $event)')

@@ -110,6 +110,26 @@
     .exclusion-profile.is-excluded .exclusion-profile-name {
         opacity: 0.6;
     }
+
+    // Pliage : le chevron et le nom forment une seule cible de clic ; le
+    // chevron garde une largeur fixe pour que les noms restent alignés d'un
+    // groupe à l'autre, plié ou non.
+    .exclusion-group-caret {
+        width: 1.4rem;
+        flex: none;
+        text-align: center;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .exclusion-group-name {
+        cursor: pointer;
+    }
 }
 
 // La bande d'onglets internes (Général / Profils exclus) — classe de PREMIER

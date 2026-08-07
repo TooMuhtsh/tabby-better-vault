@@ -48,7 +48,21 @@ interface ExclusionGroup {
     memberIds: string[]
     excludedCount: number
     allExcluded: boolean
+    /** Replié : les profils sont masqués, l'en-tête (compteur compris) reste. */
+    collapsed: boolean
 }
+
+/**
+ * Clé localStorage de l'état plié/déplié des groupes de l'onglet des
+ * exclusions — même support que `sidebarPlusGroupCollapsed` côté sidebar, et
+ * pour les mêmes raisons : cosmétique pur, propre à la machine, et un id de
+ * groupe périmé qui y traîne (re-parentage, suppression) est sans le moindre
+ * effet. Le mettre dans `better-vault.json` mélangerait de l'état d'interface
+ * avec l'état du plugin, sans rien y gagner.
+ */
+const COLLAPSED_KEY = 'betterVaultExclusionsCollapsed'
+/** Le panier « sans groupe » a `id: null` — il lui faut une clé de rangement. */
+const UNGROUPED_KEY = '__ungrouped__'
 
 /** @hidden */
 @Component({
@@ -170,6 +184,7 @@ export class BetterVaultSettingsTabComponent {
         // La purge avant la construction du modèle : sans cela, l'affichage
         // décrirait un fichier que l'on vient de réécrire.
         this.pruneExclusions()
+        this.loadCollapsed()
         this.buildExclusions()
         if (this.settings.enabled) {
             this.probeKeychain()
@@ -458,6 +473,9 @@ export class BetterVaultSettingsTabComponent {
                 memberIds: profiles.map(p => p.id),
                 excludedCount,
                 allExcluded: excludedCount === profiles.length,
+                // Réappliqué depuis l'ensemble à CHAQUE reconstruction : le
+                // modèle est jetable, l'état plié ne l'est pas.
+                collapsed: this.collapsedGroups.has(id ?? UNGROUPED_KEY),
             })
         }
         if (Array.isArray(groups)) {
@@ -503,6 +521,41 @@ export class BetterVaultSettingsTabComponent {
         setProfilesExcluded(group.memberIds, excluded)
         log(`group ${group.id ?? 'ungrouped'} — ${group.memberIds.length} profile(s) ${excluded ? 'excluded from' : 'included back into'} automatic unlocking (${group.memberIds.join(', ')})`)
         this.buildExclusions()
+    }
+
+    /** Groupes actuellement repliés — chargé une fois, persisté à chaque bascule. */
+    private collapsedGroups = new Set<string>()
+
+    private loadCollapsed (): void {
+        try {
+            const raw = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]')
+            if (Array.isArray(raw)) {
+                this.collapsedGroups = new Set(raw.filter((x): x is string => typeof x === 'string'))
+            }
+        } catch {
+            // Entrée illisible : tout part déplié, et la prochaine bascule
+            // réécrit une entrée saine.
+        }
+    }
+
+    /**
+     * Plie ou déplie un groupe, et s'en souvient. Bascule directe du champ
+     * plutôt qu'une reconstruction : rien d'autre du modèle ne change, et
+     * reconstruire détruirait l'animation du clic lui-même.
+     */
+    toggleCollapsed (group: ExclusionGroup): void {
+        const key = group.id ?? UNGROUPED_KEY
+        group.collapsed = !group.collapsed
+        if (group.collapsed) {
+            this.collapsedGroups.add(key)
+        } else {
+            this.collapsedGroups.delete(key)
+        }
+        try {
+            localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...this.collapsedGroups]))
+        } catch {
+            // Stockage indisponible : l'état tient pour la session, c'est déjà ça.
+        }
     }
 
     /**
