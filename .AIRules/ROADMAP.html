@@ -35,7 +35,7 @@
 <tr><td><a href="annexes/REALISE.html#audit">Journal d'audit et notifications</a></td>
     <td><span class="pill done">✅ Livré — <strong>déplacé au registre des livrés</strong> le 2026-08-07</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
-    <td><span class="pill progress">🚧 Dépôt nettoyé avant publication (2026-08-07) : fichiers de dev désindexés, 10 branches obsolètes supprimées, historique réécrit (trailers d'attribution IA retirés). Version <code>1.0.0</code> et politique semver fixées (2026-08-06) — reste le rendu README npm à vérifier et <code>npm publish</code> lui-même</span></td><td>—</td></tr>
+    <td><span class="pill done">✅ <strong><code>tabby-better-vault@1.0.0</code> publié sur npm le 2026-08-07</strong> — docs publics rattrapés (granularité), bundle de production (<code>build:prod</code>), registre vérifié après coup (keywords, author, README). Politique semver active à partir de maintenant</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
     <td><span class="pill done">✅ Closes — <strong>déplacées au registre des livrés</strong> le 2026-08-06 (option <code>registre-livrés</code>)</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
@@ -409,20 +409,26 @@ la liste était fausse, retirée plutôt que corrigée sur place. Détail intég
 <a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>,
 avec <code>README.md</code> (anglais) et <code>README.fr.md</code> (français).</p>
 
-<h3>Reste à faire — publication npm</h3>
-<p>C'est elle qui rendra le plugin installable en un clic depuis le gestionnaire de plugins de
-Tabby : celui-ci interroge le registre npm avec <code>keywords:tabby-plugin</code>, mot-clé déjà
-présent dans le <code>package.json</code>. Vérifié avant de publier :</p>
+<h3>Publiée le 2026-08-07 — <code>tabby-better-vault@1.0.0</code> sur npm</h3>
+<p>Publication déclenchée par l'utilisateur (« Corrige et publie »), après le rattrapage des
+documents publics : la granularité par profil entrait dans <code>README.md</code>,
+<code>README.fr.md</code> (fonctionnalités, utilisation, installation par le gestionnaire de
+plugins de Tabby) et <code>docs/ARCHITECTURE.md</code> (section dédiée, limites dites sans
+détour). <strong>Version restée à <code>1.0.0</code>, décidé par l'utilisateur le jour même</strong> :
+la première publication embarque tout, la politique semver ci-dessous ne s'applique qu'aux
+versions publiées.</p>
 <ul>
-<li>Le champ <code>author</code> doit être présent, même vide, sinon la découverte du plugin échoue
-  silencieusement (piège hérité #2) — c'est déjà le cas.</li>
-<li><code>npm run build</code> est déjà branché sur <code>prepublishOnly</code>, et
-  <code>files</code> ne publie que <code>dist</code>.</li>
-<li><strong>Version passée à <code>1.0.0</code> le 2026-08-06</strong>, décidée par l'utilisateur —
-  le mécanisme reste non contractuel (<a href="AI-CONTEXT.html#piege-v2">#V2</a>), mais la condition
-  de publication est remplie et le plugin est en usage réel depuis son lancement.</li>
-<li>Vérifier le rendu du README sur la page npm, qui n'affiche que <code>README.md</code> — pas
-  encore fait.</li>
+<li><strong>Deux défauts corrigés au moment de publier</strong> : <code>prepublishOnly</code>
+  lançait le build de <em>développement</em> (le mode dépend de <code>NODE_ENV</code>, jamais posé)
+  — un <code>build:prod</code> (<code>--mode production</code>, qui passe par-dessus la config
+  objet) publie désormais un bundle minifié ; et <code>dist/</code> traînait trois
+  <code>.d.ts</code> orphelins d'anciennes sources, reconstruit à neuf avant l'empaquetage.</li>
+<li><strong>Vérifié sur le registre après coup</strong> : <code>1.0.0</code> en
+  <code>latest</code>, <code>keywords: tabby-plugin</code> (découverte par le gestionnaire de
+  plugins), <code>author</code> présent (piège hérité #2 / #V29), README anglais repris. Paquet :
+  27 fichiers, 212 Ko compressés, <code>dist</code> seul + READMEs + licence.</li>
+<li>Le champ <code>author</code> était déjà là, <code>files</code> ne publie que <code>dist</code> —
+  les deux vérifications prévues par cette fiche tenaient.</li>
 </ul>
 
 <div class="callout note">

@@ -79,6 +79,19 @@ In Tabby, open **Settings → Plugins**, search for `better-vault` and install
 it, then restart Tabby completely.
 
 <details>
+<summary>With npm directly</summary>
+
+```bash
+# In Tabby's plugin directory: %APPDATA%\tabby\plugins on Windows,
+# ~/.config/tabby/plugins on macOS/Linux
+npm install tabby-better-vault
+```
+
+Then restart Tabby completely.
+
+</details>
+
+<details>
 <summary>From source (for development)</summary>
 
 ```bash
