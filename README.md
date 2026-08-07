@@ -150,6 +150,12 @@ your session gains, is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#security
 the sibling plugin, see [Better Tabby](#-better-tabby-the-plugin-family)
 above.
 
+[**AI governance docs**](https://toomuhtsh.github.io/tabby-better-vault/.AIRules/README.html) —
+this plugin is developed with an AI assistant under a written governance
+charter, and the full working dossier is public: invariants and pitfalls
+(30 of them, numbered), development journal, and roadmap, browsable as a
+small static site.
+
 ## Credits
 
 - [Tabby](https://github.com/Eugeny/tabby) by Eugeny — the terminal this

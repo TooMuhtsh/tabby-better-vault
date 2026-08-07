@@ -23,6 +23,7 @@
 #   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
 #   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-08T00:07:00+02:00 | pages | 68d4faa | GitHub Pages active sur master/racine (.nojekyll commite, sans lui Jekyll ignore les dossiers en point) : .AIRules/ consultable sur toomuhtsh.github.io/tabby-better-vault/.AIRules/README.html, verifie en 200. Lien ajoute aux deux READMEs (Voir aussi).
 2026-08-07T23:49:00+02:00 | publication | - | Diffusion : paquet visible dans le gestionnaire de plugins de Tabby des le jour de la publication ; topics GitHub ajoutes au depot ; annonce postee dans Discussions/General de Eugeny/tabby ; reponses postees dans plusieurs fils qui demandaient ce deverrouillage.
 2026-08-07T16:21:00+02:00 | reliquat-config | - | Cloture : l'utilisateur a retire la cle betterVault: de sa config.yaml a la main, apres verification qu'aucun code de src/ n'y touchait. ROADMAP.html passe de "planned" a "done".
 2026-08-07T16:16:25+02:00 | architecture | 9ae162c | docs/ARCHITECTURE.md rendu autonome sur le panneau partage (structure a deux niveaux, jeton BetterPanelEmbedded, hotkey fantome assume) : le renvoi vers CLAUDE.md pointait dans le vide depuis le nettoyage du depot public.

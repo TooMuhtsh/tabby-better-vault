@@ -162,6 +162,12 @@ anglais).
 le plugin frère, voir [Better Tabby](#-better-tabby-la-famille-de-plugins)
 ci-dessus.
 
+[**Documents de gouvernance IA**](https://toomuhtsh.github.io/tabby-better-vault/.AIRules/README.html) —
+ce plugin est développé avec un assistant IA sous une charte de gouvernance
+écrite, et le dossier de travail complet est public : invariants et pièges
+(30, numérotés), journal de développement et roadmap, consultables comme un
+petit site statique.
+
 ## Crédits
 
 - [Tabby](https://github.com/Eugeny/tabby) par Eugeny — le terminal que ce
