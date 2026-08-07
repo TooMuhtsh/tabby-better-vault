@@ -9,6 +9,7 @@ import { SettingsTabProvider } from 'tabby-settings'
 // composant ait été chargé.
 import './toast.scss'
 
+import { BetterPanelContribution, VAULT_PANEL_TOKEN } from './betterPanel'
 import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
 import { BetterVaultSettingsTabProvider } from './settings'
 import { I18nService } from './i18n'
@@ -21,6 +22,17 @@ import { briefError } from './messages'
 applyRetention()
 startSession()
 
+/**
+ * Contribution de ce plugin au panneau de réglages unifié « Better Tabby » —
+ * voir src/betterPanel.ts pour le contrat et l'élection de l'hôte.
+ */
+const vaultPanelContribution: BetterPanelContribution = {
+    id: 'vault',
+    title: 'Better Vault',
+    hostWeight: 20,
+    componentType: BetterVaultSettingsTabComponent,
+}
+
 @NgModule({
     imports: [
         CommonModule,
@@ -29,6 +41,7 @@ startSession()
     ],
     providers: [
         { provide: SettingsTabProvider, useClass: BetterVaultSettingsTabProvider, multi: true },
+        { provide: VAULT_PANEL_TOKEN, useValue: vaultPanelContribution },
     ],
     declarations: [
         BetterVaultSettingsTabComponent,

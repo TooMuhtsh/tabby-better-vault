@@ -126,6 +126,25 @@ puis relancer entièrement `Tabby.exe` — un rechargement de fenêtre ne suffit
   pré-cache et sert sa propre instance, #V8) ; il n'est en devDependency que
   pour ses typages.
 
+## Panneau de réglages unifié Better Tabby
+
+Les plugins « Better » partagent un onglet de réglages unique. La convention :
+chaque plugin expose sa contribution sous une clé de chaîne
+`BetterPanelContribution:<id>` — le contrat (`src/betterPanel.ts`) est
+**dupliqué** dans chaque dépôt, jamais d'import npm entre plugins. La liste des
+tokens connus y est codée en dur : un futur plugin « Better X » doit y être
+ajouté. L'hôte est la contribution de `hostWeight` minimal (égalité départagée
+par id alphabétique) ; poids actuels : sidebar 10, vault 20, espacés de 10.
+
+Le non-hôte se retire par `getComponentType() → null` — le mécanisme officiel,
+filtré par le constructeur de `SettingsTabComponent` de Tabby ; le provider,
+lui, reste toujours enregistré (`SettingsHotkeyProvider` planterait sur une
+entrée `null` du multi-provider). Conséquence assumée : un hotkey fantôme
+« Open settings tab: Better Vault » subsiste quand ce plugin n'est pas hôte.
+L'hôte fournit le jeton `BetterPanelEmbedded` à l'injecteur du composant
+embarqué, qui s'en sert pour ne pas appliquer `content-box` (mise en page
+portée par l'hôte).
+
 ## Git
 
 Identité configurée **localement** pour ce dépôt (pas globalement) :

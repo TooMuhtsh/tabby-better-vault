@@ -1,10 +1,11 @@
-import { Component, HostBinding } from '@angular/core'
+import { Component, HostBinding, Inject, Optional } from '@angular/core'
 import { PlatformService } from 'tabby-core'
 
 // Import en side-effect : `styleUrls` ne fonctionne pas pour un plugin tiers
 // (piège hérité #3), les styles sont injectés en CSS globale.
 import './settingsTab.component.scss'
 
+import { BETTER_PANEL_EMBEDDED } from '../betterPanel'
 import { I18nService } from '../i18n'
 import { guardState, describeState, rearm } from '../keychainGuard'
 import { log, warn, purge, LOG_PATH } from '../logger'
@@ -24,7 +25,16 @@ import {
     template: require('./settingsTab.component.pug'),
 })
 export class BetterVaultSettingsTabComponent {
-    @HostBinding('class.content-box') true
+    /**
+     * `content-box` est la convention d'onglet racine de Tabby (padding +
+     * largeur max). Embarqué comme sous-onglet par l'hôte Better Tabby (jeton
+     * `BetterPanelEmbedded` présent dans l'injecteur), c'est l'hôte qui porte
+     * la mise en page — on ne l'applique donc qu'en solo. Ce binding était
+     * inopérant jusqu'ici (coquille : champ littéralement nommé `true`, de
+     * valeur `undefined`) — l'appliquer réellement en solo est un changement
+     * d'apparence à vérifier visuellement.
+     */
+    @HostBinding('class.content-box') contentBox: boolean
 
     settings: Settings
     /**
@@ -84,7 +94,12 @@ export class BetterVaultSettingsTabComponent {
         { value: 0, source: 'Unlimited' },
     ]
 
-    constructor (private platform: PlatformService, private i18n: I18nService) {
+    constructor (
+        private platform: PlatformService,
+        private i18n: I18nService,
+        @Optional() @Inject(BETTER_PANEL_EMBEDDED) embedded: unknown,
+    ) {
+        this.contentBox = !embedded
         this.settings = readSettings()
         this.refreshGuard()
         if (this.settings.enabled) {
