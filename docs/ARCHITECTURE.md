@@ -183,6 +183,18 @@ The mechanism:
 - A deep link to a specific plugin's page inside the shared tab sets
   `openRequested = true` on that plugin's own contribution object; the host
   reads and clears it on mount, whichever plugin happens to be hosting.
+- **Two-level layout.** When more than one plugin is installed, the host
+  renders one sub-tab per contributor inside the shared "Better Tabby" tab,
+  each mounted via `ngComponentOutlet`. The host supplies an injection token,
+  `BetterPanelEmbedded`, that every embedded page checks to drop its own
+  outer padding — the shared tab owns the layout, an embedded page only owns
+  its content. A plugin's internal sub-navigation (if it has one) stays one
+  level below that, inside its own page. Installed alone, a plugin instead
+  renders its page flat, with no embedding at all.
 
-See each plugin's own `CLAUDE.md` for the full mechanism, including the
-two-level layout used when more than one plugin is installed.
+A known, accepted quirk: the non-host plugin's own settings-tab provider
+stays registered (Tabby's hotkey list has no other way to enumerate tabs), so
+its keyboard shortcut — e.g. "Open settings tab: Better Vault" — still
+appears and still opens Settings, just without landing on any particular
+tab. Harmless, and simpler than adding a second retirement path Tabby
+doesn't otherwise need.
