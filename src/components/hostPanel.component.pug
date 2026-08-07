@@ -1,0 +1,12 @@
+//- Un onglet par plugin de la famille « Better * » ; le contenu de chaque
+    onglet est le composant de réglages du plugin lui-même, monté en mode
+    embarqué (jeton BetterPanelEmbedded) — s'il a des sous-onglets internes,
+    ils apparaissent au niveau du dessous ; sinon sa page s'affiche directement.
+    Les libellés sont des noms propres de plugins : rien à traduire.
+.better-vault-host
+  ul.nav.nav-tabs.better-vault-host-nav
+    li.nav-item(*ngFor='let panel of panels')
+      a.nav-link(href='#', [class.active]='selected === panel.id', (click)='select(panel.id, $event)') {{panel.title}}
+  ng-container(*ngFor='let panel of panels')
+    ng-container(*ngIf='selected === panel.id')
+      ng-container(*ngComponentOutlet='panel.componentType; injector: embedInjector')

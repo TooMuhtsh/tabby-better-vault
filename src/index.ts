@@ -10,6 +10,7 @@ import { SettingsTabProvider } from 'tabby-settings'
 import './toast.scss'
 
 import { BetterPanelContribution, VAULT_PANEL_TOKEN } from './betterPanel'
+import { BetterVaultHostPanelComponent } from './components/hostPanel.component'
 import { BetterVaultSettingsTabComponent } from './components/settingsTab.component'
 import { BetterVaultSettingsTabProvider } from './settings'
 import { I18nService } from './i18n'
@@ -44,6 +45,7 @@ const vaultPanelContribution: BetterPanelContribution = {
         { provide: VAULT_PANEL_TOKEN, useValue: vaultPanelContribution },
     ],
     declarations: [
+        BetterVaultHostPanelComponent,
         BetterVaultSettingsTabComponent,
     ],
     // Volontairement pas de ConfigProvider : les réglages de ce plugin ne

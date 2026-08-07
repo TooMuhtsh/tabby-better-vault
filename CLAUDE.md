@@ -141,9 +141,17 @@ filtré par le constructeur de `SettingsTabComponent` de Tabby ; le provider,
 lui, reste toujours enregistré (`SettingsHotkeyProvider` planterait sur une
 entrée `null` du multi-provider). Conséquence assumée : un hotkey fantôme
 « Open settings tab: Better Vault » subsiste quand ce plugin n'est pas hôte.
-L'hôte fournit le jeton `BetterPanelEmbedded` à l'injecteur du composant
-embarqué, qui s'en sert pour ne pas appliquer `content-box` (mise en page
-portée par l'hôte).
+
+L'hôte élu d'une famille de plusieurs rend son
+`src/components/hostPanel.component.ts` : **un onglet par plugin**, sa propre
+page comprise, chaque page montée par `ngComponentOutlet` avec un injecteur
+portant le jeton `BetterPanelEmbedded` — les pages embarquées s'en servent pour
+ne pas appliquer `content-box` (mise en page portée par l'hôte), et une page
+embarquée ne monte jamais les autres. Seul de sa famille, l'hôte rend son
+panneau plat tel quel, sans habillage. Le deep-link d'un plugin vers son propre
+onglet du panneau partagé passe par `openRequested = true` sur sa contribution
+(objet partagé tel quel via l'injecteur) — le panneau hôte le lit et l'efface à
+sa construction, quel que soit le plugin qui le porte.
 
 ## Git
 
