@@ -8,172 +8,225 @@
   h3.mb-1 {{ 'Automatic vault unlocking' | translate }}
   .machine-badge.mb-3 {{ 'Settings specific to this machine — never synchronised.' | translate }}
 
-  //- Garde-fou déclenché : un accès au trousseau n'est jamais revenu lors d'une
-      session précédente, et le plugin s'est mis en retrait pour que Tabby
-      redémarre. C'est le seul état que l'utilisateur peut lever lui-même — d'où
-      un encadré distinct de l'indisponibilité ordinaire, avec l'action à faire.
-  .alert.alert-danger(*ngIf='suspended')
-    strong {{ 'Keychain access suspended.' | translate }}
-    |  {{ suspendedDetail }}.
-    .mt-1 {{ 'The plugin no longer queries it, so that Tabby startup cannot freeze. Your master password is requested normally every time.' | translate }}
-    .mt-1 {{ 'Unlock your keychain, then run the check below.' | translate }}
-    .mt-1.muted {{ 'This check really encrypts and decrypts a throwaway value — that is the only way to know whether the keychain responds. If yours is still locked, your system will ask you to authenticate.' | translate }}
-    button.btn.btn-warning.mt-2((click)='rearmKeychain()')
-      i.fas.fa-unlock.mr-2
-      | {{ 'Lift the suspension and check' | translate }}
+  //- Sous-onglets internes, même motif que la page de réglages de la sidebar :
+      un niveau SOUS l'onglet « Better Vault » du panneau unifié. L'onglet des
+      exclusions disparaît avec l'interrupteur du plugin — un onglet qui survit
+      à ce qu'il règle se lit comme cassé plutôt que comme sans objet.
+  ul.nav.nav-tabs.better-vault-settings-nav
+    li.nav-item
+      a.nav-link(href='#', [class.active]="section === 'general'", (click)="setSection('general', $event)") {{ 'General' | translate }}
+    li.nav-item(*ngIf='settings.enabled')
+      a.nav-link(href='#', [class.active]="section === 'exclusions'", (click)="setSection('exclusions', $event)") {{ 'Excluded profiles' | translate }}
 
-  //- Sonde non encore faite : l'interroger peut bloquer sur un trousseau
-      verrouillé, ce doit donc rester un geste de l'utilisateur tant que le
-      plugin n'est pas activé.
-  .alert.alert-info(*ngIf='!suspended && !keychain')
-    strong {{ 'System keychain not checked.' | translate }}
-    .mt-1 {{ 'The plugin does not query the keychain until it is enabled — that is what guarantees its mere presence cannot delay Tabby startup.' | translate }}
-    .mt-1.muted {{ 'The check encrypts and decrypts a throwaway value. If your keychain is locked, your system will ask you to authenticate.' | translate }}
-    button.btn.btn-primary.mt-2((click)='verifyKeychain()')
-      i.fas.fa-key.mr-2
-      | {{ 'Check the keychain' | translate }}
+  ng-container(*ngIf="section === 'general'")
+    //- Garde-fou déclenché : un accès au trousseau n'est jamais revenu lors d'une
+        session précédente, et le plugin s'est mis en retrait pour que Tabby
+        redémarre. C'est le seul état que l'utilisateur peut lever lui-même — d'où
+        un encadré distinct de l'indisponibilité ordinaire, avec l'action à faire.
+    .alert.alert-danger(*ngIf='suspended')
+      strong {{ 'Keychain access suspended.' | translate }}
+      |  {{ suspendedDetail }}.
+      .mt-1 {{ 'The plugin no longer queries it, so that Tabby startup cannot freeze. Your master password is requested normally every time.' | translate }}
+      .mt-1 {{ 'Unlock your keychain, then run the check below.' | translate }}
+      .mt-1.muted {{ 'This check really encrypts and decrypts a throwaway value — that is the only way to know whether the keychain responds. If yours is still locked, your system will ask you to authenticate.' | translate }}
+      button.btn.btn-warning.mt-2((click)='rearmKeychain()')
+        i.fas.fa-unlock.mr-2
+        | {{ 'Lift the suspension and check' | translate }}
 
-  .alert.alert-warning(*ngIf='keychain && !keychain.available && !keychain.suspended')
-    strong {{ 'System keychain unavailable.' | translate }}
-    |  {{ keychainReason }}
-    //- Sans cette ligne, l'utilisateur reclique sur « vérifier » indéfiniment :
-        le trousseau ne sera plus interrogé de la session, et le bouton ne
-        l'annonce pas (#V23). Le redémarrage est le seul remède, il doit être
-        écrit là où l'échec s'affiche.
-    .mt-1(*ngIf='keychain.restartRequired')
-      strong {{ 'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.' | translate }}
-    .mt-1 {{ 'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.' | translate }}
-    .mt-1 {{ 'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.' | translate }}
+    //- Sonde non encore faite : l'interroger peut bloquer sur un trousseau
+        verrouillé, ce doit donc rester un geste de l'utilisateur tant que le
+        plugin n'est pas activé.
+    .alert.alert-info(*ngIf='!suspended && !keychain')
+      strong {{ 'System keychain not checked.' | translate }}
+      .mt-1 {{ 'The plugin does not query the keychain until it is enabled — that is what guarantees its mere presence cannot delay Tabby startup.' | translate }}
+      .mt-1.muted {{ 'The check encrypts and decrypts a throwaway value. If your keychain is locked, your system will ask you to authenticate.' | translate }}
+      button.btn.btn-primary.mt-2((click)='verifyKeychain()')
+        i.fas.fa-key.mr-2
+        | {{ 'Check the keychain' | translate }}
 
-  //- Masqués plutôt que grisés. Le composant `toggle` de Tabby expose bien un
-      `@Input() disabled`, mais son `@HostListener('click')` ne suffit pas à
-      neutraliser la case à cocher interne : mesuré sur Tabby 1.0.235, le
-      contrôle restait actionnable alors qu'il paraissait inactif — pire qu'un
-      contrôle franchement absent. Un `*ngIf` ne dépend d'aucun comportement
-      tiers.
-  ng-container(*ngIf='keychain?.available')
+    .alert.alert-warning(*ngIf='keychain && !keychain.available && !keychain.suspended')
+      strong {{ 'System keychain unavailable.' | translate }}
+      |  {{ keychainReason }}
+      //- Sans cette ligne, l'utilisateur reclique sur « vérifier » indéfiniment :
+          le trousseau ne sera plus interrogé de la session, et le bouton ne
+          l'annonce pas (#V23). Le redémarrage est le seul remède, il doit être
+          écrit là où l'échec s'affiche.
+      .mt-1(*ngIf='keychain.restartRequired')
+        strong {{ 'Restart Tabby before trying again: the keychain remembers this failure for as long as the application is running, so another check cannot reach it.' | translate }}
+      .mt-1 {{ 'Automatic unlocking cannot work on this machine; the master password will keep being requested every time.' | translate }}
+      .mt-1 {{ 'Settings that depend on it stay hidden while this lasts. The log and observation mode remain available, as does revocation if a password had been saved.' | translate }}
+
+    //- Masqués plutôt que grisés. Le composant `toggle` de Tabby expose bien un
+        `@Input() disabled`, mais son `@HostListener('click')` ne suffit pas à
+        neutraliser la case à cocher interne : mesuré sur Tabby 1.0.235, le
+        contrôle restait actionnable alors qu'il paraissait inactif — pire qu'un
+        contrôle franchement absent. Un `*ngIf` ne dépend d'aucun comportement
+        tiers.
+    ng-container(*ngIf='keychain?.available')
+      .form-line
+        .header
+          .title {{ 'Enable on this machine' | translate }}
+          //- « confié au trousseau » disait où le mot de passe allait, pas où il
+              va réellement : le trousseau du système ne détient qu'une CLÉ, le
+              mot de passe chiffré vit dans better-vault.json (campagne 4, poste
+              C, "1. Le panneau dit... ce n'est pas ce qui se passe").
+          .description {{ 'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.' | translate }}
+        toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
+
+    //- Conservé en toutes circonstances : ce nom étiquette les entrées du
+        journal, qui reste consultable même sans trousseau.
     .form-line
       .header
-        .title {{ 'Enable on this machine' | translate }}
-        //- « confié au trousseau » disait où le mot de passe allait, pas où il
-            va réellement : le trousseau du système ne détient qu'une CLÉ, le
-            mot de passe chiffré vit dans better-vault.json (campagne 4, poste
-            C, "1. Le panneau dit... ce n'est pas ce qui se passe").
-        .description {{ 'The master password is encrypted with a key held by the operating system keychain, never stored in clear text.' | translate }}
-      toggle([(ngModel)]='settings.enabled', (ngModelChange)='save()')
-
-  //- Conservé en toutes circonstances : ce nom étiquette les entrées du
-      journal, qui reste consultable même sans trousseau.
-  .form-line
-    .header
-      .title {{ 'Name of this machine' | translate }}
-      .description {{ 'Purely indicative — helps you find your way around the settings and the log.' | translate }}
-    input.form-control(
-      type='text',
-      [(ngModel)]='settings.machineName',
-      (change)='save()',
-      [placeholder]="'home machine' | translate",
-    )
-
-  ng-container(*ngIf='keychain?.available')
-    h4.mt-4.mb-2 {{ 'Expiry' | translate }}
-
-    .form-line
-      .header
-        .title {{ 'Ask for the password again' | translate }}
-        .description {{ 'Next due: {value}' | translate:{ value: expiryLabel } }}
-      select.form-control(
-        [(ngModel)]='settings.expiry.mode',
-        (ngModelChange)='onExpiryChanged()',
-      )
-        option(value='schedule') {{ 'At a fixed day and time' | translate }}
-        option(value='sliding') {{ 'After a delay' | translate }}
-        option(value='never') {{ 'Never' | translate }}
-
-    .form-line(*ngIf="settings.expiry.mode === 'schedule'")
-      .header
-        .title {{ 'Every' | translate }}
-        .description {{ 'Choosing a quiet slot avoids the re-entry falling in the middle of a work session.' | translate }}
-      div
-        select.form-control.mr-2(
-          [(ngModel)]='settings.expiry.weekday',
-          (ngModelChange)='onExpiryChanged()',
-        )
-          option(*ngFor='let d of weekdays', [ngValue]='d.value') {{ d.source | translate }}
-        select.form-control(
-          [(ngModel)]='settings.expiry.hour',
-          (ngModelChange)='onExpiryChanged()',
-        )
-          option(*ngFor='let h of hours', [ngValue]='h') {{ '{hour}:00' | translate:{ hour: h } }}
-
-    .form-line(*ngIf="settings.expiry.mode === 'sliding'")
-      .header
-        .title {{ 'Validity period' | translate }}
-        .description {{ 'In days, counted from the last entry.' | translate }}
+        .title {{ 'Name of this machine' | translate }}
+        .description {{ 'Purely indicative — helps you find your way around the settings and the log.' | translate }}
       input.form-control(
-        type='number',
-        min='1',
-        max='365',
-        [(ngModel)]='settings.expiry.days',
-        (ngModelChange)='onExpiryChanged()',
+        type='text',
+        [(ngModel)]='settings.machineName',
+        (change)='save()',
+        [placeholder]="'home machine' | translate",
       )
 
-  //- Visible aussi sans trousseau DÈS LORS qu'un jeton existe : `deleteToken()`
-      ne fait que réécrire notre fichier, il ne sollicite pas le trousseau. Un
-      mot de passe enregistré avant que le trousseau ne devienne inutilisable
-      doit rester révocable — c'est le moment où ça compte le plus. En revanche
-      le cas « aucun jeton » est masqué : il annoncerait un enregistrement futur
-      qui ne se produira pas.
-  ng-container(*ngIf='keychain?.available || hasToken')
-    h4.mt-4.mb-2 {{ 'Saved password' | translate }}
+    ng-container(*ngIf='keychain?.available')
+      h4.mt-4.mb-2 {{ 'Expiry' | translate }}
+
+      .form-line
+        .header
+          .title {{ 'Ask for the password again' | translate }}
+          .description {{ 'Next due: {value}' | translate:{ value: expiryLabel } }}
+        select.form-control(
+          [(ngModel)]='settings.expiry.mode',
+          (ngModelChange)='onExpiryChanged()',
+        )
+          option(value='schedule') {{ 'At a fixed day and time' | translate }}
+          option(value='sliding') {{ 'After a delay' | translate }}
+          option(value='never') {{ 'Never' | translate }}
+
+      .form-line(*ngIf="settings.expiry.mode === 'schedule'")
+        .header
+          .title {{ 'Every' | translate }}
+          .description {{ 'Choosing a quiet slot avoids the re-entry falling in the middle of a work session.' | translate }}
+        div
+          select.form-control.mr-2(
+            [(ngModel)]='settings.expiry.weekday',
+            (ngModelChange)='onExpiryChanged()',
+          )
+            option(*ngFor='let d of weekdays', [ngValue]='d.value') {{ d.source | translate }}
+          select.form-control(
+            [(ngModel)]='settings.expiry.hour',
+            (ngModelChange)='onExpiryChanged()',
+          )
+            option(*ngFor='let h of hours', [ngValue]='h') {{ '{hour}:00' | translate:{ hour: h } }}
+
+      .form-line(*ngIf="settings.expiry.mode === 'sliding'")
+        .header
+          .title {{ 'Validity period' | translate }}
+          .description {{ 'In days, counted from the last entry.' | translate }}
+        input.form-control(
+          type='number',
+          min='1',
+          max='365',
+          [(ngModel)]='settings.expiry.days',
+          (ngModelChange)='onExpiryChanged()',
+        )
+
+    //- Visible aussi sans trousseau DÈS LORS qu'un jeton existe : `deleteToken()`
+        ne fait que réécrire notre fichier, il ne sollicite pas le trousseau. Un
+        mot de passe enregistré avant que le trousseau ne devienne inutilisable
+        doit rester révocable — c'est le moment où ça compte le plus. En revanche
+        le cas « aucun jeton » est masqué : il annoncerait un enregistrement futur
+        qui ne se produira pas.
+    ng-container(*ngIf='keychain?.available || hasToken')
+      h4.mt-4.mb-2 {{ 'Saved password' | translate }}
+
+      .form-line
+        .header
+          .title(*ngIf='hasToken') {{ 'A password is saved on this machine' | translate }}
+          .title(*ngIf='!hasToken') {{ 'No password saved' | translate }}
+          .description(*ngIf='hasToken') {{ 'It will be forgotten on {date}, or immediately if you ask.' | translate:{ date: expiryLabel } }}
+          .description(*ngIf='!hasToken') {{ 'It will be saved at the next manual entry, if the plugin is enabled.' | translate }}
+        button.btn.btn-danger(
+          *ngIf='hasToken',
+          (click)='forgetNow()',
+        )
+          i.fas.fa-trash.mr-2
+          | {{ 'Forget now' | translate }}
+
+    h4.mt-4.mb-2 {{ 'Log' | translate }}
+
+    //- Le mode observation vit ici, et non sous « Mot de passe enregistré » comme
+        auparavant : c'est un mode de journalisation, et il reste opérant sans
+        trousseau. `VaultBridgeService.resolve()` teste `debug` AVANT `enabled` et
+        avant l'état du trousseau — c'est donc le seul moyen d'observer ce que fait
+        le plugin dans une session dégradée. Le masquer priverait l'utilisateur de
+        l'outil de diagnostic au moment précis où il en a besoin.
+    .form-line
+      .header
+        .title {{ 'Observation mode' | translate }}
+        .description {{ 'Logs what happens without ever serving or saving a password. To diagnose safely.' | translate }}
+      toggle([(ngModel)]='settings.debug', (ngModelChange)='save()')
 
     .form-line
       .header
-        .title(*ngIf='hasToken') {{ 'A password is saved on this machine' | translate }}
-        .title(*ngIf='!hasToken') {{ 'No password saved' | translate }}
-        .description(*ngIf='hasToken') {{ 'It will be forgotten on {date}, or immediately if you ask.' | translate:{ date: expiryLabel } }}
-        .description(*ngIf='!hasToken') {{ 'It will be saved at the next manual entry, if the plugin is enabled.' | translate }}
-      button.btn.btn-danger(
-        *ngIf='hasToken',
-        (click)='forgetNow()',
+        .title {{ 'Entry retention' | translate }}
+        .description {{ 'The log records vault openings, expiries and revocations. It never contains your password.' | translate }}
+      select.form-control(
+        [(ngModel)]='settings.logRetentionDays',
+        (ngModelChange)='save()',
       )
-        i.fas.fa-trash.mr-2
-        | {{ 'Forget now' | translate }}
+        option(*ngFor='let r of retentions', [ngValue]='r.value') {{ r.source | translate }}
 
-  h4.mt-4.mb-2 {{ 'Log' | translate }}
+    .form-line
+      .header
+        .title {{ 'File' | translate }}
+        .description
+          code {{ logPath }}
+        .description.mt-1 {{ 'Local to this machine, never synchronised. Never contains your password.' | translate }}
+      div
+        button.btn.btn-secondary.mr-2((click)='openLog()')
+          i.fas.fa-external-link-alt.mr-2
+          | {{ 'Open' | translate }}
+        button.btn.btn-danger((click)='purgeLog()')
+          i.fas.fa-eraser.mr-2
+          | {{ 'Purge' | translate }}
 
-  //- Le mode observation vit ici, et non sous « Mot de passe enregistré » comme
-      auparavant : c'est un mode de journalisation, et il reste opérant sans
-      trousseau. `VaultBridgeService.resolve()` teste `debug` AVANT `enabled` et
-      avant l'état du trousseau — c'est donc le seul moyen d'observer ce que fait
-      le plugin dans une session dégradée. Le masquer priverait l'utilisateur de
-      l'outil de diagnostic au moment précis où il en a besoin.
-  .form-line
-    .header
-      .title {{ 'Observation mode' | translate }}
-      .description {{ 'Logs what happens without ever serving or saving a password. To diagnose safely.' | translate }}
-    toggle([(ngModel)]='settings.debug', (ngModelChange)='save()')
+  ng-container(*ngIf="section === 'exclusions'")
+    //- CE TEXTE DIT LES LIMITES MESURÉES, IL NE LES ADOUCIT PAS. L'exclusion
+        agit sur la SAISIE du mot de passe d'un profil, pas sur le contenu du
+        coffre : le laisser croire ferait passer un confort pour un
+        cloisonnement (ROADMAP.html#granularite, callout « Limites mesurées »).
+    .exclusions-note
+      div {{ 'An excluded profile gets its password asked again at every connection, and that is all it does: the vault remains a single encrypted store, any profile that is not excluded still opens it automatically, and private key passphrases are outside this scope.' | translate }}
+      .mt-1 {{ 'With an encrypted configuration, unlocking at startup also stays automatic — it happens before any profile exists. Excluding a group applies to the profiles it holds at that moment; one added afterwards is not excluded.' | translate }}
 
-  .form-line
-    .header
-      .title {{ 'Entry retention' | translate }}
-      .description {{ 'The log records vault openings, expiries and revocations. It never contains your password.' | translate }}
-    select.form-control(
-      [(ngModel)]='settings.logRetentionDays',
-      (ngModelChange)='save()',
-    )
-      option(*ngFor='let r of retentions', [ngValue]='r.value') {{ r.source | translate }}
+    .exclusions-empty(*ngIf='!exclusionGroups.length') {{ 'No SSH profile is defined in this configuration.' | translate }}
 
-  .form-line
-    .header
-      .title {{ 'File' | translate }}
-      .description
-        code {{ logPath }}
-      .description.mt-1 {{ 'Local to this machine, never synchronised. Never contains your password.' | translate }}
-    div
-      button.btn.btn-secondary.mr-2((click)='openLog()')
-        i.fas.fa-external-link-alt.mr-2
-        | {{ 'Open' | translate }}
-      button.btn.btn-danger((click)='purgeLog()')
-        i.fas.fa-eraser.mr-2
-        | {{ 'Purge' | translate }}
+    .exclusion-group(*ngFor='let g of exclusionGroups; trackBy: trackGroup')
+      .exclusion-group-header
+        //- Le chevron et le nom plient/déplient tous les deux : la cible du
+            clic est toute la partie gauche de l'en-tête, pas un glyphe de
+            quelques pixels. Replié, l'en-tête reste entier — compteur et
+            action de groupe compris : on peut agir sur un groupe sans le
+            déplier. État mémorisé en localStorage (`toggleCollapsed`).
+        .exclusion-group-caret((click)='toggleCollapsed(g)')
+          i.fas([ngClass]="g.collapsed ? 'fa-chevron-right' : 'fa-chevron-down'")
+        //- Nom saisi par l'utilisateur d'un côté, libellé traduit du panier
+            « sans groupe » de l'autre — voir `ExclusionGroup`.
+        .exclusion-group-name(*ngIf='!g.source', (click)='toggleCollapsed(g)') {{ g.name }}
+        .exclusion-group-name(*ngIf='g.source', (click)='toggleCollapsed(g)') {{ g.source | translate }}
+        .exclusion-group-count {{ '{excluded} of {total} excluded' | translate:{ excluded: g.excludedCount, total: g.profiles.length } }}
+        //- Un seul bouton, dont la règle vit dans `toggleGroup()` : deux libellés
+            plutôt que deux boutons, pour qu'il n'y ait qu'un endroit où l'action
+            est décidée.
+        button.btn.btn-sm.btn-secondary((click)='toggleGroup(g)')
+          span(*ngIf='!g.allExcluded') {{ 'Exclude all' | translate }}
+          span(*ngIf='g.allExcluded') {{ 'Include all' | translate }}
+
+      //- Bascule active = profil EXCLU, dans le sens du titre de l'onglet et
+          du bouton de groupe. Le compteur au-dessus lève l'ambiguïté.
+      ng-container(*ngIf='!g.collapsed')
+        .exclusion-profile(
+          *ngFor='let p of g.profiles; trackBy: trackProfile',
+          [ngClass]="{ 'is-excluded': p.excluded }",
+        )
+          .exclusion-profile-name {{ p.name }}
+          toggle([ngModel]='p.excluded', (ngModelChange)='toggleProfile(p, $event)')

@@ -60,6 +60,14 @@ export interface Settings {
     token: string | null
     /** Échéance du jeton courant (ms depuis l'époque), null si sans expiration. */
     tokenExpiresAt: number | null
+    /**
+     * Ids des profils exclus du déverrouillage automatique — granularité par
+     * profil (ROADMAP.html#granularite). JAMAIS d'ids de groupe : le groupe
+     * n'est qu'un raccourci d'interface qui applique l'exclusion à ses membres
+     * au moment du clic, précisément pour que le re-parentage d'un groupe côté
+     * sidebar (nouvel uuid, piège hérité #12) ne puisse rien invalider ici.
+     */
+    excludedProfiles: string[]
 }
 
 /** Lundi 3 h du matin : la ressaisie tombe en début de semaine, pas en pleine session. */
@@ -76,6 +84,7 @@ function defaults (): Settings {
         expiry: { ...DEFAULT_EXPIRY },
         token: null,
         tokenExpiresAt: null,
+        excludedProfiles: [],
     }
 }
 
@@ -111,6 +120,9 @@ export function readSettings (): Settings {
         },
         token: typeof parsed.token === 'string' ? parsed.token : null,
         tokenExpiresAt: typeof parsed.tokenExpiresAt === 'number' ? parsed.tokenExpiresAt : null,
+        excludedProfiles: Array.isArray(parsed.excludedProfiles)
+            ? [...new Set((parsed.excludedProfiles as unknown[]).filter((x): x is string => typeof x === 'string' && x !== ''))]
+            : [],
     }
 }
 
@@ -212,10 +224,30 @@ function writeDirectly (target: string, tmp: string, payload: string, cause: unk
  * laisser une seule ligne, et la cible restait telle quelle, avec son ancien
  * contenu et ses anciens droits.
  */
+/**
+ * Relit le fichier tel quel, sans coercition ni défauts — uniquement pour que
+ * `writeSettings()` préserve les clés qu'il ne connaît pas. Ne jamais s'en
+ * servir pour LIRE un réglage : c'est le rôle de `readSettings()`, qui valide.
+ */
+function readRaw (): Record<string, unknown> {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(storePath(), 'utf8'))
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+    } catch {
+        return {}
+    }
+}
+
 export function writeSettings (settings: Settings): void {
     const target = storePath()
     const tmp = target + '.tmp'
-    const payload = JSON.stringify(settings, null, 2)
+    // Les clés inconnues du fichier sont recopiées telles quelles : une version
+    // de ce plugin ANTÉRIEURE à un champ ne doit plus l'effacer à sa première
+    // écriture. Sans cette fusion, tout enrichissement futur du fichier était
+    // silencieusement détruit par un simple renouvellement de jeton fait depuis
+    // une version plus ancienne (constat de la passe de faisabilité du
+    // 2026-08-07, ROADMAP.html#granularite).
+    const payload = JSON.stringify({ ...readRaw(), ...settings }, null, 2)
 
     try {
         // Un temporaire résiduel — écriture interrompue, ou lien posé là — ferait
@@ -285,6 +317,52 @@ export function deleteToken (): void {
     if (settings.token || settings.tokenExpiresAt !== null) {
         writeSettings({ ...settings, token: null, tokenExpiresAt: null })
     }
+}
+
+/** L'id de profil est-il exclu du déverrouillage automatique ? */
+export function isProfileExcluded (profileId: string, settings: Settings = readSettings()): boolean {
+    return settings.excludedProfiles.includes(profileId)
+}
+
+/**
+ * Applique l'exclusion à un lot d'ids en une seule écriture — le lot, c'est le
+ * raccourci groupe : un clic sur un groupe passe ici les ids de ses membres.
+ * Fusion sur une lecture fraîche, jamais sur un instantané (même règle que le
+ * panneau de réglages : le pont écrit le même fichier de son côté).
+ */
+export function setProfilesExcluded (profileIds: string[], excluded: boolean): void {
+    const settings = readSettings()
+    const set = new Set(settings.excludedProfiles)
+    for (const id of profileIds) {
+        if (excluded) {
+            set.add(id)
+        } else {
+            set.delete(id)
+        }
+    }
+    const next = [...set].sort()
+    if (JSON.stringify(next) !== JSON.stringify([...settings.excludedProfiles].sort())) {
+        writeSettings({ ...settings, excludedProfiles: next })
+    }
+}
+
+/**
+ * Purge les ids ne correspondant plus à aucun profil de la config. Rend le
+ * nombre d'entrées retirées.
+ *
+ * À n'appeler qu'avec la config CHARGÉE comme référentiel, donc jamais sur le
+ * chemin du déverrouillage (au boot en config chiffrée, la config n'est pas
+ * lisible — le référentiel serait vide et purgerait tout). Une entrée périmée
+ * qui traîne est sans danger : `isProfileExcluded` l'ignore de fait.
+ */
+export function pruneExcludedProfiles (validIds: ReadonlySet<string>): number {
+    const settings = readSettings()
+    const kept = settings.excludedProfiles.filter(id => validIds.has(id))
+    const removed = settings.excludedProfiles.length - kept.length
+    if (removed > 0) {
+        writeSettings({ ...settings, excludedProfiles: kept })
+    }
+    return removed
 }
 
 /** Supprime l'ancien fichier de jeton, devenu inutilisable. */
