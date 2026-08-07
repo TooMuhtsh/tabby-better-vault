@@ -57,6 +57,7 @@ export default {
     'Forget now': 'Jetzt vergessen',
 
     // Panneau de réglages — profils exclus
+    'General': 'Allgemein',
     'Excluded profiles': 'Ausgeschlossene Profile',
     'An excluded profile gets its password asked again at every connection, and that is all it does: the vault remains a single encrypted store, any profile that is not excluded still opens it automatically, and private key passphrases are outside this scope.': 'Bei einem ausgeschlossenen Profil wird das Passwort bei jeder Verbindung wieder abgefragt, mehr nicht: Der Tresor bleibt ein einziger verschlüsselter Speicher, jedes nicht ausgeschlossene Profil öffnet ihn weiterhin automatisch, und Passphrasen privater Schlüssel liegen außerhalb dieses Rahmens.',
     'With an encrypted configuration, unlocking at startup also stays automatic — it happens before any profile exists. Excluding a group applies to the profiles it holds at that moment; one added afterwards is not excluded.': 'Bei verschlüsselter Konfiguration bleibt auch das Entsperren beim Start automatisch – es erfolgt, bevor überhaupt ein Profil existiert. Der Ausschluss einer Gruppe gilt für die Profile, die sie in diesem Moment enthält; ein später hinzugefügtes Profil ist nicht ausgeschlossen.',

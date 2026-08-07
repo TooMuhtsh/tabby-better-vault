@@ -111,3 +111,39 @@
         opacity: 0.6;
     }
 }
+
+// La bande d'onglets internes (Général / Profils exclus) — classe de PREMIER
+// niveau et non imbriquée sous .better-vault-settings, par précaution héritée
+// du piège #56 de la sidebar : une classe nichée sous la racine d'une page ne
+// s'applique plus si le même balisage est rendu ailleurs. Même idiome
+// rgba-de-blanc/noir que le reste, lisible sur les deux thèmes.
+.better-vault-settings-nav {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+    margin-bottom: 1.25rem;
+    gap: 0.25rem;
+
+    .nav-link {
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        color: rgba(255, 255, 255, 0.62);
+        padding: 0.45rem 0.9rem;
+        cursor: pointer;
+        transition: color 0.15s ease, background 0.15s ease;
+
+        &:hover:not(.active) {
+            color: rgba(255, 255, 255, 0.85);
+            background: rgba(128, 128, 128, 0.14);
+        }
+
+        // L'onglet actif se lit comme rattaché à la page qu'il découvre : même
+        // bordure que la bande, moins le segment sous l'onglet lui-même.
+        &.active {
+            color: rgba(255, 255, 255, 0.95);
+            background: rgba(128, 128, 128, 0.2);
+            border-color: rgba(128, 128, 128, 0.35);
+            margin-bottom: -1px;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+        }
+    }
+}

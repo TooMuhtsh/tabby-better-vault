@@ -99,6 +99,15 @@ export class BetterVaultSettingsTabComponent {
     suspendedDetail = ''
 
     /**
+     * Onglet interne affiché — même motif que les sous-onglets de la page de
+     * réglages de la sidebar (Général / Fonctionnalités / …) : un niveau SOUS
+     * l'onglet « Better Vault » du panneau unifié, qui lui appartient au
+     * panneau hôte. Demandé par l'utilisateur le 2026-08-07 : les exclusions
+     * ont leur propre onglet plutôt qu'une section en milieu de page.
+     */
+    section: 'general' | 'exclusions' = 'general'
+
+    /**
      * Groupes et profils SSH avec leur état d'exclusion, RECALCULÉS à chaque
      * bascule par `buildExclusions()`.
      *
@@ -313,6 +322,25 @@ export class BetterVaultSettingsTabComponent {
         // significatif du cycle de vie, il doit laisser une trace.
         log('manual revocation from the settings — token deleted')
         this.settings = readSettings()
+    }
+
+    /**
+     * Bascule d'onglet interne. `preventDefault` : les liens de la nav sont des
+     * `href='#'` (le style Bootstrap l'attend), le navigateur ne doit pas s'y
+     * accrocher.
+     *
+     * Le modèle des exclusions est reconstruit à CHAQUE entrée dans l'onglet,
+     * pas seulement à la construction du composant : la liste peut avoir changé
+     * ailleurs pendant que ce panneau restait ouvert — par le pont
+     * inter-plugins notamment, dont c'est le rôle.
+     */
+    setSection (section: 'general' | 'exclusions', event: Event): void {
+        event.preventDefault()
+        if (section === 'exclusions') {
+            this.settings = readSettings()
+            this.buildExclusions()
+        }
+        this.section = section
     }
 
     /**
@@ -542,6 +570,14 @@ export class BetterVaultSettingsTabComponent {
 
         // Relecture : l'affichage reflète le fichier, pas notre instantané.
         this.settings = readSettings()
+
+        // L'onglet des exclusions disparaît avec l'interrupteur (même règle que
+        // les sous-onglets de fonctionnalités de la sidebar : un onglet qui
+        // survit à ce qu'il règle se lit comme cassé). Si on y était, on
+        // retombe sur le général plutôt que sur une page vide.
+        if (!this.settings.enabled && this.section === 'exclusions') {
+            this.section = 'general'
+        }
     }
 
     /**

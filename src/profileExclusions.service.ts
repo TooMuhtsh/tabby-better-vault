@@ -1,5 +1,5 @@
 import { Injectable, Injector } from '@angular/core'
-import type { SSHProfile } from 'tabby-ssh'
+import { ProfileProvider } from 'tabby-core'
 
 import { log, crit } from './logger'
 import { briefError } from './messages'
@@ -24,27 +24,31 @@ import { VaultBridgeService } from './vaultBridge.service'
  * laquelle le pont refuse de servir la passphrase automatiquement. La pop-up
  * native de Tabby s'affiche donc pour cette connexion-là, et pour elle seule.
  *
- * PATTERN NON CONTRACTUEL, au même titre que #V2 : remplacement d'une méthode
- * sur l'instance d'un service interne, vérifié aux deux niveaux sur
- * `tabby-ssh@1.0.231-nightly.0` uniquement — à revérifier à chaque mise à jour
- * de Tabby.
+ * NE JAMAIS FAIRE `require('tabby-ssh')` DEPUIS CE PLUGIN. Le chargeur de Tabby
+ * n'intercepte par NOM que `@angular/*`, `rxjs`, `ngx-toastr`, `zone.js` et
+ * quatre modules Tabby — `tabby-core`, `tabby-local`, `tabby-settings`,
+ * `tabby-terminal` (`cachedBuiltinModules` + `builtinModules` de son
+ * `initModuleLookup`). `tabby-ssh` N'EN FAIT PAS PARTIE : requis par nom depuis
+ * ce plugin, Node le résout dans NOTRE `node_modules` (visible à l'exécution à
+ * travers la jonction NTFS) et charge une SECONDE copie du module. Sa classe
+ * `PasswordStorageService` étant `providedIn: 'root'`, l'injecteur crée alors
+ * sans broncher un JUMEAU du singleton — que personne d'autre n'utilise : le
+ * patch se pose dessus et ne se déclenche jamais. Mesuré en conditions réelles
+ * le 2026-08-07, lors de la première passe de test de ce chantier.
  *
- * LES TYPINGS NPM NE DÉCRIVENT PAS CE QUI EST INSTALLÉ. Deux écarts constatés au
- * moment d'écrire ce fichier, d'où le `require` et l'interface locale ci-dessous
- * plutôt qu'un import typé :
+ * L'ACQUISITION PASSE DONC PAR L'INJECTEUR SEUL : le multi-provider
+ * `ProfileProvider` de `tabby-core` (intercepté par nom, donc toujours le vrai),
+ * dont l'entrée `id === 'ssh'` détient l'instance réelle dans son champ
+ * `passwordStorage`. Vérifié en live par l'injecteur : c'est bien l'instance
+ * que `SSHService` et les sessions utilisent. Bénéfice collatéral : plus aucune
+ * dépendance de chargement sur `tabby-ssh` — sans lui, l'entrée `ssh` manque et
+ * ce service se retire proprement.
  *
- *   1. `PasswordStorageService` n'est PAS réexporté par
- *      `tabby-ssh/typings/index.d.ts` (qui ne fait qu'`export * from './api'`),
- *      alors que le bundle compilé l'expose bien dans son bloc de réexport
- *      webpack. Un `import { PasswordStorageService } from 'tabby-ssh'` échoue à
- *      la compilation tout en étant parfaitement valide à l'exécution.
- *   2. Les typings déclarent `loadPassword(profile)` à UN paramètre, quand le
- *      code installé en prend DEUX — `loadPassword(profile, username)`, le
- *      second servant à résoudre le compte quand il diffère de
- *      `profile.options.user` (authentification interactive, jump host, WinSCP).
- *      Se fier aux typings ferait perdre ce paramètre en cours de route, donc
- *      changerait la clé de recherche du secret : le déverrouillage retomberait
- *      silencieusement sur le mauvais compte.
+ * PATTERN NON CONTRACTUEL, au même titre que #V2 : le nom du champ
+ * `passwordStorage` et la signature `loadPassword(profile, username)` sortent
+ * du bundle installé (`tabby-ssh@1.0.231-nightly.0`), pas d'une API — les
+ * typings npm, eux, MENTENT deux fois (classe non réexportée, second paramètre
+ * absent). À revérifier à chaque mise à jour de Tabby.
  *
  * LIMITES ASSUMÉES, et qui doivent être dites à l'interface plutôt que cachées :
  *
@@ -63,12 +67,16 @@ import { VaultBridgeService } from './vaultBridge.service'
  */
 
 /**
- * Surface réellement patchée, décrite d'après le BUNDLE INSTALLÉ et non d'après
- * les typings (voir l'écart n°2 ci-dessus). Volontairement minimale : tout ce
- * qui n'est pas enveloppé n'a pas à figurer ici.
+ * Surface réellement consommée, décrite d'après le BUNDLE INSTALLÉ (voir
+ * ci-dessus — les typings ne sont pas fiables ici, et ce fichier n'importe plus
+ * rien de `tabby-ssh`). Volontairement minimale.
  */
+interface SSHProfileLike {
+    id?: string
+}
+
 interface PasswordStorage {
-    loadPassword (profile: SSHProfile, username?: string): Promise<string | null>
+    loadPassword (profile: SSHProfileLike, username?: string): Promise<string | null>
 }
 
 @Injectable({ providedIn: 'root' })
@@ -87,32 +95,28 @@ export class ProfileExclusionsService {
 
         let storage: PasswordStorage
         try {
-            // `require` et non `import` de valeur POUR LA SEULE RAISON que le
-            // symbole manque aux typings (écart n°1) — pas pour retarder quoi que
-            // ce soit. Ne pas se méprendre sur cette forme : la sortie est en
-            // UMD, et webpack hisse TOUS les externals dans l'en-tête du module,
-            // y compris ceux écrits en `require` au fond d'une fonction (c'est
-            // déjà le cas de `@electron/remote`, vérifié dans `dist/index.js`).
-            // `tabby-ssh` devient donc une dépendance de CHARGEMENT de ce plugin,
-            // au même titre que `tabby-settings` — un autre plugin intégré, déjà
-            // présent dans cet en-tête sans que cela ait jamais posé problème.
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const { PasswordStorageService } = require('tabby-ssh')
-            storage = this.injector.get(PasswordStorageService) as PasswordStorage
+            const providers = this.injector.get<unknown>(ProfileProvider as any, [])
+            const list = Array.isArray(providers) ? providers : [providers]
+            const ssh = list.find((p: any) => p?.id === 'ssh') as any
+            const candidate = ssh?.passwordStorage
+            if (!candidate || typeof candidate.loadPassword !== 'function') {
+                // `tabby-ssh` absent, ou son provider ne détient plus le champ :
+                // pas d'exclusions, mais un plugin par ailleurs intact. Le dire
+                // en CRIT — sans cette trace, une exclusion réglée puis sans
+                // effet serait indéboguable.
+                crit('per-profile exclusions unavailable: no ssh profile provider exposing passwordStorage — has Tabby changed?')
+                return
+            }
+            storage = candidate
         } catch (e) {
-            // Couvre ce que l'en-tête UMD ne couvre pas : le service absent de
-            // l'injecteur, renommé ou déplacé par une mise à jour de Tabby.
-            // Jamais d'exception qui remonte — ce service est installé depuis le
-            // constructeur du NgModule, sur le chemin de démarrage de Tabby.
-            // Sans exclusions, le plugin fonctionne exactement comme avant.
-            crit(`per-profile exclusions unavailable: PasswordStorageService not found — ${briefError(e)}`)
+            crit(`per-profile exclusions unavailable — ${briefError(e)}`)
             return
         }
 
         this.installed = true
         const original = storage.loadPassword.bind(storage)
 
-        storage.loadPassword = async (profile: SSHProfile, username?: string): Promise<string | null> => {
+        storage.loadPassword = async (profile: SSHProfileLike, username?: string): Promise<string | null> => {
             let excluded = false
             try {
                 // `profile?.id` et non `profile.id` : le type promet un objet,
