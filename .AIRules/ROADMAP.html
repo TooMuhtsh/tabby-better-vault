@@ -47,8 +47,10 @@
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
     <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>Prochain chantier</td></tr>
 <tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé — pattern général de détection inter-plugin</span></td><td>Secondaire</td></tr>
-<tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
-    <td><span class="pill planned">📋 Conception tranchée le 2026-08-07 — prêt à faire, aucun code écrit</span></td><td>Plus tard</td></tr>
+<tr><td><a href="annexes/REALISE.html#panneau-unifie">Panneau de réglages unifié « Better Tabby »</a></td>
+    <td><span class="pill done">✅ Livré le 2026-08-07 — conçu, codé et validé 25/25 le même jour, <strong>déplacé au registre des livrés</strong></span></td><td>—</td></tr>
+<tr><td><a href="#reliquat-config">Reliquat <code>betterVault:</code> dans <code>config.yaml</code></a></td>
+    <td><span class="pill planned">📋 Repéré le 2026-08-07 — contraire à #V11, à examiner</span></td><td>Mineur</td></tr>
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
     <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
@@ -751,110 +753,20 @@ l'appellerait depuis son menu contextuel Profil/Groupe — qui existe déjà et 
 du même genre (favoris). L'optionalité reste la règle : sans <code>tabby-better-vault</code>
 installé, l'entrée de menu disparaît, sans erreur ni dépendance dure.</p>
 
-<h2 id="panneau-unifie">Panneau de réglages unifié « Tabby Better * » — conception tranchée, pas encore codée</h2>
-<div class="callout important">
-<span class="callout-title">Conception tranchée avec l'utilisateur le 2026-08-07 — chantier prêt à faire</span>
-<p>Le blocage du 2026-07-28 (<code>tabby-better-sidebar</code> sans panneau de réglages, donc rien à
-unifier) est levé : une enquête en lecture seule sur ce dépôt frère a confirmé qu'il a désormais un
-onglet de réglages réel (<code>SidebarPlusSettingsTabProvider</code>, <code>src/settings.ts</code>),
-avec une nav interne à onglets fermée sur trois valeurs codées en dur (Général / Fonctionnalités /
-Snippets, <code>src/components/settingsTab.component.ts</code>/<code>.pug</code>) — pas un registre
-extensible. La même enquête a vérifié dans le bundle compilé de <code>tabby-settings</code>
-(<code>node_modules/tabby-settings/dist/index.js</code>) que Tabby <strong>ne déduplique pas</strong>
-deux <code>SettingsTabProvider</code> de même <code>id</code> : ils apparaissent comme deux entrées
-séparées, sans erreur ni fusion — ce qui répond à la question restée ouverte ci-dessous et qui
-impose qu'un seul plugin déclare cet <code>id</code> à la fois. Ce qui suit est une conception
-tranchée, documentée pour être implémentée plus tard : <strong>aucune ligne de code n'a été
-écrite</strong>.</p>
-</div>
+<h2 id="panneau-unifie">Panneau de réglages unifié « Better Tabby » — livré le 2026-08-07</h2>
+<p>Conçu, codé et validé le même jour (cinq vagues de tests, 25/25, y compris poids inversés — ce
+plugin sait héberger la famille). L'état du chantier tel que livré vit au
+<a href="annexes/REALISE.html#panneau-unifie">registre des livrés</a> ; la convention
+(<code>src/betterPanel.ts</code>, contrat dupliqué dans chaque dépôt, jamais d'import npm entre
+plugins) est documentée dans le <code>CLAUDE.md</code> des deux projets.</p>
 
-<h3>Détection inter-plugin — un token Angular par chaîne</h3>
-<p>Pas de classe TypeScript importée entre les deux dépôts : cela introduirait une dépendance npm
-dure, contraire à l'installabilité indépendante des deux plugins. Chaque plugin « Better * » installé
-expose plutôt, au niveau de son module racine, un provider sous une clé de chaîne
-<code>BetterPanelContribution:&lt;id&gt;</code> (par exemple <code>BetterPanelContribution:vault</code>,
-<code>BetterPanelContribution:sidebar</code>), de la forme :</p>
-<pre><code>interface BetterPanelContribution {
-  id: string              // identifiant stable ('vault', 'sidebar', ...)
-  title: string            // libellé affiché en sous-onglet
-  hostWeight: number        // poids d'élection de l'hôte — SANS RAPPORT avec le `weight`
-                             // natif de SettingsTabProvider, qui ordonne les onglets Tabby
-                             // de premier niveau ; à ne pas confondre
-  componentType: Type&lt;any&gt;  // le composant Angular déjà existant de ce plugin, réutilisé tel quel
-}</code></pre>
-<p>Chaque plugin interroge les tokens des <strong>autres</strong> membres connus de la famille via
-<code>injector.get('BetterPanelContribution:xxx', null)</code> (<code>@Optional()</code> ou valeur
-par défaut <code>null</code>, jamais d'erreur si l'autre n'est pas installé). La liste des tokens à
-connaître est codée en dur et documentée dans le <code>CLAUDE.md</code> de chaque plugin — ce
-<strong>n'est pas</strong> un registre automatique : un futur plugin « Better X » qui voudrait
-rejoindre l'unification devra être ajouté à cette liste dans les projets existants.</p>
-
-<h3>Élection de l'hôte — poids numérique, le plus léger gagne</h3>
-<p>Chaque plugin déclare un <code>hostWeight</code> fixe. Au démarrage, un plugin calcule l'ensemble
-des contributions présentes (lui-même + celles détectées par token) et devient hôte
-<strong>seulement</strong> s'il porte le <code>hostWeight</code> le plus faible parmi les présentes
-(égalité départagée par ordre alphabétique d'<code>id</code>, cas improbable mais couvert pour rester
-déterministe).</p>
-<table>
-<tr><th>Rôle</th><th>Comportement</th></tr>
-<tr><td>Hôte</td>
-    <td>Déclare <strong>seul</strong> un <code>SettingsTabProvider</code> unifié
-    (<code>id: 'better-tabby'</code>), qui monte dynamiquement chaque <code>componentType</code>
-    présent comme sous-onglet (y compris le sien) via <code>ViewContainerRef.createComponent()</code>
-    (API Angular 15 native).</td></tr>
-<tr><td>Non-hôte</td>
-    <td>Ne déclare <strong>pas</strong> son propre <code>SettingsTabProvider</code>
-    (<code>useFactory</code> conditionnel dans le module racine) — expose seulement sa contribution
-    par le token, montée par l'hôte.</td></tr>
-<tr><td>Seul de sa famille présent</td>
-    <td>Aucun autre plugin Better détecté : reste trivialement hôte d'un ensemble à un seul élément —
-    dégrade proprement vers l'onglet solo actuel de ce plugin, sans habillage de sous-onglet unique
-    forcé.</td></tr>
-</table>
-<p>Valeurs retenues, espacées de 10 pour pouvoir insérer un futur membre sans renuméroter les
-existants :</p>
-<table>
-<tr><th>Plugin</th><th><code>hostWeight</code></th><th>Rôle aujourd'hui</th></tr>
-<tr><td><code>tabby-better-sidebar</code></td><td>10</td>
-    <td>Hôte par défaut — a déjà l'infrastructure de nav à onglets internes à étendre (Vault n'a
-    qu'un panneau plat).</td></tr>
-<tr><td><code>tabby-better-vault</code></td><td>20</td><td>Non-hôte tant que la sidebar est installée
-    ; hôte trivial d'un ensemble à un seul élément si elle ne l'est pas.</td></tr>
-</table>
-
-<h3>Ce qui reste compatible côté Vault — à préserver</h3>
-<ul>
-<li><strong>Logique et présentation sont déjà séparées</strong> : <code>src/store.ts</code> ne
-  dépend d'aucun composant Angular, et <code>settingsTab.component.ts</code> ne fait que le piloter.
-  Le composant se réutilise tel quel comme <code>componentType</code> de la contribution.</li>
-<li>Le composant est autonome (aucune dépendance à son parent) et ne suppose rien de son
-  emplacement, hormis le point ci-dessous.</li>
-</ul>
-
-<h3>Ce qu'il faudra changer côté Vault</h3>
-<ul>
-<li><code>title = 'Better Vault'</code> et <code>weight = 2</code> (<code>src/settings.ts</code>)
-  deviendraient les métadonnées de la contribution (<code>title</code>) ; l'enregistrement du
-  <code>SettingsTabProvider</code> deviendrait conditionnel (<code>useFactory</code>) au lieu
-  d'inconditionnel.</li>
-<li><code>@HostBinding('class.content-box')</code> sur le composant est une convention d'onglet
-  racine de Tabby : à retirer quand ce plugin est non-hôte et que le composant devient le contenu
-  d'un sous-onglet monté par l'autre.</li>
-</ul>
-
-<h3>Chantier de code restant — rien de commencé</h3>
-<ul>
-<li>Rendre l'enregistrement du <code>SettingsTabProvider</code> conditionnel dans le module racine de
-  chaque plugin.</li>
-<li>Construire côté hôte le montage dynamique de composants externes comme sous-onglet.</li>
-<li>Documenter la convention <code>hostWeight</code> / <code>BetterPanelContribution:*</code> dans
-  les deux <code>CLAUDE.md</code>.</li>
-<li>Tester avec les deux plugins installés simultanément (jonction NTFS double dans
-  <code>%APPDATA%\tabby\plugins\node_modules\</code>).</li>
-</ul>
-<p>Les sous-onglets eux-mêmes ne posent pas de problème d'outillage : <code>@ng-bootstrap</code>
-(<code>ngb-nav</code>) est déjà disponible dans l'environnement Tabby pour l'habillage de navigation
-côté hôte.</p>
+<h2 id="reliquat-config">Reliquat <code>betterVault: enabled: true</code> dans <code>config.yaml</code></h2>
+<p>Repéré le 2026-08-07 dans la config réelle de l'utilisateur (déchiffrée le temps d'une passe de
+test) : une clé <code>betterVault:</code> y subsiste, alors que la règle #V11 interdit tout réglage
+de ce plugin dans <code>config.yaml</code> — l'état vit dans <code>better-vault.json</code>.
+Probablement le reliquat d'une version ancienne. À examiner : vérifier qu'aucun code n'y lit ou
+écrit encore, puis décider du retrait — c'est une édition du fichier de l'utilisateur, geste à sa
+main, jamais d'office.</p>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
 <p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à

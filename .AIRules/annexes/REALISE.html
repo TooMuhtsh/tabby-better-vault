@@ -16,6 +16,56 @@ moment de la bascule, repris ici sans être réécrit. Ce qui reste à faire vit
 <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, que cette page renvoie sans répéter. Le plus
 récent chantier livré est en tête — l'inverse de l'ordre du journal.</p>
 
+<h2 id="panneau-unifie">Panneau de réglages unifié « Better Tabby » — livré le 2026-08-07</h2>
+<p>Quand plusieurs plugins de la famille « Better * » sont installés, un seul onglet
+<strong>Better Tabby</strong> apparaît dans les réglages Tabby, à deux niveaux : un onglet par
+plugin, les sous-onglets internes d'un plugin (Général/Fonctionnalités/Snippets côté sidebar) au
+niveau du dessous, une page plate (ce plugin) affichée directement. Seul de sa famille, chaque
+plugin garde son onglet solo, sans habillage. Conçu, codé et validé le même jour — cinq vagues de
+tests, 25/25, y compris <strong>poids inversés</strong> : ce plugin sait héberger la sidebar, le
+mécanisme est entièrement symétrique.</p>
+<h3>Le mécanisme, tel que livré</h3>
+<ul>
+<li><strong>Contrat dupliqué, jamais d'import npm</strong> : chaque plugin expose sa contribution
+  sous la clé de chaîne <code>BetterPanelContribution:&lt;id&gt;</code> dans les providers de son
+  module (<code>src/betterPanel.ts</code>, liste des tokens connus codée en dur — un futur
+  « Better X » s'y ajoute dans chaque dépôt).</li>
+<li><strong>Élection par <code>hostWeight</code> minimal</strong> (égalité départagée par id
+  alphabétique) : sidebar = 10, vault = 20, espacés de 10.</li>
+<li><strong>Retrait du non-hôte par <code>getComponentType() → null</code></strong> — le filtre
+  officiel du constructeur de <code>SettingsTabComponent</code> ; le provider reste toujours
+  enregistré, car <code>SettingsHotkeyProvider</code> parcourt tous les providers sans ce filtre
+  (un <code>useFactory</code> rendant <code>null</code> l'aurait fait planter). Conséquence
+  assumée : un hotkey fantôme « Open settings tab: Better Vault » subsiste côté non-hôte.</li>
+<li><strong>Hébergement</strong> : l'hôte élu d'une famille de plusieurs rend son
+  <code>src/components/hostPanel.component.ts</code>, qui monte chaque contribution — la sienne
+  comprise — par <code>NgComponentOutlet</code> avec un injecteur portant le jeton
+  <code>BetterPanelEmbedded</code> ; les pages embarquées lâchent leur <code>content-box</code> et
+  ne montent jamais les autres. L'onglet unifié prend l'id <code>better-tabby</code>.</li>
+<li><strong>Deep-link croisé</strong> : un plugin vise son propre onglet du panneau partagé en
+  posant <code>openRequested = true</code> sur sa contribution (objet partagé tel quel via
+  l'injecteur) — l'hôte, quel qu'en soit le porteur, le lit et l'efface à sa construction.</li>
+</ul>
+<h3>Corrigé en passant</h3>
+<p><code>@HostBinding('class.content-box') true</code> sur le panneau de réglages était une
+coquille : un champ littéralement nommé <code>true</code>, de valeur <code>undefined</code> — la
+classe n'avait <strong>jamais</strong> été réellement appliquée (vérifié dans le bundle compilé).
+Remplacée par <code>contentBox = !embedded</code> ; l'application réelle en solo, changement
+d'apparence, a été validée à l'œil (vague 2).</p>
+<h3>Limites consignées, non bloquantes</h3>
+<ul>
+<li>Le bouton « désactiver » de l'onglet Plugins de Tabby <strong>fausse l'élection</strong> : il
+  blackliste les services sans décharger le module, le token de contribution reste visible et plus
+  aucun onglet Better ne s'affiche. Amélioration possible : faire consulter
+  <code>pluginBlacklist</code> par l'élection. En attendant, écarter un plugin de la famille se
+  fait en retirant sa jonction.</li>
+<li>Ce panneau hébergeant une famille de plusieurs n'arrive que si un membre de poids supérieur à
+  20 existe un jour — vérifié en poids inversés précisément parce que le cas nominal ne
+  l'exerce pas.</li>
+</ul>
+<p>L'événement daté et les commits vivent dans <a href="../AI-HISTORY.log">AI-HISTORY.log</a>
+(branche <code>feat/panneau-unifie</code>, fusionnée avec cette documentation).</p>
+
 <h2 id="correctifs-c3">Correctifs issus de la 3ᵉ campagne — priorité absolue</h2>
 <p>Le plan ci-dessous a été arrêté le 2026-08-01, après revérification des dix constats un par un
 contre les sources — tous tiennent, et les mécanismes sont ceux que le rapport décrit.</p>
