@@ -15,7 +15,7 @@
 </nav>
 
 <h1>Roadmap</h1>
-<p class="muted">Dernière revue : 2026-08-03</p>
+<p class="muted">Dernière revue : 2026-08-07</p>
 
 <h2>Vue d'ensemble</h2>
 <table>
@@ -30,9 +30,10 @@
     <td><span class="pill planned">📋 Verdict rendu le 2026-07-28 : les deux levés</span></td><td>—</td></tr>
 <tr><td><a href="#scaffold">Scaffold du plugin</a></td><td><span class="pill planned">📋 Base en place, compile</span></td><td>—</td></tr>
 <tr><td><a href="#unlock">Déverrouillage automatique</a></td><td><span class="pill done">✅ Fonctionne — validé en conditions réelles le 2026-07-28</span></td><td>Cœur du plugin</td></tr>
-<tr><td><a href="#reglages">Panneau de réglages et expiration</a></td><td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
-<tr><td><a href="#audit">Journal d'audit et notifications</a></td>
-    <td><span class="pill done">✅ Validé en conditions réelles le 2026-07-28</span></td><td>—</td></tr>
+<tr><td><a href="annexes/REALISE.html#reglages">Panneau de réglages et politique d'expiration</a></td>
+    <td><span class="pill done">✅ Livré — <strong>déplacé au registre des livrés</strong> le 2026-08-07</span></td><td>—</td></tr>
+<tr><td><a href="annexes/REALISE.html#audit">Journal d'audit et notifications</a></td>
+    <td><span class="pill done">✅ Livré — <strong>déplacé au registre des livrés</strong> le 2026-08-07</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
     <td><span class="pill progress">🚧 Dépôt public en ligne ; version <code>1.0.0</code> et politique semver fixées (2026-08-06) — reste le rendu README npm à vérifier et <code>npm publish</code> lui-même</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
@@ -45,13 +46,13 @@
     <td><span class="pill done">✅ Livrée — <strong>déplacée au registre des livrés</strong> le 2026-08-06 (testée Windows &amp; Linux, macOS accepté comme non testable)</span></td><td>—</td></tr>
 <tr><td><a href="#granularite">Granularité par profil / groupe</a></td>
     <td><span class="pill planned">📋 Idée notée le 2026-07-29 — sémantique à trancher avant tout code</span></td><td>Prochain chantier</td></tr>
-<tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé</span></td><td>Secondaire</td></tr>
+<tr><td><a href="#interfacage">Interfaçage avec tabby-better-sidebar</a></td><td><span class="pill planned">📋 Design validé — pattern général de détection inter-plugin</span></td><td>Secondaire</td></tr>
 <tr><td><a href="#panneau-unifie">Panneau de réglages unifié « Tabby Better * »</a></td>
-    <td><span class="pill planned">📋 Intention notée — bloquée par l'amont</span></td><td>Plus tard</td></tr>
+    <td><span class="pill planned">📋 Conception tranchée le 2026-08-07 — prêt à faire, aucun code écrit</span></td><td>Plus tard</td></tr>
 <tr><td><a href="#gouvernance">Conformité de la gouvernance à la charte</a></td>
     <td><span class="pill done">✅ Charte fusionnée jusqu'à <code>20260804-071239</code> et entretien de cadrage relancé (2026-08-06) — 24 options tranchées, aucune ouverte</span></td><td>Entretien récurrent</td></tr>
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
-    <td><span class="pill progress">🚧 Cinq entrées migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a> (trois campagnes, correctifs-c3, i18n) — <code>#audit</code>/<code>#reglages</code> restent ouverts</span></td><td>—</td></tr>
+    <td><span class="pill done">✅ Sept entrées migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a> (trois campagnes, correctifs-c3, i18n, réglages, audit) — aucun chantier non terminal ne reste dans ce tableau</span></td><td>—</td></tr>
 <tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
     <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé</span></td><td>—</td></tr>
 </table>
@@ -380,119 +381,25 @@ natif », a depuis été couvert par une campagne indépendante — et l'annonce
 registre des livrés.</p>
 </div>
 
-<h2 id="reglages">Panneau de réglages et politique d'expiration</h2>
-<p>Onglet « Coffre-fort auto » dans les paramètres de Tabby
-(<code>SettingsTabProvider</code> de <code>tabby-settings</code>, composant Angular avec template
-Pug inliné — piège hérité #3).</p>
-
-<h3>Expiration du jeton</h3>
-<p>Trois modes, l'échéance étant recalculée à chaque enregistrement de mot de passe :</p>
-<table>
-<tr><th>Mode</th><th>Comportement</th></tr>
-<tr><td><code>schedule</code> <strong>(défaut)</strong></td>
-    <td>Prochain créneau jour + heure fixes, <strong>lundi 3 h</strong> par défaut. Choisi pour que
-    la ressaisie tombe toujours au même moment, en début de semaine, jamais en pleine session.</td></tr>
-<tr><td><code>sliding</code></td>
-    <td>N jours à compter de la saisie, comme le « remember for » natif de Tabby. Simple, mais
-    l'échéance tombe à une heure imprévisible.</td></tr>
-<tr><td><code>never</code></td>
-    <td>Le jeton reste valide jusqu'à purge manuelle ou changement du mot de passe maître.</td></tr>
-</table>
-<p class="muted">Cas limites vérifiés sur le calcul : un jeton créé le lundi à 2 h expire le jour
-même à 3 h (pas une semaine plus tard) ; à 3 h pile ou après, il vise le lundi suivant. Passage
-d'année et changement d'heure traités — tout est calculé en heure locale.</p>
-<p>Un jeton enregistré <em>avant</em> qu'une politique d'expiration n'existe se voit attribuer une
-échéance au premier usage suivant, sans quoi il resterait éternellement valide alors que les
-réglages affichent une échéance.</p>
-
-<h3>Transparence — notification à l'enregistrement</h3>
-<p>À l'instant où le mot de passe est confié à l'OS, une notification l'annonce : où il est stocké,
-jusqu'à quand, et comment le révoquer. <strong>Un plugin qui capte un secret ne doit jamais le faire
-en silence</strong> — l'information doit atteindre l'utilisateur au moment où elle le concerne, pas
-dormir dans un panneau de réglages qu'il n'ouvrira peut-être jamais.</p>
-<p class="muted">Affichée via <code>ToastrService</code> (<code>ngx-toastr</code>), avec un délai
-allongé à 12 s : le message compte trois informations à lire. <code>ngx-toastr</code> doit rester
-<strong>external</strong> dans webpack — Tabby le pré-cache (<a href="AI-CONTEXT.html#piege-v8">#V8</a>)
-et sert sa propre instance, seule reliée au conteneur de toasts réellement affiché. Le bundler
-n'ayant pas de paquet à résoudre, il est installé en <code>devDependency</code> pour ses seuls
-typages, avec <code>@angular/platform-browser</code> qu'il réclame en peer.</p>
-
-<h3>Réglages par machine</h3>
-<p>Aucune mécanique dédiée n'a été nécessaire : <code>better-vault.json</code> étant strictement
-local et jamais synchronisé (<a href="#stockage">§ Stockage</a>), <strong>chaque machine a
-naturellement ses propres réglages</strong>. Un poste fixe peut garder le mot de passe une semaine
-pendant qu'un portable le redemande chaque jour, et l'exclusion d'une machine se fait simplement en
-la laissant désactivée.</p>
-<ul>
-<li><strong>Exclure une machine</strong> — interrupteur « Activer sur cette machine ».</li>
-<li><strong>Expiration propre à la machine</strong> — chaque poste a sa politique.</li>
-<li><strong>« Oublier maintenant »</strong> — purge immédiate du jeton, sans attendre l'échéance.</li>
-<li><strong>Nommer la machine</strong> — libellé indicatif (défaut : nom d'hôte), repris dans le
-  journal pour savoir de quel poste vient une trace.</li>
-</ul>
+<h2 id="reglages">Panneau de réglages et politique d'expiration — livré le 2026-07-28</h2>
+<p>Onglet « Better Vault » dans les paramètres de Tabby, expiration du jeton en trois modes, réglages
+par machine. Rien n'y est resté ouvert lors de la relecture du 2026-08-07 qui a corrigé le tableau
+récapitulatif et le <a href="#registre-livres-migration">§ Registre des livrés</a> ci-dessous — les
+deux le donnaient à tort pour non terminal. Détail intégral, repris tel quel, dans le
+<a href="annexes/REALISE.html#reglages">registre des livrés</a>.</p>
 
 <h2 id="audit">Journal d'audit et notifications — livré le 2026-07-28</h2>
-<div class="callout note">
-<span class="callout-title">Réalisé</span>
-<p>Horodatage absolu, niveaux <code>INFO</code>/<code>WARN</code>/<code>CRIT</code>, révocation
-manuelle et changements de configuration tracés, rétention réglable (défaut 90 jours) doublée d'un
-plafond de taille, boutons « Ouvrir » et « Purger » (avec confirmation), et notification de
-déverrouillage ancrée à l'onglet actif (<a href="AI-CONTEXT.html#piege-v13">#V13</a>). Le
-vocabulaire des messages a été aligné sur celui de l'interface : le journal disait « keychain » là où
-le panneau dit « trousseau », ce qui rendait une recherche infructueuse.</p>
-<p>Le journal est documenté dans les README publics, avec ses deux réserves reprises telles
-quelles — décision de l'utilisateur : « on est honnête, et normalement un utilisateur de ce plugin
-le sait déjà ».</p>
-<p>Reste ouvert : viser le <strong>panneau</strong> actif plutôt que l'onglet dans une vue splittée
-(<span class="pill planned">📋 reporté</span>, sans urgence).</p>
-</div>
-<p>Enrichir <code>better-vault.log</code> pour en faire un véritable historique d'événements de
-cycle de vie : savoir quand le coffre a été ouvert, quand un jeton a expiré, quand un garde-fou
-s'est déclenché. <strong>Emplacement tranché par l'utilisateur : le fichier dédié existant</strong>,
-et non le flux natif de Tabby — choix confirmé par le code, <code>LogService</code> ne fabriquant
-qu'un <code>ConsoleLogger</code> qui écrit dans la console DevTools, sans rien persister.</p>
-<p class="muted">L'invariant de sécurité s'applique sans exception : le mot de passe en clair n'est
-jamais journalisé, <strong>ni sa longueur</strong>. Seuls des événements anonymes sont tracés.</p>
-
-<h3>Déjà en place — à ne pas réimplémenter</h3>
-<ul>
-<li>En-tête de session horodaté ISO à chaque démarrage.</li>
-<li>Nom de la machine, état actif/inactif du plugin et backend de trousseau retenu, à l'installation.</li>
-<li>Déverrouillage automatique réussi ; vérification du jeton ; jeton illisible.</li>
-<li>Jeton arrivé à échéance et purgé ; échéance appliquée à un jeton qui n'en avait pas.</li>
-<li>Enregistrement d'un mot de passe, avec la date d'échéance calculée.</li>
-<li>Trousseau indisponible, avec la raison exacte (dont le refus de <code>basic_text</code>).</li>
-</ul>
-
-<h3>Ce qui manque réellement</h3>
-<ul>
-<li><strong>La révocation manuelle</strong> : « Oublier maintenant » ne journalise rien
-  aujourd'hui — c'est le trou le plus net, puisque c'est une action délibérée de l'utilisateur.</li>
-<li><strong>Un horodatage absolu par ligne.</strong> Les lignes portent un délai relatif au
-  démarrage (<code>+532ms</code>), utile au diagnostic mais inexploitable pour un audit : une entrée
-  doit dire <em>quand</em>, pas <em>combien de temps après le lancement</em>.</li>
-<li><strong>Des niveaux de sévérité</strong> pour distinguer d'un coup d'œil une information
-  d'un garde-fou déclenché.</li>
-<li><strong>Les changements de configuration</strong> : activation/désactivation du plugin,
-  modification de la politique d'expiration.</li>
-<li><strong>Un plafonnement du fichier.</strong> Il croît aujourd'hui sans limite. Un journal
-  d'audit qui finit par peser des dizaines de mégaoctets ne se consulte plus — prévoir une rotation
-  simple, ou une troncature au-delà d'une taille donnée.</li>
-</ul>
-
-<h3>Deux réserves à ne pas perdre de vue</h3>
-<div class="callout warning">
-<span class="callout-title">Portée réelle de ce journal</span>
-<p><strong>Il est local à la machine, et le restera.</strong> L'idée de « repérer un comportement
-suspect si la configuration est partagée » ne s'applique pas ici : <code>better-vault.json</code>
-comme le journal sont délibérément exclus de toute synchronisation
-(<a href="#stockage">§ Stockage</a>). Chaque poste a le sien. Consigner le nom de la machine n'a donc
-d'intérêt que si les journaux sont agrégés ailleurs — ce qui reste à décider.</p>
-<p><strong>Il n'est pas inviolable.</strong> C'est un fichier texte modifiable par quiconque a accès
-à la session de l'utilisateur — c'est-à-dire précisément l'attaquant contre lequel un audit servirait.
-Il vaut comme outil de diagnostic et de détection <em>a posteriori</em>, pas comme preuve. À ne pas
-présenter autrement dans le README.</p>
-</div>
+<p>Horodatage absolu par ligne, niveaux <code>INFO</code>/<code>WARN</code>/<code>CRIT</code>,
+révocation manuelle et changements de configuration tracés, rétention réglable doublée d'un plafond
+de taille, boutons « Ouvrir » et « Purger ». Un seul point reste ouvert, reporté sans urgence : voir
+le registre. Cette section portait jusqu'au 2026-08-07 une liste <code>Ce qui manque réellement</code>
+qui recopiait exactement les cinq points ci-dessus comme non implémentés — contredite par le callout
+« Réalisé » juste au-dessus d'elle dans la version précédente de ce document, et par
+<a href="AI-HISTORY.html">AI-HISTORY.html</a> § « Journal d'audit et notifications (2026-07-28) », qui
+atteste leur livraison par <code>10ad983</code> le jour même. Vérification indépendante sur le code
+actuel (<code>src/logger.ts</code>, <code>src/components/settingsTab.component.ts</code>) confirmée :
+la liste était fausse, retirée plutôt que corrigée sur place. Détail intégral, repris tel quel, dans le
+<a href="annexes/REALISE.html#audit">registre des livrés</a>.</p>
 
 <h2 id="publication">Publication</h2>
 <p><strong>Dépôt GitHub public depuis le 2026-07-28</strong> :
@@ -844,59 +751,120 @@ l'appellerait depuis son menu contextuel Profil/Groupe — qui existe déjà et 
 du même genre (favoris). L'optionalité reste la règle : sans <code>tabby-better-vault</code>
 installé, l'entrée de menu disparaît, sans erreur ni dépendance dure.</p>
 
-<h2 id="panneau-unifie">Panneau de réglages unifié « Tabby Better * » — intention, pas un chantier ouvert</h2>
-<div class="callout note">
-<span class="callout-title">Volontairement repoussé (2026-07-28)</span>
-<p>Idée exprimée par l'utilisateur : lorsqu'au moins deux plugins <code>tabby-better-*</code> sont
-installés, n'afficher <strong>qu'un seul onglet de réglages</strong> les regroupant en sous-onglets,
-plutôt qu'un onglet par plugin. <strong>Pas réalisable aujourd'hui</strong> :
-<code>tabby-better-sidebar</code> est en développement actif et n'a pas encore de panneau de
-réglages — il n'y a donc rien à unifier. À reprendre quand ce sera le cas.</p>
+<h2 id="panneau-unifie">Panneau de réglages unifié « Tabby Better * » — conception tranchée, pas encore codée</h2>
+<div class="callout important">
+<span class="callout-title">Conception tranchée avec l'utilisateur le 2026-08-07 — chantier prêt à faire</span>
+<p>Le blocage du 2026-07-28 (<code>tabby-better-sidebar</code> sans panneau de réglages, donc rien à
+unifier) est levé : une enquête en lecture seule sur ce dépôt frère a confirmé qu'il a désormais un
+onglet de réglages réel (<code>SidebarPlusSettingsTabProvider</code>, <code>src/settings.ts</code>),
+avec une nav interne à onglets fermée sur trois valeurs codées en dur (Général / Fonctionnalités /
+Snippets, <code>src/components/settingsTab.component.ts</code>/<code>.pug</code>) — pas un registre
+extensible. La même enquête a vérifié dans le bundle compilé de <code>tabby-settings</code>
+(<code>node_modules/tabby-settings/dist/index.js</code>) que Tabby <strong>ne déduplique pas</strong>
+deux <code>SettingsTabProvider</code> de même <code>id</code> : ils apparaissent comme deux entrées
+séparées, sans erreur ni fusion — ce qui répond à la question restée ouverte ci-dessous et qui
+impose qu'un seul plugin déclare cet <code>id</code> à la fois. Ce qui suit est une conception
+tranchée, documentée pour être implémentée plus tard : <strong>aucune ligne de code n'a été
+écrite</strong>.</p>
 </div>
 
-<h3>Ce qui est déjà compatible — à préserver</h3>
+<h3>Détection inter-plugin — un token Angular par chaîne</h3>
+<p>Pas de classe TypeScript importée entre les deux dépôts : cela introduirait une dépendance npm
+dure, contraire à l'installabilité indépendante des deux plugins. Chaque plugin « Better * » installé
+expose plutôt, au niveau de son module racine, un provider sous une clé de chaîne
+<code>BetterPanelContribution:&lt;id&gt;</code> (par exemple <code>BetterPanelContribution:vault</code>,
+<code>BetterPanelContribution:sidebar</code>), de la forme :</p>
+<pre><code>interface BetterPanelContribution {
+  id: string              // identifiant stable ('vault', 'sidebar', ...)
+  title: string            // libellé affiché en sous-onglet
+  hostWeight: number        // poids d'élection de l'hôte — SANS RAPPORT avec le `weight`
+                             // natif de SettingsTabProvider, qui ordonne les onglets Tabby
+                             // de premier niveau ; à ne pas confondre
+  componentType: Type&lt;any&gt;  // le composant Angular déjà existant de ce plugin, réutilisé tel quel
+}</code></pre>
+<p>Chaque plugin interroge les tokens des <strong>autres</strong> membres connus de la famille via
+<code>injector.get('BetterPanelContribution:xxx', null)</code> (<code>@Optional()</code> ou valeur
+par défaut <code>null</code>, jamais d'erreur si l'autre n'est pas installé). La liste des tokens à
+connaître est codée en dur et documentée dans le <code>CLAUDE.md</code> de chaque plugin — ce
+<strong>n'est pas</strong> un registre automatique : un futur plugin « Better X » qui voudrait
+rejoindre l'unification devra être ajouté à cette liste dans les projets existants.</p>
+
+<h3>Élection de l'hôte — poids numérique, le plus léger gagne</h3>
+<p>Chaque plugin déclare un <code>hostWeight</code> fixe. Au démarrage, un plugin calcule l'ensemble
+des contributions présentes (lui-même + celles détectées par token) et devient hôte
+<strong>seulement</strong> s'il porte le <code>hostWeight</code> le plus faible parmi les présentes
+(égalité départagée par ordre alphabétique d'<code>id</code>, cas improbable mais couvert pour rester
+déterministe).</p>
+<table>
+<tr><th>Rôle</th><th>Comportement</th></tr>
+<tr><td>Hôte</td>
+    <td>Déclare <strong>seul</strong> un <code>SettingsTabProvider</code> unifié
+    (<code>id: 'better-tabby'</code>), qui monte dynamiquement chaque <code>componentType</code>
+    présent comme sous-onglet (y compris le sien) via <code>ViewContainerRef.createComponent()</code>
+    (API Angular 15 native).</td></tr>
+<tr><td>Non-hôte</td>
+    <td>Ne déclare <strong>pas</strong> son propre <code>SettingsTabProvider</code>
+    (<code>useFactory</code> conditionnel dans le module racine) — expose seulement sa contribution
+    par le token, montée par l'hôte.</td></tr>
+<tr><td>Seul de sa famille présent</td>
+    <td>Aucun autre plugin Better détecté : reste trivialement hôte d'un ensemble à un seul élément —
+    dégrade proprement vers l'onglet solo actuel de ce plugin, sans habillage de sous-onglet unique
+    forcé.</td></tr>
+</table>
+<p>Valeurs retenues, espacées de 10 pour pouvoir insérer un futur membre sans renuméroter les
+existants :</p>
+<table>
+<tr><th>Plugin</th><th><code>hostWeight</code></th><th>Rôle aujourd'hui</th></tr>
+<tr><td><code>tabby-better-sidebar</code></td><td>10</td>
+    <td>Hôte par défaut — a déjà l'infrastructure de nav à onglets internes à étendre (Vault n'a
+    qu'un panneau plat).</td></tr>
+<tr><td><code>tabby-better-vault</code></td><td>20</td><td>Non-hôte tant que la sidebar est installée
+    ; hôte trivial d'un ensemble à un seul élément si elle ne l'est pas.</td></tr>
+</table>
+
+<h3>Ce qui reste compatible côté Vault — à préserver</h3>
 <ul>
 <li><strong>Logique et présentation sont déjà séparées</strong> : <code>src/store.ts</code> ne
   dépend d'aucun composant Angular, et <code>settingsTab.component.ts</code> ne fait que le piloter.
-  Le jour venu, le composant se réutilise tel quel comme contenu d'un sous-onglet.</li>
+  Le composant se réutilise tel quel comme <code>componentType</code> de la contribution.</li>
 <li>Le composant est autonome (aucune dépendance à son parent) et ne suppose rien de son
   emplacement, hormis le point ci-dessous.</li>
 </ul>
 
-<h3>Ce qu'il faudra revoir</h3>
+<h3>Ce qu'il faudra changer côté Vault</h3>
 <ul>
 <li><code>title = 'Better Vault'</code> et <code>weight = 2</code> (<code>src/settings.ts</code>)
-  passeraient à l'onglet parent ; ce plugin ne déclarerait plus son propre
-  <code>SettingsTabProvider</code>.</li>
+  deviendraient les métadonnées de la contribution (<code>title</code>) ; l'enregistrement du
+  <code>SettingsTabProvider</code> deviendrait conditionnel (<code>useFactory</code>) au lieu
+  d'inconditionnel.</li>
 <li><code>@HostBinding('class.content-box')</code> sur le composant est une convention d'onglet
-  racine de Tabby : à retirer si le composant devient le contenu d'un sous-onglet.</li>
+  racine de Tabby : à retirer quand ce plugin est non-hôte et que le composant devient le contenu
+  d'un sous-onglet monté par l'autre.</li>
 </ul>
 
-<h3>Difficulté centrale — qui héberge l'onglet parent ?</h3>
-<p>Les deux plugins doivent rester installables indépendamment : aucun ne peut supposer la présence
-de l'autre. Trois pistes, aucune tranchée :</p>
-<table>
-<tr><th>Piste</th><th>Compromis</th></tr>
-<tr><td>Package commun <code>tabby-better-shared</code></td>
-    <td>Propre et typé, mais introduit une dépendance npm dure et un versioning croisé à gérer entre
-    trois paquets.</td></tr>
-<tr><td>Registre à l'exécution via l'injecteur Angular partagé</td>
-    <td>Aucune dépendance de build — c'est déjà le mécanisme envisagé pour
-    <a href="#interfacage">l'interfaçage</a>. Mais non officiel, et il faut élire lequel des plugins
-    crée l'onglet parent (le premier chargé), ce qui rend l'ordre de chargement significatif.</td></tr>
-<tr><td>Onglet parent optionnel</td>
-    <td>Chaque plugin garde son onglet et n'en propose un commun que s'il détecte l'autre. Le plus
-    simple à dégrader, le plus verbeux à écrire.</td></tr>
-</table>
-<p><strong>À vérifier avant de choisir</strong> : le comportement de Tabby quand deux
-<code>SettingsTabProvider</code> déclarent le même <code>id</code> — écrasement, doublon ou erreur ?
-Rien dans le code lu à ce jour ne le précise, et c'est ce qui décidera de la viabilité de la
-deuxième piste. Les sous-onglets eux-mêmes ne posent pas de problème :
-<code>@ng-bootstrap</code> (<code>ngb-nav</code>) est déjà disponible dans l'environnement Tabby.</p>
+<h3>Chantier de code restant — rien de commencé</h3>
+<ul>
+<li>Rendre l'enregistrement du <code>SettingsTabProvider</code> conditionnel dans le module racine de
+  chaque plugin.</li>
+<li>Construire côté hôte le montage dynamique de composants externes comme sous-onglet.</li>
+<li>Documenter la convention <code>hostWeight</code> / <code>BetterPanelContribution:*</code> dans
+  les deux <code>CLAUDE.md</code>.</li>
+<li>Tester avec les deux plugins installés simultanément (jonction NTFS double dans
+  <code>%APPDATA%\tabby\plugins\node_modules\</code>).</li>
+</ul>
+<p>Les sous-onglets eux-mêmes ne posent pas de problème d'outillage : <code>@ng-bootstrap</code>
+(<code>ngb-nav</code>) est déjà disponible dans l'environnement Tabby pour l'habillage de navigation
+côté hôte.</p>
 
 <h2 id="interfacage">Interfaçage avec tabby-better-sidebar</h2>
 <p>Optionnel, pas une dépendance dure : <code>tabby-better-sidebar</code> doit continuer à
 fonctionner normalement si ce plugin n'est pas installé.</p>
+<p class="muted">Le <a href="#panneau-unifie">panneau de réglages unifié</a> ci-dessus décline ce
+principe général pour un cas précis (les onglets de réglages) avec un mécanisme plus strict —
+token par chaîne <code>BetterPanelContribution:&lt;id&gt;</code>, sans import npm du tout, même
+optionnel. Les points ci-dessous restent la description générale du pattern, dont
+<code>VaultBridgeService</code> (bascule par profil/groupe) est un autre cas d'usage, pas encore
+tranché dans le détail.</p>
 <ul>
 <li>Tous les plugins Tabby tournent dans le même process Electron et partagent le même injecteur
   Angular — c'est le mécanisme déjà utilisé par <code>tabby-better-sidebar</code> pour consommer des
@@ -1048,7 +1016,7 @@ ultérieure compare cette date <em>au lieu</em> de relire la charte, donc un mar
 étouffe la détection même qu'il sert à déclencher. Ne l'avancer qu'après avoir vérifié les éléments
 exigés, pas seulement la date.</p></div>
 
-<h2 id="registre-livres-migration">Registre des livrés — cinq entrées migrées au 2026-08-06</h2>
+<h2 id="registre-livres-migration">Registre des livrés — sept entrées migrées, la dernière paire le 2026-08-07</h2>
 <p>Option <code>registre-livrés</code> tranchée à <code>oui</code> à l'entretien de cadrage du
 2026-08-06 (<a href="PROFIL.md">PROFIL.md</a>) : cette roadmap dépassait 1700 lignes, en grande
 partie des chantiers déjà <code>✅ Livré</code>/<code>Adopté</code> — exactement le cas que
@@ -1062,14 +1030,24 @@ macOS accepté comme non testable (voir <a href="#correctifs-c3">correctifs-c3</
 devenait terminal au sens de l'option — « testé sur les plateformes visées », pas « aucune inconnue
 nulle part » — et l'i18n avec lui, pour la même raison
 (<a href="annexes/REALISE.html#correctifs-c3">correctifs-c3</a>,
-<a href="annexes/REALISE.html#i18n">i18n</a>). Cinq entrées au total, chacune reprise verbatim avec
-son renvoi vers l'entrée de journal qui l'a actée, ses évolutions post-livraison, ses pièges et ses
-commits. La roadmap active ne garde plus qu'une ligne et un lien par chantier livré (voir le tableau
-plus haut).</p>
-<p><strong>Deux candidats restent non terminaux</strong> : <a href="#audit">Journal d'audit</a> et
-<a href="#reglages">Panneau de réglages</a> portent encore des points ouverts listés dans leur
-propre section. Un chantier <code>Écarté</code> ne bascule jamais au registre, il reste « Hors
-périmètre » dans la roadmap active.</p>
+<a href="annexes/REALISE.html#i18n">i18n</a>).</p>
+<p><strong>Troisième lot, le 2026-08-07</strong> : <a href="annexes/REALISE.html#reglages">Panneau de
+réglages</a> et <a href="annexes/REALISE.html#audit">Journal d'audit</a>, tous deux livrés le
+2026-07-28 et déjà marqués <code>✅ Validé en conditions réelles</code> dans le tableau récapitulatif
+— mais annoncés ici même comme « non terminaux », à tort. Vérification menée section par section :
+<code>#reglages</code> ne portait <strong>aucun</strong> point « reste ouvert », contrairement à ce
+que cette page affirmait ; <code>#audit</code> en portait un — la notification ancrée à l'onglet
+plutôt qu'au panneau actif d'une vue splittée, <span class="pill planned">📋 reporté, sans
+urgence</span> — repris tel quel dans son entrée du registre, sur le même principe que la cinquième
+langue restée ouverte dans l'entrée <a href="annexes/REALISE.html#i18n">i18n</a> : un point mineur et
+non bloquant n'empêche pas un chantier d'être terminal. En revanche, sa section listait cinq points
+comme « manquants » qui étaient en réalité livrés le jour même par <code>10ad983</code> — erreur de
+documentation, pas un chantier resté ouvert ; corrigée en migrant, pas en la laissant sur place.</p>
+<p><strong>Sept entrées au total</strong>, chacune reprise verbatim avec son renvoi vers l'entrée de
+journal qui l'a actée, ses évolutions post-livraison, ses pièges et ses commits. La roadmap active ne
+garde plus qu'une ligne et un lien par chantier livré (voir le tableau plus haut), et
+<strong>plus aucun candidat non terminal</strong> à ce jour. Un chantier <code>Écarté</code> ne
+bascule jamais au registre, il reste « Hors périmètre » dans la roadmap active.</p>
 
 <h2 id="journal-log-migration">Journal en <code>.log</code> — fait le 2026-08-06, sans conversion rétroactive</h2>
 <p>Option <code>journal-format</code> tranchée le 2026-08-06 <strong>hors du menu de la

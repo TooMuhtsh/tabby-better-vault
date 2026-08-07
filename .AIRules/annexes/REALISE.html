@@ -8,7 +8,7 @@
 <body>
 
 <h1>Registre des livrés</h1>
-<p class="muted">Annexe de <a href="../ROADMAP.html#registre-livres-migration">Roadmap → Registre des livrés</a>. Dernière revue : 2026-08-06</p>
+<p class="muted">Annexe de <a href="../ROADMAP.html#registre-livres-migration">Roadmap → Registre des livrés</a>. Dernière revue : 2026-08-07</p>
 
 <p>Ce registre ne porte que l'<strong>état</strong> d'un chantier déjà livré — le design retenu au
 moment de la bascule, repris ici sans être réécrit. Ce qui reste à faire vit dans
@@ -836,6 +836,167 @@ haute), trouvé et corrigé par la <a href="#campagne-2">deuxième campagne</a> 
 <a href="../AI-CONTEXT.html#piege-v16">#V16</a>, <a href="../AI-CONTEXT.html#piege-v17">#V17</a>.</p>
 <p><strong>Commits</strong> : <code>4c1fe0d</code>, <code>2dc049c</code>, <code>f086739</code>,
 <code>f0548f8</code>, <code>75de08a</code>.</p>
+</div>
+
+<h2 id="reglages">Panneau de réglages et politique d'expiration — livré le 2026-07-28</h2>
+<p>Onglet <strong>« Better Vault »</strong> dans les paramètres de Tabby
+(<code>SettingsTabProvider</code> de <code>tabby-settings</code>, composant Angular avec template
+Pug inliné — piège hérité #3).</p>
+
+<h3>Expiration du jeton</h3>
+<p>Trois modes, l'échéance étant recalculée à chaque enregistrement de mot de passe :</p>
+<table>
+<tr><th>Mode</th><th>Comportement</th></tr>
+<tr><td><code>schedule</code> <strong>(défaut)</strong></td>
+    <td>Prochain créneau jour + heure fixes, <strong>lundi 3 h</strong> par défaut. Choisi pour que
+    la ressaisie tombe toujours au même moment, en début de semaine, jamais en pleine session.</td></tr>
+<tr><td><code>sliding</code></td>
+    <td>N jours à compter de la saisie, comme le « remember for » natif de Tabby. Simple, mais
+    l'échéance tombe à une heure imprévisible.</td></tr>
+<tr><td><code>never</code></td>
+    <td>Le jeton reste valide jusqu'à purge manuelle ou changement du mot de passe maître.</td></tr>
+</table>
+<p class="muted">Cas limites vérifiés sur le calcul : un jeton créé le lundi à 2 h expire le jour
+même à 3 h (pas une semaine plus tard) ; à 3 h pile ou après, il vise le lundi suivant. Passage
+d'année et changement d'heure traités — tout est calculé en heure locale.</p>
+<p>Un jeton enregistré <em>avant</em> qu'une politique d'expiration n'existe se voit attribuer une
+échéance au premier usage suivant, sans quoi il resterait éternellement valide alors que les
+réglages affichent une échéance.</p>
+
+<h3>Transparence — notification à l'enregistrement</h3>
+<p>À l'instant où le mot de passe est confié à l'OS, une notification l'annonce : où il est stocké,
+jusqu'à quand, et comment le révoquer. <strong>Un plugin qui capte un secret ne doit jamais le faire
+en silence</strong> — l'information doit atteindre l'utilisateur au moment où elle le concerne, pas
+dormir dans un panneau de réglages qu'il n'ouvrira peut-être jamais.</p>
+<p class="muted">Affichée via <code>ToastrService</code> (<code>ngx-toastr</code>), avec un délai
+allongé à 12 s : le message compte trois informations à lire. <code>ngx-toastr</code> doit rester
+<strong>external</strong> dans webpack — Tabby le pré-cache (<a href="../AI-CONTEXT.html#piege-v8">#V8</a>)
+et sert sa propre instance, seule reliée au conteneur de toasts réellement affiché. Le bundler
+n'ayant pas de paquet à résoudre, il est installé en <code>devDependency</code> pour ses seuls
+typages, avec <code>@angular/platform-browser</code> qu'il réclame en peer.</p>
+
+<h3>Réglages par machine</h3>
+<p>Aucune mécanique dédiée n'a été nécessaire : <code>better-vault.json</code> étant strictement
+local et jamais synchronisé (<a href="../ROADMAP.html#stockage">§ Stockage</a>), <strong>chaque
+machine a naturellement ses propres réglages</strong>. Un poste fixe peut garder le mot de passe une
+semaine pendant qu'un portable le redemande chaque jour, et l'exclusion d'une machine se fait
+simplement en la laissant désactivée.</p>
+<ul>
+<li><strong>Exclure une machine</strong> — interrupteur « Activer sur cette machine ».</li>
+<li><strong>Expiration propre à la machine</strong> — chaque poste a sa politique.</li>
+<li><strong>« Oublier maintenant »</strong> — purge immédiate du jeton, sans attendre l'échéance.</li>
+<li><strong>Nommer la machine</strong> — libellé indicatif (défaut : nom d'hôte), repris dans le
+  journal pour savoir de quel poste vient une trace.</li>
+</ul>
+
+<div class="callout">
+<span class="callout-title">Registre</span>
+<p><strong>Journal</strong> : <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, entrée
+« Implémentation du déverrouillage automatique (2026-07-28) », lignes « Panneau validé par
+l'utilisateur, puis habillage et repositionnement » et « Panneau de réglages et expiration du
+jeton ».</p>
+<p><strong>Évolutions post-livraison</strong> : aucune sur le fond. Migré ici le 2026-08-07 : cette
+section vivait encore dans <a href="../ROADMAP.html">ROADMAP.html</a>, marquée « non terminale » par
+erreur dans son <a href="../ROADMAP.html#registre-livres-migration">§ Registre des livrés</a> alors
+qu'elle ne portait, en réalité, aucun point « reste ouvert ».</p>
+<p><strong>Pièges</strong> : piège hérité #3 (<code>templateUrl</code> inopérant pour un plugin
+tiers) et #14 (styles de composant hors <code>:host</code>), cités en tête de section — aucun piège
+numéroté <code>#V</code> propre à ce chantier.</p>
+<p><strong>Commits</strong> : <code>623f768</code>, <code>d8c05ff</code>.</p>
+</div>
+
+<h2 id="audit">Journal d'audit et notifications — livré le 2026-07-28</h2>
+<div class="callout note">
+<span class="callout-title">Réalisé</span>
+<p>Horodatage absolu, niveaux <code>INFO</code>/<code>WARN</code>/<code>CRIT</code>, révocation
+manuelle et changements de configuration tracés, rétention réglable (défaut 90 jours) doublée d'un
+plafond de taille, boutons « Ouvrir » et « Purger » (avec confirmation), et notification de
+déverrouillage ancrée à l'onglet actif (<a href="../AI-CONTEXT.html#piege-v13">#V13</a>). Le
+vocabulaire des messages a été aligné sur celui de l'interface : le journal disait « keychain » là où
+le panneau dit « trousseau », ce qui rendait une recherche infructueuse.</p>
+<p>Le journal est documenté dans les README publics, avec ses deux réserves reprises telles
+quelles — décision de l'utilisateur : « on est honnête, et normalement un utilisateur de ce plugin
+le sait déjà ».</p>
+<p>Reste ouvert : viser le <strong>panneau</strong> actif plutôt que l'onglet dans une vue splittée
+(<span class="pill planned">📋 reporté</span>, sans urgence) — sur le même principe que la cinquième
+langue restée ouverte dans l'entrée <a href="#i18n">i18n</a> ci-dessus : un point mineur et non
+bloquant n'empêche pas ce chantier d'être terminal.</p>
+</div>
+<p><code>better-vault.log</code> est un véritable historique d'événements de cycle de vie : savoir
+quand le coffre a été ouvert, quand un jeton a expiré, quand un garde-fou s'est déclenché.
+<strong>Emplacement tranché par l'utilisateur : le fichier dédié existant</strong>, et non le flux
+natif de Tabby — choix confirmé par le code, <code>LogService</code> ne fabriquant qu'un
+<code>ConsoleLogger</code> qui écrit dans la console DevTools, sans rien persister.</p>
+<p class="muted">L'invariant de sécurité s'applique sans exception : le mot de passe en clair n'est
+jamais journalisé, <strong>ni sa longueur</strong>. Seuls des événements anonymes sont tracés.</p>
+
+<h3>Ce qui est en place</h3>
+<ul>
+<li>En-tête de session horodaté ISO à chaque démarrage.</li>
+<li>Nom de la machine, état actif/inactif du plugin et backend de trousseau retenu, à l'installation.</li>
+<li>Déverrouillage automatique réussi ; vérification du jeton ; jeton illisible.</li>
+<li>Jeton arrivé à échéance et purgé ; échéance appliquée à un jeton qui n'en avait pas.</li>
+<li>Enregistrement d'un mot de passe, avec la date d'échéance calculée.</li>
+<li>Trousseau indisponible, avec la raison exacte (dont le refus de <code>basic_text</code>).</li>
+<li><strong>Révocation manuelle</strong> : « Oublier maintenant » journalise
+  <code>manual revocation from the settings — token deleted</code>
+  (<code>settingsTab.component.ts</code>, <code>forgetNow()</code>).</li>
+<li><strong>Horodatage absolu par ligne</strong> — <code>stamp()</code>/<code>writeLine()</code> dans
+  <code>src/logger.ts</code>, et non un délai relatif au démarrage.</li>
+<li><strong>Niveaux de sévérité</strong> <code>INFO</code>/<code>WARN</code>/<code>CRIT</code>
+  (<code>Level</code>, <code>src/logger.ts</code>).</li>
+<li><strong>Changements de configuration</strong> : activation/désactivation du plugin, changement de
+  politique d'expiration (<code>settingsTab.component.ts</code>, <code>persist()</code>).</li>
+<li><strong>Plafonnement du fichier</strong> : rétention par date au démarrage
+  (<code>applyRetention()</code>), doublée d'un plafond de taille fixe et non configurable
+  (<code>HARD_SIZE_LIMIT</code>, 4 Mo) qui tronque par la fin même en cours de session — la purge par
+  date, elle, ne tourne qu'au démarrage.</li>
+</ul>
+
+<div class="callout important">
+<span class="callout-title">Erreur de documentation corrigée le 2026-08-07 — cinq points annoncés « manquants » alors que livrés le jour même</span>
+<p>Cette section portait jusqu'ici un <code>Ce qui manque réellement</code> listant exactement les
+cinq derniers points de la liste ci-dessus comme non implémentés — en contradiction directe avec le
+callout « Réalisé » juste au-dessus, qui les annonçait déjà faits. Vérification indépendante,
+répétée de zéro plutôt que reprise sur parole : lecture directe de <code>src/logger.ts</code>
+(<code>stamp()</code>, <code>Level</code>, <code>HARD_SIZE_LIMIT</code>,
+<code>applyRetention()</code>) et de <code>src/components/settingsTab.component.ts</code>
+(<code>forgetNow()</code>, <code>persist()</code>), croisée avec
+<a href="../AI-HISTORY.html">AI-HISTORY.html</a> § « Journal d'audit et notifications
+(2026-07-28) » : les cinq points ont bien été livrés par <code>10ad983</code> le 2026-07-28, le jour
+même où la liste erronée a été écrite. Rien dans <code>git log</code> ne montre un retrait ultérieur
+de ces fonctions. La liste est retirée plutôt que corrigée sur place — un chantier livré n'a pas
+vocation à garder la trace d'une liste de choses à faire qu'il a déjà faites.</p>
+</div>
+
+<h3>Deux réserves à ne pas perdre de vue</h3>
+<div class="callout warning">
+<span class="callout-title">Portée réelle de ce journal</span>
+<p><strong>Il est local à la machine, et le restera.</strong> L'idée de « repérer un comportement
+suspect si la configuration est partagée » ne s'applique pas ici : <code>better-vault.json</code>
+comme le journal sont délibérément exclus de toute synchronisation
+(<a href="../ROADMAP.html#stockage">§ Stockage</a>). Chaque poste a le sien. Consigner le nom de la
+machine n'a donc d'intérêt que si les journaux sont agrégés ailleurs — ce qui reste à décider.</p>
+<p><strong>Il n'est pas inviolable.</strong> C'est un fichier texte modifiable par quiconque a accès
+à la session de l'utilisateur — c'est-à-dire précisément l'attaquant contre lequel un audit servirait.
+Il vaut comme outil de diagnostic et de détection <em>a posteriori</em>, pas comme preuve. À ne pas
+présenter autrement dans le README.</p>
+</div>
+
+<div class="callout">
+<span class="callout-title">Registre</span>
+<p><strong>Journal</strong> : <a href="../AI-HISTORY.html">AI-HISTORY.html</a>, entrée « Journal
+d'audit et notifications (2026-07-28) ».</p>
+<p><strong>Évolutions post-livraison</strong> : vocabulaire aligné sur l'interface (« trousseau »
+plutôt que « keychain ») le jour même. Erreur de documentation corrigée le 2026-08-07 — voir le
+callout ci-dessus ; migré ici le même jour depuis <a href="../ROADMAP.html">ROADMAP.html</a>, marqué
+« non terminal » par erreur dans son
+<a href="../ROADMAP.html#registre-livres-migration">§ Registre des livrés</a> à cause de cette même
+liste fausse.</p>
+<p><strong>Pièges</strong> : <a href="../AI-CONTEXT.html#piege-v13">#V13</a>.</p>
+<p><strong>Commits</strong> : <code>10ad983</code>, <code>f9fddac</code> (chantier lui-même) ·
+<code>a8f86b4</code>, <code>2f672b4</code> (notification à chaque déverrouillage, ancrage à l'onglet
+actif — même branche <code>feat/audit-log</code>).</p>
 </div>
 
 <footer>tabby-better-vault · registre des chantiers livrés (option <code>registre-livrés</code>)</footer>
