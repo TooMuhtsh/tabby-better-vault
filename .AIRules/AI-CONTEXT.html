@@ -84,6 +84,14 @@ pas dupliqué ici pour éviter que les deux copies divergent avec le temps. Seul
 pourquoi ça s'applique probablement ici aussi.</p>
 
 <h3>Environnement &amp; build</h3>
+<div class="callout note"><span class="callout-title">Version de Tabby de référence :
+<strong>1.0.235</strong> (au 2026-08-08)</span>
+<p>Version installée sur le poste de développement, et celle contre laquelle les pièges ci-dessous
+ont été vérifiés. Le <code>tabby-core</code> qu'elle embarque s'annonce, lui, en
+<code>1.0.231-nightly.0</code> : c'est ce numéro que cible la peer dependency du
+<code>package.json</code>, pas celui de l'application — les confondre fait chercher une
+incompatibilité qui n'existe pas. À mettre à jour ici <em>et</em> dans le README quand la référence
+change.</p></div>
 <ul>
 <li><strong>Piège #1</strong> — <code>TABBY_PLUGINS</code> cassé sur Windows (bug Tabby, pas du
   plugin) : utiliser une jonction NTFS dans <code>%APPDATA%\tabby\plugins\node_modules\</code>,
