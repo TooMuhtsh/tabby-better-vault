@@ -1,9 +1,23 @@
 {
   "name": "tabby-better-vault",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Unlock the Tabby Vault automatically using your operating system's native keychain — no third-party password manager required.",
   "keywords": [
-    "tabby-plugin"
+    "tabby-plugin",
+    "tabby",
+    "terminal",
+    "vault",
+    "keychain",
+    "keyring",
+    "passphrase",
+    "credentials",
+    "secrets",
+    "ssh",
+    "security",
+    "safestorage",
+    "dpapi",
+    "libsecret",
+    "electron"
   ],
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
