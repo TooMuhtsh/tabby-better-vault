@@ -61,7 +61,7 @@
 <tr><td><a href="#toasts">Notifications : ancrage et couleurs</a></td>
     <td><span class="pill planned">📋 Ouvert le 2026-08-14 — couleurs par sévérité (tout est rouge aujourd'hui) + ancrage au panneau actif rouvert depuis le <a href="annexes/REALISE.html#audit">registre</a></span></td><td>Prochain chantier</td></tr>
 <tr><td><a href="#hygiene-paquet">Hygiène du paquet et de l'outillage (5 points GitHub)</a></td>
-    <td><span class="pill planned">📋 Consignés le 2026-08-14 après vérification — source map dans le tarball (bloquant avant republication), notices tierces, CHANGELOG ; audit et outillage en surveillance</span></td><td>Avant la prochaine publication</td></tr>
+    <td><span class="pill done">✅ Lot livré le 2026-08-14, le jour de sa consignation — strip des maps en production (0 map au <code>pack --dry-run</code>), notices tierces dans <code>files[]</code>, CHANGELOG créé, audit fix nu (19 → 16) ; <strong>effectif sur npm à la prochaine publication</strong>, non déclenchée. Restent en surveillance : vulnérabilités Angular/pug, <code>apply-loader</code>, <code>webpack-cli@4</code></span></td><td>—</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -800,6 +800,36 @@ ajouter.</p>
 <p>Relevés par l'utilisateur dans son Project GitHub le 2026-08-10, rapatriés ici le 2026-08-14
 après vérification sur pièces (bundle, <code>node_modules</code>, registre npm). Par ordre de
 priorité :</p>
+
+<div class="callout note">
+<span class="callout-title">Lot livré le 2026-08-14 (branche <code>chore/hygiene-paquet</code>, commit <code>02e6c0a</code>)</span>
+<p>Les points 1 à 3 sont faits, le point 4 est traité pour sa part corrigeable :</p>
+<ul>
+<li><strong>Source map</strong> : <code>webpack.config.js</code> exporté <strong>en fonction</strong>
+  (un objet ne voit pas le <code>--mode production</code> que webpack-cli fusionne par-dessus —
+  c'est le mécanisme qui avait publié la map) ; <code>devtool</code> et <code>pathinfo</code>
+  coupés en production ; <code>scripts/strip-source-maps.js</code> (repris du projet frère) chaîné
+  dans <code>build:prod</code>. <strong>Prouvé</strong> : build de dev → map présente, puis
+  <code>build:prod</code> → <code>strip-source-maps: 1 removed</code>, et
+  <code>npm pack --dry-run</code> → 0 <code>.map</code>, 237 Ko décompressés contre 756 pour la
+  1.0.1 publiée. Le build de dev garde sa map — c'est lui que la jonction NTFS sert.</li>
+<li><strong>Notices tierces</strong> : <code>THIRD-PARTY-NOTICES.md</code> créé et ajouté à
+  <code>files[]</code> — js-yaml (texte MIT recopié intégralement : bundlé en entier, sa notice ne
+  survit pas à la minification), pug-runtime, runtimes css-loader <em>et</em> style-loader (ce
+  dernier trouvé au grep du bundle, absent d'<code>index.js.LICENSE.txt</code>), et l'attribution
+  du tracé Font Awesome <code>info-circle</code> du toast (CC BY 4.0, tracé seul, recoloré).</li>
+<li><strong>CHANGELOG</strong> : <code>CHANGELOG.md</code> créé (format Keep a Changelog) —
+  <code>Unreleased</code> (ce lot) + 1.0.1 + 1.0.0, rétro-rempli depuis les releases GitHub et le
+  journal, liens de comparaison compris. Au dépôt seulement, comme sur la sidebar — pas dans
+  <code>files[]</code>. <strong>À tenir à chaque publication.</strong></li>
+<li><strong>Audit</strong> : <code>npm audit fix</code> nu appliqué — 19 → 16
+  (<code>brace-expansion</code>, <code>fast-uri</code>, <code>nanoid</code> corrigées) ; les 16
+  restantes sont celles bloquées par Angular 15 et pug 2, en surveillance comme prévu.</li>
+</ul>
+<p><strong>Le paquet npm publié (1.0.1) porte encore la map</strong> : le correctif ne sera
+effectif qu'à la prochaine publication, non déclenchée — action distincte, à la main de
+l'utilisateur. <code>webpack-cli@4</code> laissé en l'état (hors lot, valeur faible).</p>
+</div>
 
 <h3>1. La source map part dans le tarball npm — à corriger avant toute republication</h3>
 <p>Vérifié : <code>devtool: 'source-map'</code> est inconditionnel dans

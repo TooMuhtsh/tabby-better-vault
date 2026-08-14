@@ -23,6 +23,7 @@
 #   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
 #   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-14T10:25:00+02:00 | hygiene-paquet | 02e6c0a | Lot livre : webpack.config en fonction (devtool/pathinfo coupes en prod) + strip chaine dans build:prod (0 map au pack --dry-run, 237 Ko vs 756), THIRD-PARTY-NOTICES.md dans files[], CHANGELOG.md cree, audit fix nu 19->16. Effectif npm a la prochaine publication.
 2026-08-14T09:58:00+02:00 | hygiene-paquet | - | Fiche affinee (grille du projet frere, reverifiee) : 13/19 pile Angular externals, 3 pug build, 3 transitives (audit fix nu) ; aucune n'atteint le paquet publie, pas de dompurify ici. Releases GitHub v1.0.0/v1.0.1 : notes presentes, seul CHANGELOG.md manque.
 2026-08-14T09:51:00+02:00 | hygiene-paquet | - | Cinq points du Project GitHub (2026-08-10) consignes apres verification : source map 490 Ko dans le tarball (a corriger avant republication), notices tierces et CHANGELOG absents, audit 19 vulns toutes devDeps, TS 5.x impossible sous Angular 15.
 2026-08-14T09:45:00+02:00 | toasts | - | Chantier ouvert (decision utilisateur) : couleurs par severite — tout est rouge #b3261e, l'info (cle enregistree, deverrouillage) se confond avec une erreur — et ancrage de la pastille au panneau actif en vue splittee (rouvert depuis registre #audit).
