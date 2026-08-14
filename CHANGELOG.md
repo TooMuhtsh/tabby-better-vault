@@ -8,10 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-08-14
+
 ### Added
 
 - `THIRD-PARTY-NOTICES.md` shipped in the published npm package.
 - This changelog.
+
+### Changed
+
+- Notification colors now follow severity: informational messages (password
+  saved, vault unlocked) are blue — red is reserved for warnings.
+- All notifications are prefixed with the plugin name, so it is clear who is
+  talking.
+- The unlock notice anchors to the focused pane of a split view, not the whole
+  tab; when no tab exists yet, it falls back to a window toast after 3 seconds
+  instead of silently giving up.
 
 ### Fixed
 
@@ -50,6 +62,7 @@ Verified on Windows and Linux, including an independent adversarial review on
 Linux. macOS is best-effort — same `safeStorage` API, but not independently
 measured.
 
-[Unreleased]: https://github.com/TooMuhtsh/tabby-better-vault/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/TooMuhtsh/tabby-better-vault/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/TooMuhtsh/tabby-better-vault/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/TooMuhtsh/tabby-better-vault/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/TooMuhtsh/tabby-better-vault/releases/tag/v1.0.0
