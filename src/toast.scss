@@ -1,12 +1,17 @@
-// Style de la notification d'enregistrement du mot de passe.
+// Style des notifications du plugin.
 //
 // Chargé depuis src/index.ts, et NON depuis le composant de réglages : ce
 // dernier n'est instancié que si l'utilisateur ouvre l'onglet, alors que la
 // notification peut survenir bien avant. Importé ici, le style est présent dès
 // le chargement du plugin (.AIRules/AI-CONTEXT.html, piège #V12).
 //
-// Rouge et surdimensionné à la demande de l'utilisateur : l'enregistrement d'un
-// mot de passe maître dans l'OS mérite d'être vu, pas seulement affiché.
+// Surdimensionné à la demande de l'utilisateur : l'enregistrement d'un mot de
+// passe maître dans l'OS mérite d'être vu, pas seulement affiché. Le rouge
+// uniforme d'origine, demandé en même temps, a été revu le 2026-08-14 : une
+// information (clé enregistrée, coffre déverrouillé) ressemblait à une erreur.
+// Désormais la couleur suit la sévérité — bleu pour l'information (`toast-info`
+// et la pastille de déverrouillage), le rouge restant aux avertissements
+// (`toast-warning` : trousseau suspendu, redémarrage requis).
 //
 // La spécificité passe par `.toast-container`, qui est le conteneur de
 // ngx-toastr : sans lui, les styles par défaut de `.toast-info` l'emportent.
@@ -23,6 +28,8 @@
     // Le retrait à gauche réserve la place de l'icône, que ngx-toastr dessine
     // en image de fond : un padding uniforme la ferait chevaucher le texte.
     padding: 0.7rem 1rem 0.7rem 3.6rem;
+    // Rouge par défaut : toute sévérité non prévue ici reste traitée en alerte
+    // plutôt que d'hériter du style ngx-toastr. `toast-info` le remplace plus bas.
     background-color: #b3261e;
     background-position: 1.1rem center;
     background-size: 1.6rem;
@@ -57,10 +64,17 @@
     }
 }
 
+// L'information porte le bleu, pas le rouge : `toastr.info` (clé enregistrée)
+// ne doit plus se confondre avec une alerte. Le sélecteur porte les deux
+// classes pour l'emporter sur le fond rouge par défaut ci-dessus (0,3,0 > 0,2,0).
+.toast-container .better-vault-toast.toast-info {
+    background-color: #1a5fb4;
+}
+
 // Notification de déverrouillage, ancrée en bas à gauche DU TERMINAL ACTIF et
 // non de la fenêtre : elle appartient au terminal que l'utilisateur regarde.
-// Insérée à la main dans `tab-body.content-tab-active` (voir inlineToast.ts),
-// ngx-toastr ne sachant positionner que par rapport à la fenêtre.
+// Insérée à la main (voir inlineToast.ts), ngx-toastr ne sachant positionner
+// que par rapport à la fenêtre. Bleu : c'est une information, pas une alerte.
 .better-vault-inline-toast {
     position: absolute;
     bottom: 1rem;
@@ -68,7 +82,7 @@
     z-index: 10;
     max-width: calc(100% - 2rem);
     padding: 0.45rem 0.8rem;
-    background-color: #b3261e;
+    background-color: #1a5fb4;
     color: #fff;
     font-size: 0.85rem;
     line-height: 1.3;

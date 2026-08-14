@@ -34,6 +34,7 @@
     "build:prod": "webpack --progress --color --mode production && node scripts/strip-source-maps.js",
     "watch": "webpack --progress --color --watch",
     "lint:airules": "html-validate \".AIRules/**/*.html\"",
+    "lint:history": "node tools/lint-history-log.js",
     "lint:i18n": "node tools/lint-i18n.js",
     "prepublishOnly": "npm run build:prod"
   },

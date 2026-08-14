@@ -317,7 +317,7 @@ export class VaultBridgeService {
         }
         this.unlockAnnounced = true
 
-        if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE))) {
+        if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE), this.appService())) {
             return
         }
 
@@ -328,11 +328,18 @@ export class VaultBridgeService {
         this.showWhenTabAvailable()
     }
 
-    private showWhenTabAvailable (): void {
-        let app: AppService
+    /** `AppService` au moment voulu, jamais requis : le toast sait s'en passer. */
+    private appService (): AppService | null {
         try {
-            app = this.injector.get(AppService)
+            return this.injector.get(AppService)
         } catch {
+            return null
+        }
+    }
+
+    private showWhenTabAvailable (): void {
+        const app = this.appService()
+        if (!app) {
             return
         }
 
@@ -341,9 +348,12 @@ export class VaultBridgeService {
                 return
             }
             // Laisse le corps de l'onglet se rendre avant d'y insérer quoi que
-            // ce soit : `activeTabChange$` précède l'apparition du DOM.
+            // ce soit : `activeTabChange$` précède l'apparition du DOM — et les
+            // classes du pane (`child`, `focused`) n'arrivent qu'au premier
+            // layout() du split ; le repli DOM puis l'onglet entier couvrent
+            // l'intervalle.
             setTimeout(() => {
-                if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE))) {
+                if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE), app)) {
                     subscription.unsubscribe()
                 }
             }, 150)
