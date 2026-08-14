@@ -35,7 +35,7 @@
 <tr><td><a href="annexes/REALISE.html#audit">Journal d'audit et notifications</a></td>
     <td><span class="pill done">✅ Livré — <strong>déplacé au registre des livrés</strong> le 2026-08-07</span></td><td>—</td></tr>
 <tr><td><a href="#publication">Publication</a></td>
-    <td><span class="pill done">✅ <strong><code>tabby-better-vault@1.0.0</code> publié sur npm le 2026-08-07</strong> — docs publics rattrapés (granularité), bundle de production (<code>build:prod</code>), registre vérifié après coup (keywords, author, README). Politique semver active à partir de maintenant</span></td><td>—</td></tr>
+    <td><span class="pill done">✅ <strong><code>1.0.2</code> publiée le 2026-08-14</strong> (hygiène du paquet + notifications) ; 1.0.1 le 2026-08-10 (référencement), 1.0.0 le 2026-08-07. Registre vérifié à chaque fois</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html">Trois campagnes de vérification Linux</a></td>
     <td><span class="pill done">✅ Closes — <strong>déplacées au registre des livrés</strong> le 2026-08-06 (option <code>registre-livrés</code>)</span></td><td>—</td></tr>
 <tr><td><a href="annexes/REALISE.html#correctifs-c3">Correctifs issus de la 3ᵉ campagne</a></td>
@@ -412,6 +412,18 @@ la liste était fausse, retirée plutôt que corrigée sur place. Détail intég
 <p><strong>Dépôt GitHub public depuis le 2026-07-28</strong> :
 <a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>,
 avec <code>README.md</code> (anglais) et <code>README.fr.md</code> (français).</p>
+
+<h3>Publiée le 2026-08-14 — <code>tabby-better-vault@1.0.2</code> : hygiène du paquet et notifications</h3>
+<p>Publication déclenchée par l'utilisateur (« publie la 1.0.2 »), numéro choisi par lui. Elle rend
+effectifs sur npm les deux chantiers du jour : <a href="#hygiene-paquet">l'hygiène du paquet</a>
+(la source map ne part plus — <strong>239,6 Ko décompressés contre 756</strong> pour la 1.0.1,
+27 fichiers, <code>THIRD-PARTY-NOTICES.md</code> embarqué) et <a href="#toasts">les
+notifications</a> (couleurs par sévérité, ancrage, signature « Better Vault »). Protocole appliqué,
+leçon du projet frère comprise : bump + entrée CHANGELOG <strong>commités avant</strong> le
+<code>npm publish</code>, si bien que le <code>gitHead</code> du registre (<code>f64665e</code>)
+pointe sur le bon commit. Registre vérifié après coup : <code>latest = 1.0.2</code>. Tag
+<code>v1.0.2</code> et release GitHub créés dans la foulée ; build de développement rendu à la
+jonction après la passe.</p>
 
 <h3>Publiée le 2026-08-10 — <code>tabby-better-vault@1.0.1</code> : référencement npm amélioré</h3>
 <p>Republication déclenchée par l'utilisateur pour corriger un défaut de référencement : la
@@ -867,9 +879,9 @@ priorité :</p>
   (<code>brace-expansion</code>, <code>fast-uri</code>, <code>nanoid</code> corrigées) ; les 16
   restantes sont celles bloquées par Angular 15 et pug 2, en surveillance comme prévu.</li>
 </ul>
-<p><strong>Le paquet npm publié (1.0.1) porte encore la map</strong> : le correctif ne sera
-effectif qu'à la prochaine publication, non déclenchée — action distincte, à la main de
-l'utilisateur. <code>webpack-cli@4</code> laissé en l'état (hors lot, valeur faible).</p>
+<p><strong>Effectif sur npm depuis la <code>1.0.2</code> du 2026-08-14</strong> (voir
+<a href="#publication">Publication</a>) — la 1.0.1 était la dernière à porter la map.
+<code>webpack-cli@4</code> laissé en l'état (hors lot, valeur faible).</p>
 </div>
 
 <h3>1. La source map part dans le tarball npm — à corriger avant toute republication</h3>
