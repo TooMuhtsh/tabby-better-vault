@@ -409,6 +409,22 @@ la liste était fausse, retirée plutôt que corrigée sur place. Détail intég
 <a href="https://github.com/TooMuhtsh/tabby-better-vault">github.com/TooMuhtsh/tabby-better-vault</a>,
 avec <code>README.md</code> (anglais) et <code>README.fr.md</code> (français).</p>
 
+<h3>Publiée le 2026-08-10 — <code>tabby-better-vault@1.0.1</code> : référencement npm amélioré</h3>
+<p>Republication déclenchée par l'utilisateur pour corriger un défaut de référencement : la
+<code>1.0.0</code> ne portait que le seul mot-clé <code>tabby-plugin</code> — suffisant pour le
+gestionnaire de plugins de Tabby, mais quasi invisible dans la recherche npm. La <code>1.0.1</code>
+porte quinze mots-clés (<code>tabby-plugin</code>, <code>tabby</code>, <code>terminal</code>,
+<code>vault</code>, <code>keychain</code>, <code>keyring</code>, <code>passphrase</code>,
+<code>credentials</code>, <code>secrets</code>, <code>ssh</code>, <code>security</code>,
+<code>safestorage</code>, <code>dpapi</code>, <code>libsecret</code>, <code>electron</code>), sans
+aucun changement de code — premier incrément de patch de la politique semver ci-dessous.</p>
+<p><strong>Particularité consignée après coup (2026-08-14)</strong> : le bump et les mots-clés ont
+été commités et poussés par l'utilisateur dans la foulée de la publication (<code>7dba0f8</code>,
+avec les tags <code>v1.0.0</code> et <code>v1.0.1</code> — premiers tags du dépôt), mais depuis un
+autre clone que le poste de travail habituel, resté en retard sans le savoir : un
+<code>git status</code> local se comparait à des refs non rafraîchies et affichait à tort « à
+jour ». Leçon : toujours <code>git fetch</code> avant de conclure sur l'état du dépôt.</p>
+
 <h3>Publiée le 2026-08-07 — <code>tabby-better-vault@1.0.0</code> sur npm</h3>
 <p>Publication déclenchée par l'utilisateur (« Corrige et publie »), après le rattrapage des
 documents publics : la granularité par profil entrait dans <code>README.md</code>,
