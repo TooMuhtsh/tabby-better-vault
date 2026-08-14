@@ -23,6 +23,7 @@
 #   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
 #   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-14T11:05:00+02:00 | toasts | 3984bbb | Valide par l'utilisateur apres 4 correctifs (f947d4b..3984bbb) : garde .child sur le chemin injecteur, renonciation 30 s supprimee, repli toast de fenetre a 3 s sans onglet, notifications signees Better Vault. Diagnostic en direct par CDP/injecteur.
 2026-08-14T10:26:00+02:00 | toasts | 2eab226 | Implemente sur feat/toasts : toast-info et pastille en bleu #1a5fb4 (rouge reserve aux alertes) ; ancrage au pane focalise (getFocusedTab recursif, replis .child.focused puis onglet entier). Validation visuelle en attente (plan-test-toasts.html).
 2026-08-14T10:26:00+02:00 | journal-log-migration | 2eab226 | Validateur du journal : tools/lint-history-log.js (npm run lint:history) — 4 colonnes, hash 7 hexa ou -, 250 car. max (erreur des 2026-08-14, tolere avant), ordre en avertissement. 3 lignes du jour raccourcies (A-5). Clot le reste-ouvert.
 2026-08-14T10:25:00+02:00 | hygiene-paquet | 02e6c0a | Lot livre : webpack.config en fonction (devtool coupe en prod) + strip dans build:prod (0 map au pack, 237 Ko vs 756), THIRD-PARTY-NOTICES.md dans files[], CHANGELOG.md cree, audit fix nu 19->16. Effectif npm a la prochaine publication.

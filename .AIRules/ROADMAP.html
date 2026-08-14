@@ -59,7 +59,7 @@
 <tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
     <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé ; validateur <code>lint:history</code> depuis le 2026-08-14</span></td><td>—</td></tr>
 <tr><td><a href="#toasts">Notifications : ancrage et couleurs</a></td>
-    <td><span class="pill planned">🧪 Implémenté le 2026-08-14 sur <code>feat/toasts</code> — bleu pour l'information, rouge réservé aux alertes, pastille ancrée au pane focalisé (injecteur + deux replis) ; <strong>validation visuelle en attente</strong> (<code>plan-test-toasts.html</code>)</span></td><td>En validation</td></tr>
+    <td><span class="pill done">✅ Livré et <strong>validé par l'utilisateur le 2026-08-14</strong> — bleu pour l'information, rouge réservé aux alertes, pastille ancrée au pane focalisé, repli en toast de fenêtre sans onglet, notifications signées « Better Vault »</span></td><td>—</td></tr>
 <tr><td><a href="#hygiene-paquet">Hygiène du paquet et de l'outillage (5 points GitHub)</a></td>
     <td><span class="pill done">✅ Lot livré le 2026-08-14, le jour de sa consignation — strip des maps en production (0 map au <code>pack --dry-run</code>), notices tierces dans <code>files[]</code>, CHANGELOG créé, audit fix nu (19 → 16) ; <strong>effectif sur npm à la prochaine publication</strong>, non déclenchée. Restent en surveillance : vulnérabilités Angular/pug, <code>apply-loader</code>, <code>webpack-cli@4</code></span></td><td>—</td></tr>
 </table>
@@ -804,10 +804,26 @@ passe en clair ne survit à aucun appel ». Il ne se négocie pas contre du conf
 <li>Le mode « tout focalisé » (<code>_allFocusMode</code>) marque tous les panes
   <code>.focused</code> : seul le chemin injecteur reste univoque, d'où son rang.</li>
 </ul>
-<p>La passe de validation est <code>plan-test-toasts.html</code> (racine, non suivi) : T1 pastille
-bleue au terminal, T2 pane focalisé d'une vue splittée restaurée, T3 toast d'enregistrement bleu,
-T4 onglet simple inchangé, T5 contrôle négatif du rouge. Fusion sur <code>master</code> après le
-verdict, pas avant.</p>
+<p><strong>Validé par l'utilisateur le 2026-08-14</strong>, après une passe en deux temps. La
+première (T1 KO deux fois, T2–T5 OK) a mené à quatre correctifs, le diagnostic décisif ayant été
+fait <em>en direct</em> par CDP + injecteur sur le poste réel plutôt que par hypothèses :</p>
+<ul>
+<li><code>f947d4b</code> — le chemin injecteur ne retient qu'un élément portant la classe
+  <code>child</code> (vrai pane, posé par <code>splitTab.layout()</code>) : l'hôte d'un onglet brut
+  ou d'un pane pré-layout est un conteneur défilant où <code>bottom: 1rem</code> tombe sous la
+  ligne de flottaison — pastille insérée mais invisible, annonce consommée.</li>
+<li><code>1da3752</code> — renonciation de 30 s supprimée : une session qui démarre sans onglet
+  (aucune restauration) dépassait la fenêtre le temps d'un détour par les réglages, et l'annonce
+  unique mourait en silence. Mesuré en direct : <code>activeTab: null</code>,
+  <code>unlockAnnounced: true</code>, aucune pastille.</li>
+<li><code>ebbda5d</code> — repli en <strong>toast de fenêtre</strong> (demande utilisateur) :
+  course entre <code>activeTabChange$</code> (→ pastille dans le terminal, le chemin voulu) et un
+  délai de 3 s (→ <code>toastr.info</code> ancré à la fenêtre, 10 s à l'écran). Une seule annonce
+  par session, quel que soit le canal.</li>
+<li><code>3984bbb</code> — notifications <strong>signées</strong> : « Better Vault — … » sur la
+  pastille et le titre des trois toasts (déverrouillage, enregistrement, avertissement trousseau).
+  Nom propre non traduit, concaténé dans le code — aucune clé i18n nouvelle.</li>
+</ul>
 </div>
 
 <div class="callout note">
