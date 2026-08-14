@@ -30,6 +30,12 @@ import { passphraseOpensVault } from './vaultCrypto'
  * jamais écrit ailleurs que chiffré par l'OS.
  */
 const UNLOCK_MESSAGE = 'Vault unlocked automatically'
+/**
+ * Nom du plugin, préfixé aux notifications pour dire QUI parle (demande
+ * utilisateur, 2026-08-14). Nom propre : jamais traduit, donc concaténé dans
+ * le code plutôt que déclaré dans les tables i18n.
+ */
+const PLUGIN_LABEL = 'Better Vault'
 
 @Injectable({ providedIn: 'root' })
 export class VaultBridgeService {
@@ -317,7 +323,7 @@ export class VaultBridgeService {
         }
         this.unlockAnnounced = true
 
-        if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE), this.appService())) {
+        if (showInlineToast(`${PLUGIN_LABEL} — ${this.i18n.t(UNLOCK_MESSAGE)}`, this.appService())) {
             return
         }
 
@@ -368,7 +374,7 @@ export class VaultBridgeService {
             // layout() du split ; le repli DOM puis l'onglet entier couvrent
             // l'intervalle.
             setTimeout(() => {
-                if (showInlineToast(this.i18n.t(UNLOCK_MESSAGE), app)) {
+                if (showInlineToast(`${PLUGIN_LABEL} — ${this.i18n.t(UNLOCK_MESSAGE)}`, app)) {
                     subscription.unsubscribe()
                 }
             }, 150)
@@ -384,7 +390,7 @@ export class VaultBridgeService {
         try {
             this.toastr.info(
                 this.i18n.t(UNLOCK_MESSAGE),
-                undefined,
+                PLUGIN_LABEL,
                 {
                     timeOut: 10000,
                     extendedTimeOut: 4000,
@@ -488,9 +494,9 @@ export class VaultBridgeService {
         // la date qu'elle porte doit l'être avec elle.
         const date = expiresAt ? this.i18n.date(expiresAt) : null
 
-        const title = preview
+        const title = PLUGIN_LABEL + ' — ' + (preview
             ? this.i18n.t('Observation mode — nothing was saved')
-            : this.i18n.t('Password saved in {keychain}', { keychain })
+            : this.i18n.t('Password saved in {keychain}', { keychain }))
 
         let body: string
         if (preview) {
@@ -539,7 +545,7 @@ export class VaultBridgeService {
         try {
             this.toastr.warning(
                 this.i18n.t('Restart Tabby to give automatic unlocking another try. Your password will be asked once in the meantime — nothing was lost.'),
-                this.i18n.t('Could not confirm the saved password with the keychain'),
+                `${PLUGIN_LABEL} — ${this.i18n.t('Could not confirm the saved password with the keychain')}`,
                 {
                     timeOut: 0,
                     extendedTimeOut: 0,
