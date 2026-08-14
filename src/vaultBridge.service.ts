@@ -340,13 +340,28 @@ export class VaultBridgeService {
     private showWhenTabAvailable (): void {
         const app = this.appService()
         if (!app) {
+            this.showWindowToast()
             return
         }
+
+        // Course entre deux affichages, décidée après la première passe de test
+        // (T1, deux fois KO) : une session qui démarre SANS onglet — aucune
+        // restauration — n'a rien où ancrer la pastille, et l'ancienne
+        // renonciation silencieuse (30 s) faisait mourir l'annonce, unique par
+        // session, pendant un simple détour par les réglages. Désormais : un
+        // onglet arrive vite → la pastille, dans le terminal, comme voulu à
+        // l'origine ; toujours rien après 3 s → un toast de fenêtre (ngx-toastr
+        // sait faire précisément cela), plutôt que rien du tout.
+        const fallback = setTimeout(() => {
+            subscription.unsubscribe()
+            this.showWindowToast()
+        }, 3000)
 
         const subscription = app.activeTabChange$.subscribe(tab => {
             if (!tab) {
                 return
             }
+            clearTimeout(fallback)
             // Laisse le corps de l'onglet se rendre avant d'y insérer quoi que
             // ce soit : `activeTabChange$` précède l'apparition du DOM — et les
             // classes du pane (`child`, `focused`) n'arrivent qu'au premier
@@ -358,15 +373,31 @@ export class VaultBridgeService {
                 }
             }, 150)
         })
+    }
 
-        // Pas de délai de renonciation. Il y en avait un (30 s), et la première
-        // passe de test l'a réfuté (T1) : une session qui démarre SANS onglet —
-        // aucune restauration — laisse largement plus de 30 s s'écouler avant
-        // le premier terminal (le temps d'un détour par les réglages), et
-        // l'annonce, unique par session, mourait en silence. Le premier onglet
-        // de la session reçoit la pastille, quel que soit le moment : le
-        // déverrouillage a bien eu lieu dans cette session, l'information reste
-        // vraie et utile.
+    /**
+     * Annonce de déverrouillage version fenêtre — le repli quand aucun onglet
+     * n'existe. `timeOut` généreux : au démarrage à froid, la fenêtre peut
+     * encore être en train de se peindre quand le toast part.
+     */
+    private showWindowToast (): void {
+        try {
+            this.toastr.info(
+                this.i18n.t(UNLOCK_MESSAGE),
+                undefined,
+                {
+                    timeOut: 10000,
+                    extendedTimeOut: 4000,
+                    // `toastClass` REMPLACE la classe par défaut au lieu de s'y
+                    // ajouter — conserver `ngx-toastr` (voir announceSaved).
+                    toastClass: 'ngx-toastr better-vault-toast',
+                },
+            )
+        } catch (e) {
+            // Une notification qui échoue ne doit pas compromettre le
+            // déverrouillage lui-même.
+            warn(`could not display the notification — ${briefError(e)}`)
+        }
     }
 
     /**
