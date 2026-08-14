@@ -359,10 +359,14 @@ export class VaultBridgeService {
             }, 150)
         })
 
-        // Sans onglet dans ce délai, on renonce : une notification qui
-        // surgirait bien plus tard n'aurait plus de rapport visible avec le
-        // déverrouillage.
-        setTimeout(() => subscription.unsubscribe(), 30000)
+        // Pas de délai de renonciation. Il y en avait un (30 s), et la première
+        // passe de test l'a réfuté (T1) : une session qui démarre SANS onglet —
+        // aucune restauration — laisse largement plus de 30 s s'écouler avant
+        // le premier terminal (le temps d'un détour par les réglages), et
+        // l'annonce, unique par session, mourait en silence. Le premier onglet
+        // de la session reçoit la pastille, quel que soit le moment : le
+        // déverrouillage a bien eu lieu dans cette session, l'information reste
+        // vraie et utile.
     }
 
     /**
