@@ -48,9 +48,17 @@ function focusedPaneHost (app: AppService | null): HTMLElement | null {
     // peut théoriquement être vide — tout l'accès reste optionnel.
     const ref: any = tab?.viewContainerEmbeddedRef ?? tab?.hostView
     const el = ref?.rootNodes?.[0] as HTMLElement | undefined
-    // `isConnected` : après removeFromContainer()/detach(), la vue existe
-    // encore mais vit dans un fragment hors document.
-    if (el?.isConnected) {
+    // Deux gardes, mesurées à la première passe de test (T1 KO) :
+    // `isConnected` — après removeFromContainer()/detach(), la vue existe
+    // encore mais vit dans un fragment hors document ; et la classe `child`,
+    // posée par splitTab.layout() lui-même — elle prouve que l'élément est un
+    // vrai pane, dimensionné à l'écran et déjà `absolute`. Sans elle (onglet
+    // brut type réglages ou page d'accueil, pane pas encore mis en page),
+    // l'élément est un conteneur potentiellement défilant : un `bottom: 1rem`
+    // y tombe sous la ligne de flottaison et la notification part invisible,
+    // en consommant l'unique annonce de la session. On préfère alors
+    // `tab-body`, toujours à la taille de la fenêtre.
+    if (el?.isConnected && el.classList.contains('child')) {
         return el
     }
 
