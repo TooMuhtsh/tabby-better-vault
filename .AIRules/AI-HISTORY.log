@@ -23,6 +23,8 @@
 #   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
 #   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-14T09:45:00+02:00 | toasts | - | Chantier ouvert (decision utilisateur) : couleurs par severite — tout est rouge #b3261e, l'info (cle enregistree, deverrouillage) se confond avec une erreur — et ancrage de la pastille au panneau actif en vue splittee (rouvert depuis registre #audit).
+2026-08-14T09:45:00+02:00 | i18n | - | Cinquieme langue ecartee, decision utilisateur : quatre langues suffisent, l'anglais en repli. Point clos dans le registre (annexes/REALISE.html#i18n) ; ajout mecanique si la decision rouvre un jour.
 2026-08-14T09:35:00+02:00 | publication | 7dba0f8 | tabby-better-vault@1.0.1 publie sur npm le 2026-08-10 par l'utilisateur : referencement ameliore, keywords de 1 a 15. Commite et pousse depuis un autre clone (tags v1.0.0/v1.0.1) ; clone local rattrape et consigne le 2026-08-14.
 2026-08-08T00:07:00+02:00 | pages | 68d4faa | GitHub Pages active sur master/racine (.nojekyll commite, sans lui Jekyll ignore les dossiers en point) : .AIRules/ consultable sur toomuhtsh.github.io/tabby-better-vault/.AIRules/README.html, verifie en 200. Lien ajoute aux deux READMEs (Voir aussi).
 2026-08-07T23:49:00+02:00 | publication | - | Diffusion : paquet visible dans le gestionnaire de plugins de Tabby des le jour de la publication ; topics GitHub ajoutes au depot ; annonce postee dans Discussions/General de Eugeny/tabby ; reponses postees dans plusieurs fils qui demandaient ce deverrouillage.

@@ -15,7 +15,7 @@
 </nav>
 
 <h1>Roadmap</h1>
-<p class="muted">Dernière revue : 2026-08-07</p>
+<p class="muted">Dernière revue : 2026-08-14</p>
 
 <h2>Vue d'ensemble</h2>
 <table>
@@ -58,6 +58,8 @@
     <td><span class="pill done">✅ Sept entrées migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a> (trois campagnes, correctifs-c3, i18n, réglages, audit) — aucun chantier non terminal ne reste dans ce tableau</span></td><td>—</td></tr>
 <tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
     <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé</span></td><td>—</td></tr>
+<tr><td><a href="#toasts">Notifications : ancrage et couleurs</a></td>
+    <td><span class="pill planned">📋 Ouvert le 2026-08-14 — couleurs par sévérité (tout est rouge aujourd'hui) + ancrage au panneau actif rouvert depuis le <a href="annexes/REALISE.html#audit">registre</a></span></td><td>Prochain chantier</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -763,6 +765,33 @@ bien le bruit que les allers-retours vers le trousseau. <strong>C'est exactement
 interdit</strong> : la promesse retenue contient le mot de passe en clair, donc le conserver entre
 deux appels, c'est le mettre en cache. Le coût par appel est le prix assumé de la règle « le mot de
 passe en clair ne survit à aucun appel ». Il ne se négocie pas contre du confort de journal.</p>
+</div>
+
+<h2 id="toasts">Notifications : ancrage au panneau actif et couleurs par sévérité — ouvert le 2026-08-14</h2>
+<p>Deux axes, décidés ensemble par l'utilisateur le 2026-08-14 :</p>
+<ul>
+<li><strong>Couleurs par sévérité.</strong> Tout est rouge aujourd'hui (<code>#b3261e</code>) : le
+  toast d'enregistrement de la clé (<code>toastr.info</code>, <code>vaultBridge.service.ts</code>),
+  celui du trousseau suspendu (<code>toastr.warning</code>) et la pastille de déverrouillage
+  (<code>inlineToast.ts</code>) partagent la même classe <code>better-vault-toast</code> et le même
+  fond dans <code>toast.scss</code>. Une information (« clé enregistrée », coffre déverrouillé)
+  ressemble donc à une erreur — c'est la confusion à lever : couleur distincte pour l'information,
+  le rouge restant aux avertissements et erreurs.</li>
+<li><strong>Ancrage en vue splittée.</strong> La pastille de déverrouillage est insérée dans
+  <code>tab-body.content-tab-active</code> (<a href="AI-CONTEXT.html#piege-v13">#V13</a>) : elle
+  vise l'onglet actif, pas le panneau actif d'une vue splittée. Point reporté « sans urgence » à la
+  livraison du journal d'audit (<a href="annexes/REALISE.html#audit">registre</a>), rouvert ce
+  jour.</li>
+</ul>
+<div class="callout note">
+<span class="callout-title">Le rouge n'est pas un accident — c'est une décision qui change</span>
+<p>Le commentaire de <code>toast.scss</code> le dit : « rouge et surdimensionné à la demande de
+l'utilisateur » — l'enregistrement d'un mot de passe maître méritait d'être vu. La décision du
+2026-08-14 ne le contredit qu'à moitié : la visibilité reste voulue, c'est la <em>couleur
+d'alerte</em> qui ne doit plus être partagée par des messages de natures différentes. À noter en
+codant : l'icône est un SVG recoloré en dur dans le CSS (impossible à teindre autrement), et
+<code>toastClass</code> <em>remplace</em> la classe par défaut de ngx-toastr au lieu de s'y
+ajouter.</p>
 </div>
 
 <h2 id="i18n">Internationalisation — livrée</h2>
