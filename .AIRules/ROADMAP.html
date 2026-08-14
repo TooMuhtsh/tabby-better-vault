@@ -825,21 +825,42 @@ distribué, pas les devDependencies. Format sidebar : prose par dépendance, lic
 intégralement seulement quand l'adaptation du code l'exige.</p>
 
 <h3>3. <code>CHANGELOG.md</code> absent</h3>
-<p>Aucun des deux dépôts n'en a. Deux versions publiées (1.0.0, 1.0.1) sans notes autres que les
-messages de commit. À créer avec ses deux entrées rétroactives, puis à tenir à chaque publication —
-la <a href="#publication">politique semver</a> donne le découpage.</p>
+<p>Aucun fichier <code>CHANGELOG.md</code> dans le dépôt — mais l'état réel est nuancé : les
+releases GitHub <code>v1.0.0</code> (« First stable release ») et <code>v1.0.1</code>
+(« Discoverability: keywords added »), créées le 2026-08-10 avec les tags, portent déjà des notes.
+Ce qui manque est le fichier au dépôt, visible depuis npm et depuis un clone. Rétro-remplissage
+faisable depuis les deux releases et <code>AI-HISTORY.log</code>, idéalement avec la prochaine
+publication — la <a href="#publication">politique semver</a> donne le découpage.</p>
 
 <h3>4. <code>npm audit</code> : 19 vulnérabilités, toutes hors livrable — surveillance, pas urgence</h3>
 <p>Mesuré le 2026-08-14 : <code>19 vulnerabilities (1 low, 3 moderate, 15 high)</code>, toutes en
 devDependencies — structurellement : <code>package.json</code> n'a aucun bloc
-<code>dependencies</code>, et le seul artefact publié est <code>dist/index.js</code>. Les gros
-contributeurs sont Angular 15 lui-même et <code>pug@2</code> ; <code>npm audit fix --force</code>
-voudrait Angular 22 et pug 3, ce qui casserait le verrouillage.
+<code>dependencies</code>, et le seul artefact publié est <code>dist/index.js</code>. Répartition
+(grille d'analyse reprise du projet frère, revérifiée ici à l'audit détaillé) :</p>
+<ul>
+<li><strong>13 sur 19 : la pile Angular 15 elle-même</strong> — neuf <code>@angular/*</code>,
+  <code>ng-bootstrap</code>, <code>@babel/core</code>, et les pairs <code>tabby-core</code> /
+  <code>tabby-settings</code> marqués incorrigeables par npm. Correction = Angular récent, bloquée
+  tant que Tabby amont reste sur Angular 15 — et tout ce groupe est external : rien n'en voyage
+  dans le paquet.</li>
+<li><strong>3 : <code>pug@2</code></strong>, build pur. La vraie sortie est pug 3 avec changement
+  de chaîne de loaders ; le « fix » que npm propose est un <em>downgrade</em> de
+  <code>pug-loader</code> (vers 1.0.2) — ne jamais <code>--force</code>.</li>
+<li><strong>3 : transitives d'outillage</strong> (<code>brace-expansion</code>,
+  <code>fast-uri</code>, <code>nanoid</code>), corrigeables par un <code>npm audit fix</code> nu —
+  hygiène à faire à l'occasion.</li>
+</ul>
+<p><strong>Différence avec le projet frère, vérifiée : aucune des 19 n'atteint le paquet
+publié.</strong> La sidebar bundle <code>dompurify</code> (sa seule vulnérabilité embarquée, avec
+un correctif dans sa plage) ; ici, ni <code>js-yaml</code> ni les runtimes inlinés
+(<code>pug-runtime</code>, <code>css-loader</code>) ne figurent à l'audit. Pas d'urgence de
+sécurité côté vault.
 <strong><code>apply-loader</code>, vérifié : toujours nécessaire</strong> — c'est lui qui exécute la
 fonction template produite par <code>pug-loader</code> pour que
 <code>template: require('./x.pug')</code> rende une chaîne — mais à l'abandon de fait (dernière
 publication : 2.0.0, en 2017), écrit contre l'API options de webpack 1/2 ; il ne tient que parce
-qu'aucune option ne lui est passée. Une alternative se cherchera le moment venu, sans urgence.</p>
+qu'aucune option ne lui est passée. S'en passer, c'est changer toute la chaîne pug, pas un simple
+retrait — le moment venu, avec pug 3, sans urgence.</p>
 
 <h3>5. Bump TypeScript / webpack-cli — la note d'origine est à corriger</h3>
 <p>Le bump TS n'est <strong>pas</strong> « low-risk » : Angular 15 impose
@@ -848,7 +869,8 @@ vérifiée dans <code>node_modules</code>) — le 4.9.5 actuel est le sommet de 
 impliquerait Angular 16+, donc une migration, pas un bump. <code>webpack</code> est déjà à jour
 (5.109.2 = latest) ; seul <code>webpack-cli</code> (4.10.0, dernière de la branche 4) a trois
 majeures de retard — bump possible à l'occasion, valeur faible, usage minimal
-(<code>--progress --color --mode --watch</code>).</p>
+(<code>--progress --color --mode --watch</code>). L'audit le confirme : <code>webpack-cli@4</code>
+ne tire aucune vulnérabilité — c'est de l'hygiène, pas de la sécurité.</p>
 
 <h2 id="i18n">Internationalisation — livrée</h2>
 <p>Interface traduite (quatre langues), journal figé en anglais. Fait le 2026-08-01, vérifié sur
