@@ -57,9 +57,9 @@
 <tr><td><a href="#registre-livres-migration">Registre des livrés</a></td>
     <td><span class="pill done">✅ Sept entrées migrées vers <a href="annexes/REALISE.html">annexes/REALISE.html</a> (trois campagnes, correctifs-c3, i18n, réglages, audit) — aucun chantier non terminal ne reste dans ce tableau</span></td><td>—</td></tr>
 <tr><td><a href="#journal-log-migration">Journal en <code>.log</code></a></td>
-    <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé</span></td><td>—</td></tr>
+    <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé ; validateur <code>lint:history</code> depuis le 2026-08-14</span></td><td>—</td></tr>
 <tr><td><a href="#toasts">Notifications : ancrage et couleurs</a></td>
-    <td><span class="pill planned">📋 Ouvert le 2026-08-14 — couleurs par sévérité (tout est rouge aujourd'hui) + ancrage au panneau actif rouvert depuis le <a href="annexes/REALISE.html#audit">registre</a></span></td><td>Prochain chantier</td></tr>
+    <td><span class="pill planned">🧪 Implémenté le 2026-08-14 sur <code>feat/toasts</code> — bleu pour l'information, rouge réservé aux alertes, pastille ancrée au pane focalisé (injecteur + deux replis) ; <strong>validation visuelle en attente</strong> (<code>plan-test-toasts.html</code>)</span></td><td>En validation</td></tr>
 <tr><td><a href="#hygiene-paquet">Hygiène du paquet et de l'outillage (5 points GitHub)</a></td>
     <td><span class="pill done">✅ Lot livré le 2026-08-14, le jour de sa consignation — strip des maps en production (0 map au <code>pack --dry-run</code>), notices tierces dans <code>files[]</code>, CHANGELOG créé, audit fix nu (19 → 16) ; <strong>effectif sur npm à la prochaine publication</strong>, non déclenchée. Restent en surveillance : vulnérabilités Angular/pug, <code>apply-loader</code>, <code>webpack-cli@4</code></span></td><td>—</td></tr>
 </table>
@@ -786,6 +786,31 @@ passe en clair ne survit à aucun appel ». Il ne se négocie pas contre du conf
   jour.</li>
 </ul>
 <div class="callout note">
+<span class="callout-title">Implémenté le 2026-08-14 (branche <code>feat/toasts</code>, commit <code>2eab226</code>) — validation visuelle en attente</span>
+<ul>
+<li><strong>Couleurs</strong> : <code>toast-info</code> et la pastille passent au bleu
+  <code>#1a5fb4</code> ; le rouge <code>#b3261e</code> devient le <em>défaut</em> de la classe —
+  les avertissements (<code>toast-warning</code>) et toute sévérité imprévue restent traités en
+  alerte. L'icône ⓘ blanche existante convient au fond bleu, rien d'autre à toucher.</li>
+<li><strong>Ancrage</strong> : <code>inlineToast.ts</code> vise désormais le <em>pane</em> focalisé,
+  en trois niveaux — injecteur (<code>AppService.activeTab</code> puis <code>getFocusedTab()</code>
+  récursif avec garde anti-cycle, élément par <code>viewContainerEmbeddedRef ?? hostView</code> →
+  <code>rootNodes[0]</code>, testé <code>isConnected</code>), repli DOM
+  (<code>split-tab &gt; .child.focused</code>, le plus profond), repli historique (l'onglet entier).
+  Point clé vérifié dans les sources de l'app installée : <strong>tout onglet terminal est déjà un
+  <code>SplitTabComponent</code> à un pane</strong> (<code>openNewTab()</code> enveloppe d'office),
+  donc un seul code couvre les deux cas, et le garde <code>position === 'static'</code> existant
+  suffit (un pane est déjà <code>absolute</code> — ne jamais forcer <code>relative</code> en dur).</li>
+<li>Le mode « tout focalisé » (<code>_allFocusMode</code>) marque tous les panes
+  <code>.focused</code> : seul le chemin injecteur reste univoque, d'où son rang.</li>
+</ul>
+<p>La passe de validation est <code>plan-test-toasts.html</code> (racine, non suivi) : T1 pastille
+bleue au terminal, T2 pane focalisé d'une vue splittée restaurée, T3 toast d'enregistrement bleu,
+T4 onglet simple inchangé, T5 contrôle négatif du rouge. Fusion sur <code>master</code> après le
+verdict, pas avant.</p>
+</div>
+
+<div class="callout note">
 <span class="callout-title">Le rouge n'est pas un accident — c'est une décision qui change</span>
 <p>Le commentaire de <code>toast.scss</code> le dit : « rouge et surdimensionné à la demande de
 l'utilisateur » — l'enregistrement d'un mot de passe maître méritait d'être vu. La décision du
@@ -1132,9 +1157,14 @@ migration.</p>
 <p><strong>Fait</strong> : <code>AI-HISTORY.log</code> créé avec son en-tête de format ;
 <code>AI-HISTORY.html</code> porte désormais un callout de gel avec renvoi ; la table
 <a href="README.html">README.html</a> § Structure documente les deux fichiers séparément.</p>
-<p><strong>Reste ouvert</strong> : <code>npm run lint:airules</code> ne valide que du HTML
-(<code>html-validate</code>) et ne couvre donc pas <code>AI-HISTORY.log</code> — pas de validateur
-dédié au nouveau format (colonnes, borne de 250 caractères) pour l'instant. La navbar HTML des
+<p><strong>Clos le 2026-08-14</strong> : le validateur dédié existe — <code>npm run
+lint:history</code> (<code>tools/lint-history-log.js</code>, local comme <code>lint:i18n</code>) :
+quatre colonnes, horodatage ISO, slug, hash 7 hexadécimaux ou <code>-</code>, explication bornée à
+250 caractères. Deux tolérances parce que le journal est en ajout seul : le dépassement de longueur
+n'est une <em>erreur</em> que pour les entrées datées de sa naissance (2026-08-14) ou après —
+l'existant figé est signalé sans faire échouer —, et l'ordre anté-chronologique n'est qu'un
+avertissement. Sa première exécution a attrapé trois lignes du jour au-dessus de la borne,
+raccourcies dans la foulée (A-5). La navbar HTML des
 quatre documents principaux n'a pas changé : elle continue de pointer vers
 <code>AI-HISTORY.html</code>, qui renvoie lui-même vers le <code>.log</code> — décision délibérée,
 pour ne pas toucher un élément identique sur quatre pages (§ 1 de <code>GABARITS.md</code>) pour un
