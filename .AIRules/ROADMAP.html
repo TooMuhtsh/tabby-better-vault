@@ -60,6 +60,8 @@
     <td><span class="pill done">✅ Fait (2026-08-06) — sans conversion rétroactive, <code>AI-HISTORY.html</code> gelé</span></td><td>—</td></tr>
 <tr><td><a href="#toasts">Notifications : ancrage et couleurs</a></td>
     <td><span class="pill planned">📋 Ouvert le 2026-08-14 — couleurs par sévérité (tout est rouge aujourd'hui) + ancrage au panneau actif rouvert depuis le <a href="annexes/REALISE.html#audit">registre</a></span></td><td>Prochain chantier</td></tr>
+<tr><td><a href="#hygiene-paquet">Hygiène du paquet et de l'outillage (5 points GitHub)</a></td>
+    <td><span class="pill planned">📋 Consignés le 2026-08-14 après vérification — source map dans le tarball (bloquant avant republication), notices tierces, CHANGELOG ; audit et outillage en surveillance</span></td><td>Avant la prochaine publication</td></tr>
 </table>
 
 <h2 id="verification">Vérification de faisabilité — résultat (2026-07-28)</h2>
@@ -793,6 +795,60 @@ codant : l'icône est un SVG recoloré en dur dans le CSS (impossible à teindre
 <code>toastClass</code> <em>remplace</em> la classe par défaut de ngx-toastr au lieu de s'y
 ajouter.</p>
 </div>
+
+<h2 id="hygiene-paquet">Hygiène du paquet et de l'outillage — cinq points relevés le 2026-08-10</h2>
+<p>Relevés par l'utilisateur dans son Project GitHub le 2026-08-10, rapatriés ici le 2026-08-14
+après vérification sur pièces (bundle, <code>node_modules</code>, registre npm). Par ordre de
+priorité :</p>
+
+<h3>1. La source map part dans le tarball npm — à corriger avant toute republication</h3>
+<p>Vérifié : <code>devtool: 'source-map'</code> est inconditionnel dans
+<code>webpack.config.js</code>, même en production — <code>dist/index.js.map</code> (490 Ko) porte
+l'intégralité des sources TS commentées, et <code>files: ["dist"]</code> l'embarque (la 1.0.1
+publiée la contient). C'est le canal mesuré le 2026-08-02 en préparant la
+<a href="#campagne-4">campagne 4</a> : le code raconte ses propres correctifs. Dispositif de la
+sidebar à répliquer tel quel : <code>devtool</code> à <code>false</code> en production
+<em>et</em> <code>scripts/strip-source-maps.js</code> (34 lignes, sans dépendance — parcours de
+<code>dist/</code>, suppression de tout <code>.map</code>) chaîné dans <code>build:prod</code>,
+parce qu'un build de dev antérieur laisse sa map derrière lui et qu'<code>output.clean</code>
+ramasserait les <code>.d.ts</code> écrits par TypeScript hors assets webpack.</p>
+
+<h3>2. Notices tierces absentes (<code>THIRD-PARTY-NOTICES.md</code>)</h3>
+<p>La sidebar embarque le sien (<code>files[]</code>) depuis sa 1.0.1 ; ce paquet n'en a pas. Ce qui
+est réellement distribué dans <code>dist/index.js</code>, vérifié dans le bundle :
+<code>js-yaml</code> (importé par <code>tabbyConfig.ts</code>, inliné) et les runtimes
+<code>pug-runtime</code> et <code>css-loader</code> (listés par <code>index.js.LICENSE.txt</code>).
+<code>ngx-toastr</code>, lui, n'est <strong>pas</strong> distribué — external
+(<a href="AI-CONTEXT.html#piege-v8">#V8</a>), vérifié : le bundle n'en contient qu'un stub
+<code>module.exports = __WEBPACK_EXTERNAL_MODULE...</code>. Le fichier doit couvrir ce qui est
+distribué, pas les devDependencies. Format sidebar : prose par dépendance, licence recopiée
+intégralement seulement quand l'adaptation du code l'exige.</p>
+
+<h3>3. <code>CHANGELOG.md</code> absent</h3>
+<p>Aucun des deux dépôts n'en a. Deux versions publiées (1.0.0, 1.0.1) sans notes autres que les
+messages de commit. À créer avec ses deux entrées rétroactives, puis à tenir à chaque publication —
+la <a href="#publication">politique semver</a> donne le découpage.</p>
+
+<h3>4. <code>npm audit</code> : 19 vulnérabilités, toutes hors livrable — surveillance, pas urgence</h3>
+<p>Mesuré le 2026-08-14 : <code>19 vulnerabilities (1 low, 3 moderate, 15 high)</code>, toutes en
+devDependencies — structurellement : <code>package.json</code> n'a aucun bloc
+<code>dependencies</code>, et le seul artefact publié est <code>dist/index.js</code>. Les gros
+contributeurs sont Angular 15 lui-même et <code>pug@2</code> ; <code>npm audit fix --force</code>
+voudrait Angular 22 et pug 3, ce qui casserait le verrouillage.
+<strong><code>apply-loader</code>, vérifié : toujours nécessaire</strong> — c'est lui qui exécute la
+fonction template produite par <code>pug-loader</code> pour que
+<code>template: require('./x.pug')</code> rende une chaîne — mais à l'abandon de fait (dernière
+publication : 2.0.0, en 2017), écrit contre l'API options de webpack 1/2 ; il ne tient que parce
+qu'aucune option ne lui est passée. Une alternative se cherchera le moment venu, sans urgence.</p>
+
+<h3>5. Bump TypeScript / webpack-cli — la note d'origine est à corriger</h3>
+<p>Le bump TS n'est <strong>pas</strong> « low-risk » : Angular 15 impose
+<code>typescript &gt;=4.8.2 &lt;5.0</code> (peerDependency de <code>@angular/compiler-cli</code>,
+vérifiée dans <code>node_modules</code>) — le 4.9.5 actuel est le sommet de la plage, TS 5.x
+impliquerait Angular 16+, donc une migration, pas un bump. <code>webpack</code> est déjà à jour
+(5.109.2 = latest) ; seul <code>webpack-cli</code> (4.10.0, dernière de la branche 4) a trois
+majeures de retard — bump possible à l'occasion, valeur faible, usage minimal
+(<code>--progress --color --mode --watch</code>).</p>
 
 <h2 id="i18n">Internationalisation — livrée</h2>
 <p>Interface traduite (quatre langues), journal figé en anglais. Fait le 2026-08-01, vérifié sur

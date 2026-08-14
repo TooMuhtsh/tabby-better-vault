@@ -23,6 +23,7 @@
 #   6ba8203 -> 4c7d2d5   67bef51 -> 78eb3af   d44ef2d -> 6a5f98e   01f45d1 -> aed6ad3
 #   (10ad983, cite en texte libre dans l'entree registre-livres-migration, est inchange.)
 
+2026-08-14T09:51:00+02:00 | hygiene-paquet | - | Cinq points du Project GitHub (2026-08-10) consignes apres verification : source map 490 Ko dans le tarball (a corriger avant republication), notices tierces et CHANGELOG absents, audit 19 vulns toutes devDeps, TS 5.x impossible sous Angular 15.
 2026-08-14T09:45:00+02:00 | toasts | - | Chantier ouvert (decision utilisateur) : couleurs par severite — tout est rouge #b3261e, l'info (cle enregistree, deverrouillage) se confond avec une erreur — et ancrage de la pastille au panneau actif en vue splittee (rouvert depuis registre #audit).
 2026-08-14T09:45:00+02:00 | i18n | - | Cinquieme langue ecartee, decision utilisateur : quatre langues suffisent, l'anglais en repli. Point clos dans le registre (annexes/REALISE.html#i18n) ; ajout mecanique si la decision rouvre un jour.
 2026-08-14T09:35:00+02:00 | publication | 7dba0f8 | tabby-better-vault@1.0.1 publie sur npm le 2026-08-10 par l'utilisateur : referencement ameliore, keywords de 1 a 15. Commite et pousse depuis un autre clone (tags v1.0.0/v1.0.1) ; clone local rattrape et consigne le 2026-08-14.
